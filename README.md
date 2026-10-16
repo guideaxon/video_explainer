@@ -87,8 +87,8 @@ video_explainer/
 
 ### Prerequisites
 
-- Python 3.10+
-- Node.js 20+
+- Python 3.14+ (C:Python314)
+- Node.js 22+
 - FFmpeg
 
 ### Installation
@@ -255,7 +255,7 @@ See [docs/CLI.md](docs/CLI.md) for complete CLI reference with all options.
 ```yaml
 llm:
   provider: claude-code  # claude-code | mock | anthropic | openai
-  model: claude-sonnet-4-20250514
+  model: claude-sonnet-5-5
 
 tts:
   provider: mock  # mock | elevenlabs | edge
@@ -346,7 +346,7 @@ Typography: Inter/SF Pro for text, JetBrains Mono for code
 
 ### System
 - FFmpeg - Video processing
-- Node.js 20+ - Remotion runtime
+- Node.js 22+ - Remotion runtime
 
 ## License
 

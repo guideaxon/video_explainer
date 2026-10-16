@@ -195,7 +195,7 @@ export function deriveProjectDir(storyboardPath) {
 export function deriveShortsSceneDir(storyboardPath) {
   // shorts storyboard is at projects/<name>/short/<variant>/storyboard/shorts_storyboard.json
   // scenes are at projects/<name>/short/<variant>/scenes/
-  const parts = storyboardPath.split("/");
+  const parts = storyboardPath.split(/[\\/]/); // handle Windows backslashes too
   parts.pop(); // remove shorts_storyboard.json
   parts.pop(); // remove storyboard/
   parts.push("scenes");

@@ -478,7 +478,7 @@ Create visually stunning scenes that:
             prompt: The generation prompt.
             output_path: Path to write the scene file.
         """
-        llm_config = LLMConfig(provider="claude-code", model="claude-sonnet-4-20250514")
+        llm_config = LLMConfig(provider="claude-code", model="claude-sonnet-5-5")
         llm = ClaudeCodeLLMProvider(
             llm_config,
             working_dir=self.working_dir,

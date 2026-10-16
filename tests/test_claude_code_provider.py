@@ -19,7 +19,7 @@ from src.understanding.llm_provider import (
 @pytest.fixture
 def llm_config():
     """Create a test LLM config."""
-    return LLMConfig(provider="claude-code", model="claude-sonnet-4-20250514")
+    return LLMConfig(provider="claude-code", model="claude-sonnet-5-5")
 
 
 @pytest.fixture
@@ -57,7 +57,7 @@ class TestBuildCommand:
         cmd = provider._build_command("Hello world", tools=[])
         assert cmd == [
             "claude", "--print", "-p", "Hello world",
-            "--model", "claude-sonnet-4-20250514",
+            "--model", "claude-sonnet-5-5",
         ]
 
     def test_command_with_system_prompt(self, provider):
@@ -69,7 +69,7 @@ class TestBuildCommand:
         )
         assert cmd == [
             "claude", "--print", "-p", "Hello world",
-            "--model", "claude-sonnet-4-20250514",
+            "--model", "claude-sonnet-5-5",
             "--system-prompt", "You are helpful.",
         ]
 

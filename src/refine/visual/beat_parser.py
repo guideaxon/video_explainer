@@ -92,7 +92,7 @@ class BeatParser:
             working_dir: Working directory for file operations.
         """
         if llm_provider is None:
-            config = LLMConfig(provider="claude-code", model="claude-sonnet-4-20250514")
+            config = LLMConfig(provider="claude-code", model="claude-sonnet-5-5")
             self.llm = ClaudeCodeLLMProvider(
                 config,
                 working_dir=working_dir or Path.cwd(),

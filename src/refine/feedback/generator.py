@@ -49,7 +49,7 @@ class PatchGenerator:
         self.verbose = verbose
 
         if llm_provider is None:
-            config = LLMConfig(provider="claude-code", model="claude-sonnet-4-20250514")
+            config = LLMConfig(provider="claude-code", model="claude-sonnet-5-5")
             self.llm = ClaudeCodeLLMProvider(config, timeout=180)
         else:
             self.llm = llm_provider

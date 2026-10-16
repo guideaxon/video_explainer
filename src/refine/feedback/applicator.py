@@ -54,7 +54,7 @@ class PatchApplicator:
         self.live_output = live_output
 
         if llm_provider is None:
-            config = LLMConfig(provider="claude-code", model="claude-sonnet-4-20250514")
+            config = LLMConfig(provider="claude-code", model="claude-sonnet-5-5")
             self.llm = ClaudeCodeLLMProvider(config, timeout=300)
         else:
             self.llm = llm_provider

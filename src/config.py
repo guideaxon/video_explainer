@@ -21,7 +21,7 @@ class LLMConfig(BaseModel):
     """LLM provider configuration."""
 
     provider: str = "claude-code"
-    model: str = "claude-sonnet-4-20250514"
+    model: str = "claude-sonnet-5-5"
     max_tokens: int = 4096
     temperature: float = 0.7
 

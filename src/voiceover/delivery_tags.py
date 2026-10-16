@@ -95,7 +95,7 @@ def add_delivery_tags(
         from ..understanding.llm_provider import ClaudeCodeLLMProvider
         from ..config import LLMConfig
 
-        config = LLMConfig(provider="claude-code", model="claude-sonnet-4-20250514")
+        config = LLMConfig(provider="claude-code", model="claude-sonnet-5-5")
         llm = ClaudeCodeLLMProvider(
             config,
             working_dir=working_dir or Path.cwd(),

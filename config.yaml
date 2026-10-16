@@ -14,7 +14,7 @@ llm:
   # Provider: "claude-code" for production, "mock" for testing
   provider: "claude-code"
   # Model to use (when provider is not mock)
-  model: "claude-sonnet-4-20250514"
+  model: "claude-sonnet-5-5"
   # Maximum tokens for generation
   max_tokens: 4096
   # Temperature for generation

@@ -1843,7 +1843,7 @@ class SceneGenerator:
         )
 
         # Use LLM to sync timing
-        llm_config = LLMConfig(provider="claude-code", model="claude-sonnet-4-20250514")
+        llm_config = LLMConfig(provider="claude-code", model="claude-sonnet-5-5")
         llm = ClaudeCodeLLMProvider(
             llm_config,
             working_dir=self.working_dir,
@@ -2044,7 +2044,7 @@ Please fix this issue and try again.
             output_path: Path to write the scene file
             validation_feedback: Optional feedback from previous validation failure
         """
-        llm_config = LLMConfig(provider="claude-code", model="claude-sonnet-4-20250514")
+        llm_config = LLMConfig(provider="claude-code", model="claude-sonnet-5-5")
         llm = ClaudeCodeLLMProvider(
             llm_config,
             working_dir=self.working_dir,
