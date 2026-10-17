@@ -558,9 +558,9 @@ def cmd_storyboard(args: argparse.Namespace) -> int:
         "version": "2.0.0",
         "project": project.id,
         "video": {
-            "width": 1920,
-            "height": 1080,
-            "fps": 30,
+            "width": project.video.width,
+            "height": project.video.height,
+            "fps": project.video.fps,
         },
         "style": {
             "background_color": "#f4f4f5",
@@ -1437,7 +1437,9 @@ def cmd_render(args: argparse.Namespace) -> int:
 
     # Determine resolution (use shorts presets for shorts)
     resolution_name = args.resolution or "1080p"
-    if is_short:
+    # Shorts, and full videos whose project config is portrait (height > width), use 9:16 presets
+    portrait = is_short or project.video.height > project.video.width
+    if portrait:
         if resolution_name not in SHORTS_RESOLUTION_PRESETS:
             print(f"Error: Unknown resolution '{resolution_name}'", file=sys.stderr)
             print(f"Available: {', '.join(SHORTS_RESOLUTION_PRESETS.keys())}", file=sys.stderr)

@@ -12,6 +12,7 @@ import {
   useVideoConfig,
   AbsoluteFill,
   Audio,
+  Sequence,
   staticFile,
 } from "remotion";
 import { ShortsVisualArea } from "./ShortsVisualArea";
@@ -306,7 +307,14 @@ const VisualRenderer: React.FC<{
   if (CustomScene) {
     // Calculate the start frame for this beat
     const beatStartFrame = Math.round(beat.start_seconds * fps);
-    return <CustomScene startFrame={beatStartFrame} />;
+    // Sequence resets useCurrentFrame() to 0 at the beat start, so scenes animate on a
+    // beat-local clock. Without it they receive the global frame and later beats begin
+    // with their entrance animations already finished.
+    return (
+      <Sequence from={beatStartFrame} layout="none">
+        <CustomScene startFrame={beatStartFrame} />
+      </Sequence>
+    );
   }
 
   // Fallback to generic visual area

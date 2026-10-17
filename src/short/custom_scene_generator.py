@@ -20,6 +20,7 @@ from typing import Any
 from ..config import Config, LLMConfig, load_config
 from ..models import Script
 from ..understanding.llm_provider import ClaudeCodeLLMProvider
+from .channel_styles import ChannelStyle, style_for_scenes_dir
 from .models import ShortsStoryboard, ShortsBeat
 
 
@@ -220,6 +221,9 @@ class ShortsCustomSceneGenerator:
         # Cache for loaded rules
         self._remotion_rules_cache: dict[str, str] = {}
 
+        # Channel style (e.g. "vantage"), resolved from the project config per generation run
+        self.style: ChannelStyle | None = None
+
     def _load_remotion_rules(
         self,
         rule_files: list[str] | None = None,
@@ -267,6 +271,9 @@ class ShortsCustomSceneGenerator:
         Returns:
             Complete system prompt for scene generation.
         """
+        if self.style:
+            return self.style.system_prompt()
+
         remotion_rules = self._load_remotion_rules(rule_files)
 
         return f"""You are an expert React/Remotion developer creating animated scene components for YouTube Shorts.
@@ -313,11 +320,19 @@ Create visually stunning scenes that:
         """
         scenes_dir.mkdir(parents=True, exist_ok=True)
 
+        # A project's config.json "channel" selects a channel style (see channel_styles.py)
+        self.style = style_for_scenes_dir(scenes_dir)
+        if self.style:
+            print(f"  Using channel style: {self.style.name}")
+
         # Generate styles.ts first
         self._generate_vertical_styles(scenes_dir, storyboard.title)
 
         # Load example scenes from full video for inspiration
-        example_scenes = self._load_example_scenes(project_scenes_dir)
+        if self.style:
+            example_scenes = self.style.example_scenes()
+        else:
+            example_scenes = self._load_example_scenes(project_scenes_dir)
 
         results = {
             "scenes_dir": str(scenes_dir),
@@ -340,7 +355,7 @@ Create visually stunning scenes that:
             try:
                 # Get the specific source scene file if available
                 beat_example_scenes = example_scenes
-                if beat.source_scene_file and project_scenes_dir:
+                if beat.source_scene_file and project_scenes_dir and not self.style:
                     source_scene_path = project_scenes_dir / beat.source_scene_file
                     if source_scene_path.exists():
                         with open(source_scene_path) as f:

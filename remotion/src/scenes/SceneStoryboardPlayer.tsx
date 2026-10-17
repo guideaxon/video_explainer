@@ -24,7 +24,9 @@ import {
 import {
   TransitionSeries,
   springTiming,
+  type TransitionPresentation,
 } from "@remotion/transitions";
+import { fade } from "@remotion/transitions/fade";
 import { getSceneByPath } from "./index";
 import { cinematicFade, cinematicSlide } from "../components/CinematicTransition";
 import {
@@ -102,9 +104,19 @@ export interface AudioConfig {
 }
 
 /**
+ * Optional per-storyboard transition override (channels with a crisp style use short plain fades).
+ * Defaults to the cinematic transitions when omitted.
+ */
+export interface TransitionConfig {
+  style?: "cinematic" | "fade";
+  duration_frames?: number;
+}
+
+/**
  * Scene-based storyboard format
  */
 export interface SceneStoryboard {
+  transitions?: TransitionConfig;
   title: string;
   description: string;
   version: string;
@@ -306,6 +318,14 @@ const MissingScene: React.FC<{ sceneType: string }> = ({ sceneType }) => {
   );
 };
 
+// Storyboards may opt into plain fades (crisp channel styles); default is the cinematic set above.
+const getPresentation = (
+  transitions: TransitionConfig | undefined,
+  style: TransitionStyle,
+  accentColor: string
+): TransitionPresentation<any> =>
+  transitions?.style === "fade" ? fade() : getTransitionPresentation(style, accentColor);
+
 // Empty storyboard for fallback
 const emptyStoryboard: SceneStoryboard = {
   title: "Empty",
@@ -330,6 +350,7 @@ export const SceneStoryboardPlayer: React.FC<SceneStoryboardPlayerProps> = ({
 }) => {
   const { fps } = useVideoConfig();
   const buffer = storyboard.audio?.buffer_between_scenes_seconds ?? 1.0;
+  const transitionFrames = storyboard.transitions?.duration_frames ?? TRANSITION_DURATION_FRAMES;
 
   // Prepare scene data with components
   const sceneData = storyboard.scenes.map((scene, index) => {
@@ -342,7 +363,7 @@ export const SceneStoryboardPlayer: React.FC<SceneStoryboardPlayerProps> = ({
     // The transition overlaps the last N frames, so we extend the scene
     // so the content (and audio) finishes before the crossfade starts
     const isLastScene = index === storyboard.scenes.length - 1;
-    const transitionPadding = isLastScene ? 0 : TRANSITION_DURATION_FRAMES;
+    const transitionPadding = isLastScene ? 0 : transitionFrames;
     const durationInFrames = baseDurationInFrames + transitionPadding;
 
     // Look up scene component from registry
@@ -360,7 +381,7 @@ export const SceneStoryboardPlayer: React.FC<SceneStoryboardPlayerProps> = ({
   const totalDurationInFrames = sceneData.reduce(
     (sum, scene) => sum + scene.durationInFrames,
     0
-  ) - (sceneData.length - 1) * TRANSITION_DURATION_FRAMES; // Account for overlapping transitions
+  ) - (sceneData.length - 1) * transitionFrames; // Account for overlapping transitions
 
   // Background music configuration
   const backgroundMusic = storyboard.audio?.background_music;
@@ -402,10 +423,10 @@ export const SceneStoryboardPlayer: React.FC<SceneStoryboardPlayerProps> = ({
               {/* Add transition between scenes (not after last scene) */}
               {!isLastScene && (
                 <TransitionSeries.Transition
-                  presentation={getTransitionPresentation(transitionStyle, accentColor)}
+                  presentation={getPresentation(storyboard.transitions, transitionStyle, accentColor)}
                   timing={springTiming({
                     config: { damping: 200 },
-                    durationInFrames: TRANSITION_DURATION_FRAMES,
+                    durationInFrames: transitionFrames,
                     durationRestThreshold: 0.001,
                   })}
                 />
@@ -426,7 +447,7 @@ export const SceneStoryboardPlayer: React.FC<SceneStoryboardPlayerProps> = ({
           const sceneVisualDuration = scene.durationInFrames;
           // Next scene starts after this scene minus the transition overlap
           const isLastScene = index === sceneData.length - 1;
-          audioStartFrame += sceneVisualDuration - (isLastScene ? 0 : TRANSITION_DURATION_FRAMES);
+          audioStartFrame += sceneVisualDuration - (isLastScene ? 0 : transitionFrames);
 
           const audioPath = `${voiceoverBasePath}/${scene.audio_file}`;
 
@@ -474,7 +495,7 @@ export const SceneStoryboardPlayer: React.FC<SceneStoryboardPlayerProps> = ({
  *
  * With TransitionSeries:
  * - Each scene (except last) has transitionPadding added so audio finishes before transition
- * - Transitions overlap by TRANSITION_DURATION_FRAMES
+ * - Transitions overlap by the transition duration (default TRANSITION_DURATION_FRAMES)
  * - The padding and overlap cancel out, so total = sum(audio + buffer + visual_padding)
  */
 export function calculateStoryboardDuration(storyboard: SceneStoryboard, fps: number = 30): number {
