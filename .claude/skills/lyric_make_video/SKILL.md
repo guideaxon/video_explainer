@@ -7,58 +7,40 @@ metadata:
 
 # Make a Lyric video
 
+## Requirements
+
+You must use the `video_make_core` skill first and follow its workflow with the channel details below.
+Do not continue from this file alone. Steps 6 and 7 are overridden here (audio choice, see below).
+
 Style source of truth: `docs/lyric_video_style_guide.md` (read it first). Kit:
 `remotion/src/components/lyric/kit.tsx`. Template scenes: `templates/lyric_video/scenes/`.
+Scripts: `scripts/lyric_new_video.py`, `scripts/lyric_finalize_storyboard.py`.
 Only for the Lyric channel; others have their own skills (`vantage_make_short`, `markets_make_video`,
 `promo_make_video`, `launch_make_video`).
 
-## Environment (Windows)
+## Channel details for the core workflow
 
-```powershell
-$env:PYTHONUTF8 = "1"                 # required for CLI output
-# ffmpeg on PATH (winget Gyan.FFmpeg); internet needed on first render for Google Fonts
-.venv\Scripts\activate
-```
-
-## Workflow
-
-1. **Project**: `python -m src.cli create <project> --title "<title>"`.
-2. **Scaffold**: `python scripts/lyric_new_video.py <project>`
-   (copies the template scenes, writes starter SAMPLE narration, sets **1080x1920**,
-   `"channel": "lyric"`, edge TTS).
-3. **Lyrics first**: write the real lyrics (yours or licensed; never another song's). Split them into
-   lines, one scene per line or couplet, each with a visual gag (prop) in mind.
-4. **Edit the scenes** in `projects/<project>/scenes/*.tsx`: lyric text, props, background per scene,
-   character hat/pose. Add or drop scenes; keep a cold open, a title moment, an emotional beat, a big
-   finish and credits. Remove `SampleTag`.
-5. **Edit `narration/narrations.json`**: one entry per scene, the spoken/sung line.
-   **Registry key rule**: each key in `scenes/index.ts` must equal the slug of that scene's `title`
-   ("Rise and Shine" gives `rise_and_shine`; leading The/A/An dropped). Component names end in `Scene`,
-   keys unquoted. Rename keys when you rename titles; `tests/test_lyric_template.py` shows the rule.
-6. **Audio**, pick one:
-   - Spoken lines: `python -m src.cli voiceover <project> --provider edge`, then
-     `python scripts/lyric_finalize_storyboard.py <project>`.
-   - A real song: slice it into `projects/<project>/voiceover/<scene_id>.mp3` clips (one per scene,
-     `ffmpeg -ss <s> -t <len> -i song.mp3 -c:a libmp3lame ...`), then
-     `python scripts/lyric_finalize_storyboard.py <project> --no-trim` (no silence trimming).
-7. **Render**: `python -m src.cli render <project>`. The portrait config gives 1080x1920
-   (`Resolution: 1080p (1080x1920)` in the log). Output `output/final.mp4`.
-8. **Verify**:
-   - size and decode: `ffprobe` shows 1080x1920; `ffmpeg -v error -i final.mp4 -f null -` prints nothing;
-   - frames: sample near the END of each scene (animations must have landed), e.g.
-     `ffmpeg -ss <scene_start+scene_len*0.8> -i final.mp4 -frames:v 1 f.png`, montage with hstack/vstack.
-     Check: every key reveal complete, text inside the safe zone (y 160 to 1500), no prop covering
-     text (stamps vs rows), nothing cut off;
-   - audio: `ffprobe` aac 48 kHz; for TTS `ebur128` about -20 LUFS.
-9. **Social export**: `ffmpeg -i final.mp4 -c:v copy -af loudnorm=I=-14:TP=-1.5:LRA=11 -c:a aac
-   -b:a 192k final_social.mp4`.
-10. **Promote reusable changes** to `templates/lyric_video/` and the kit (`projects/` is gitignored).
+- `<channel>` = `lyric`.
+- **Step 3, lyrics first**: write the real lyrics (yours or licensed; never another song's). Split them into
+  lines, one scene per line or couplet, each with a visual gag (prop) in mind.
+- **Step 4, scenes**: lyric text, props, background per scene, character hat/pose. Add or drop scenes; keep
+  a cold open, a title moment, an emotional beat, a big finish and credits. Remove `SampleTag`.
+- **Step 4, narration**: one entry per scene, the spoken/sung line (no word range is checked).
+  Registry example: "Rise and Shine" gives `rise_and_shine`.
+- **Step 5, review extras**: lyrics are original or licensed, none copied from another song; credits scene
+  names the real author; no "SAMPLE LYRICS" tag left.
+- **Steps 6 and 7, audio** (replace the core steps), pick one:
+  - Spoken lines: `python -m src.cli voiceover <project> --provider edge`, then
+    `python scripts/lyric_finalize_storyboard.py <project>`.
+  - A real song: slice it into `projects/<project>/voiceover/<scene_id>.mp3` clips (one per scene,
+    `ffmpeg -ss <s> -t <len> -i song.mp3 -c:a libmp3lame ...`), then
+    `python scripts/lyric_finalize_storyboard.py <project> --no-trim` (no silence trimming).
+- **Step 9, frames**: sample near the END of each scene (animations must have landed), e.g.
+  `ffmpeg -ss <scene_start+scene_len*0.8> -i final.mp4 -frames:v 1 f.png`, montage with hstack/vstack.
+  Check every key reveal is complete, text is inside the safe zone (y 160 to 1500), no prop covers text
+  (stamps vs rows), nothing is cut off. For TTS, `ebur128` about -20 LUFS.
 
 ## Pitfalls
 
 - Reveals that start after ~60% of a scene's length are cut off by the next scene (scenes are 2 to 5 s).
-- Render came out 1920x1080: the project config is not portrait (`video.resolution` must be 1080x1920).
-- "Found 0 scene types in scenes/index.ts": component names do not end in `Scene`.
-- Scene not found at render: the registry key is not the title slug (step 5).
 - Trimming a song with the default finalize step cuts the music: use `--no-trim` for song clips.
-- A transient "Target closed" message at the end of a render is harmless if the log says "Video rendered".
