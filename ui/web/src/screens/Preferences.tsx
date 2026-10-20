@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { DEFAULT_PREFS, loadPrefs, savePrefs, type Prefs, type Theme } from "../prefs";
 import { CHANNELS } from "./NewProject";
 
@@ -7,6 +7,13 @@ export default function Preferences() {
   const [prefs, setPrefs] = useState<Prefs>(loadPrefs);
   const [saved, setSaved] = useState(false);
   const [secondsText, setSecondsText] = useState(String(prefs.defaultSeconds));
+
+  // The top-bar theme toggle also writes preferences; keep this page in step with it.
+  useEffect(() => {
+    const sync = () => setPrefs(loadPrefs());
+    window.addEventListener("prefs-changed", sync);
+    return () => window.removeEventListener("prefs-changed", sync);
+  }, []);
 
   const update = (patch: Partial<Prefs>) => {
     const next = { ...prefs, ...patch };

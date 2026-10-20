@@ -33,7 +33,13 @@ function Group({ label, icon, collapsed, open, onToggle, children }: GroupProps)
       <button className="side-item" onClick={onToggle} aria-expanded={expanded} title={collapsed ? label : undefined}>
         <span className="side-icon">{icon}</span>
         {!collapsed && <span className="side-label">{label}</span>}
-        {!collapsed && <span className={`side-caret ${expanded ? "open" : ""}`} aria-hidden="true">▶</span>}
+        {!collapsed && (
+          <span className={`side-caret ${expanded ? "open" : ""}`} aria-hidden="true">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M9 6l6 6-6 6" />
+            </svg>
+          </span>
+        )}
       </button>
       {expanded && <div className="side-children" role="group" aria-label={label}>{children}</div>}
     </div>

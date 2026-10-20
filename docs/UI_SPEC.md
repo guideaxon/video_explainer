@@ -23,6 +23,11 @@ Status: draft for review. Nothing is built yet.
   Open Recent → the latest projects plus **All** (`#/projects`, the Continue a project screen with a
   filter), and Preferences (`#/preferences`: theme, recent count, default channel, length and voice,
   stored in the browser). Collapsible to icons; the state is remembered.
+- **Themes and look:** light and dark palettes (tokens in `ui/web/src/styles.css`), a top bar with a
+  Create / Projects switch and a single light/dark button (it shows the theme you would switch to;
+  "follow system" is in Preferences), rounded cards, summary tiles on the
+  project page, aspect-ratio icons on channel cards, and a terminal-style job log. JS resolves
+  "system" to `data-theme` on `<html>` (an inline script in `index.html` sets it before first paint).
 - **Behaviour worth knowing:** a channel scaffold script resets the project config (for example to edge
   TTS); the server restores the voice and length chosen at creation after it runs. A successful run
   of a step counts as producing its output, so copied template files with old timestamps are not stale.

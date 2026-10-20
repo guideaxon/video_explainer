@@ -59,7 +59,7 @@ await page.waitForSelector(".rail", { timeout: 10000 });
 const railText = await textOf(".rail");
 check("rail shows 8 steps + source (no treatment)", /Source document/.test(railText) && /8\. Verify/.test(railText) && !/Treatment/.test(railText));
 check("script step is skipped/disabled for channel", await page.$$eval(".rail-item", (els) => els.some((e) => /Script/.test(e.innerText) && e.disabled)));
-check("header shows PROMO + mock voice", /promo/i.test(await textOf(".proj-head")) && /voice mock/.test(await textOf(".proj-head")));
+check("header shows PROMO + summary tiles with mock voice", /promo/i.test(await textOf(".proj-head")) && /mock/.test(await textOf(".stats")) && /\d+ × \d+/.test(await textOf(".stats")));
 
 // Source editor: edit, save
 await clickText(".rail-item", "Source document");
@@ -186,7 +186,7 @@ check("a finished job's log is replayed in full after reload", (await page.$$(".
 await shot("7-sidebar-collapsed");
 await page.click("button.side-toggle");
 await page.click("a.side-item[href='#/preferences']");
-await waitText("Preferences", 3000);
+await page.waitForSelector(".card.settings select", { timeout: 5000 });
 await page.select(".card.settings select", "dark");
 check("theme preference applies at once", (await page.$eval("html", (e) => e.getAttribute("data-theme"))) === "dark");
 await shot("8-preferences-dark");
@@ -209,7 +209,44 @@ await page.waitForSelector(".channel");
 check("default channel from Preferences preselects Promo", (await page.$$eval("button.channel.selected", (e) => e.map((x) => x.innerText))).join().includes("Promo"));
 await page.goto(`${BASE}/#/preferences`, { waitUntil: "networkidle0" });
 await clickText("button", "Reset to defaults");
-check("reset restores system theme", (await page.$eval("html", (e) => e.getAttribute("data-theme"))) === null);
+check("reset restores system theme", (await page.$eval("html", (e) => e.getAttribute("data-theme-pref"))) === "system");
+
+// Themes: live system follow, top-bar toggle, polish details
+const themeNow = () => page.$eval("html", (e) => `${e.dataset.theme}/${e.dataset.themePref}`);
+await page.goto(`${BASE}/#/new`, { waitUntil: "networkidle0" });
+await page.emulateMediaFeatures([{ name: "prefers-color-scheme", value: "dark" }]);
+await new Promise((r) => setTimeout(r, 300));
+check("system theme follows the OS (dark) without a reload", (await themeNow()) === "dark/system", await themeNow());
+await page.emulateMediaFeatures([{ name: "prefers-color-scheme", value: "light" }]);
+await new Promise((r) => setTimeout(r, 300));
+check("system theme follows the OS (light) live", (await themeNow()) === "light/system", await themeNow());
+// One toggle button: it shows the theme you would switch TO (moon while light, sun while dark).
+const toggleInfo = () => page.$eval(".theme-btn", (b) => ({ label: b.getAttribute("aria-label"), sun: !!b.querySelector("circle") }));
+check("toggle in light theme offers dark (moon icon)", JSON.stringify(await toggleInfo()) === JSON.stringify({ label: "Switch to dark theme", sun: false }), JSON.stringify(await toggleInfo()));
+check("only one theme button is shown", (await page.$$(".theme-btn")).length === 1 && (await page.$$(".topbar [role=radio]")).length === 0);
+await page.click(".theme-btn");
+check("toggle switches to dark", (await themeNow()) === "dark/dark" && (await page.$eval("body", (b) => getComputedStyle(b).backgroundColor)) === "rgb(10, 15, 23)");
+check("toggle in dark theme offers light (sun icon)", JSON.stringify(await toggleInfo()) === JSON.stringify({ label: "Switch to light theme", sun: true }), JSON.stringify(await toggleInfo()));
+await shot("9-create-dark");
+await page.click(".theme-btn");
+check("toggle switches back to light", (await themeNow()) === "light/light" && (await page.$eval("body", (b) => getComputedStyle(b).backgroundColor)) === "rgb(243, 245, 249)");
+await shot("10-create-light");
+const iconCounts = await page.$$eval(".channel", (cs) => Object.fromEntries(cs.map((c) => [c.querySelector("strong").innerText, c.querySelectorAll(".aspect svg").length])));
+check("aspect icons: one shape per channel, two for Demo (16:9 or portrait)",
+  iconCounts.Standard === 1 && iconCounts.Promo === 1 && iconCounts.Markets === 1 && iconCounts.Demo === 2, JSON.stringify(iconCounts));
+check("menu uses a plain chevron, not a filled triangle", (await page.$$eval(".side-caret", (c) => c.every((x) => x.textContent.trim() === "" && x.querySelector("svg path")))) && !(await side()).includes("▶"));
+check("segmented Create/Projects switch marks the current page", (await page.$eval(".seg.nav [aria-current='page']", (b) => b.innerText)) === "Create");
+await page.goto(`${BASE}/#/p/e2e-click-test`, { waitUntil: "networkidle0" });
+await page.waitForSelector(".stats");
+check("project page shows four summary tiles", (await page.$$(".stat")).length === 4);
+await shot("11-project-light");
+await page.click(".theme-btn");
+await shot("12-project-dark");
+// Preferences keeps "follow system" and stays in step with the toggle
+await page.goto(`${BASE}/#/preferences`, { waitUntil: "networkidle0" });
+check("Preferences theme select mirrors the toggle", (await page.$eval(".card.settings select", (s) => s.value)) === "dark");
+await page.select(".card.settings select", "system");
+check("Preferences can return to follow-system", (await themeNow()) === "light/system", await themeNow());
 
 // Deep-link reload keeps state
 await page.goto(`${BASE}/#/p/e2e-click-test`, { waitUntil: "networkidle0" });

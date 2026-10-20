@@ -184,7 +184,9 @@ dependencies; fix any red one first (LLM steps shell out to Claude Code).
    **Open Recent** lists your latest projects; **All** opens the Continue a project screen with every
    project and a filter. **Preferences** sets the theme, how many recent projects the menu shows, and
    the default channel, length and voice for new projects. The menu collapses to icons with the
-   button at its bottom.
+   button at its bottom. The top bar has a Create / Projects switch and a single theme button that shows the
+   theme you would switch to (a moon in light mode, a sun in dark mode). The choice is remembered.
+   Preferences also offers "Follow my system", which tracks your OS live.
 2. In the project, work down the step list on the left. Each step has Run, an optional
    Regenerate (overwrite), and Approve and continue. Steps that call an LLM, TTS or the renderer ask
    for confirmation first. Job logs stream live, and a running job can be cancelled.

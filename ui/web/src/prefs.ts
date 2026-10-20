@@ -28,8 +28,26 @@ export function savePrefs(prefs: Prefs): void {
   window.dispatchEvent(new Event("prefs-changed"));
 }
 
+const darkQuery = () => window.matchMedia("(prefers-color-scheme: dark)");
+
+/** The theme actually shown: "system" resolves to the operating system's current setting. */
+export function resolveTheme(theme: Theme): "light" | "dark" {
+  if (theme === "system") return darkQuery().matches ? "dark" : "light";
+  return theme;
+}
+
+/** Sets data-theme (the resolved theme the CSS keys on) and data-theme-pref (what the user chose). */
 export function applyTheme(theme: Theme): void {
   const root = document.documentElement;
-  if (theme === "system") root.removeAttribute("data-theme");
-  else root.setAttribute("data-theme", theme);
+  root.dataset.theme = resolveTheme(theme);
+  root.dataset.themePref = theme;
+  window.dispatchEvent(new Event("theme-applied"));
+}
+
+/** Re-applies the theme when the operating system switches, if the preference is "system". */
+export function watchSystemTheme(): () => void {
+  const query = darkQuery();
+  const onChange = () => { if (loadPrefs().theme === "system") applyTheme("system"); };
+  query.addEventListener("change", onChange);
+  return () => query.removeEventListener("change", onChange);
 }

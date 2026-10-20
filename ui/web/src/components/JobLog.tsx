@@ -77,7 +77,10 @@ export default function JobLog({ project, jobId, onDone, onCancel }: Props) {
   return (
     <div className="joblog">
       <div className="joblog-head">
-        <span>{running ? "Running…" : `${job.status} (exit ${job.exit_code ?? "?"})`}</span>
+        <span>
+          {running ? "Running…" : `${job.status} (exit ${job.exit_code ?? "?"})`}
+          {job?.finished ? ` · ${(job.finished - job.started).toFixed(1)} s` : ""}
+        </span>
         {errors + warnings > 0 && (
           <label className="inline problems">
             <input type="checkbox" checked={onlyProblems} onChange={(e) => setOnlyProblems(e.target.checked)} />

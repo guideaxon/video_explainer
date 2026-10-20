@@ -55,7 +55,12 @@ export default function ProjectScreen({ id }: { id: string }) {
       <div className="proj-head">
         <h1>{project.title}</h1>
         {project.channel && <span className="badge">{project.channel}</span>}
-        <span className="muted small">{project.resolution} · {project.fps} fps · target {project.target_seconds}s · voice {project.tts_provider} · {project.progress} done</span>
+      </div>
+      <div className="stats" aria-label="Project summary">
+        <div className="stat"><strong>{project.progress}</strong><span>Steps done</span></div>
+        <div className="stat"><strong>{project.resolution.replace("x", " × ")}</strong><span>{project.fps} fps</span></div>
+        <div className="stat"><strong>{project.target_seconds} s</strong><span>Target length</span></div>
+        <div className="stat"><strong>{project.tts_provider}</strong><span>Voice</span></div>
       </div>
 
       <div className="layout">

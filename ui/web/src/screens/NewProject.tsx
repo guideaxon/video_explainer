@@ -15,6 +15,21 @@ export const CHANNELS: { id: string; name: string; blurb: string; format: string
   { id: "demo", name: "Demo", blurb: "Narrated product demos from real screenshots", format: "16:9 or portrait" },
 ];
 
+/** Outline of the frame shape a channel produces, like the Landscape / Portrait picker in the reference. */
+function AspectIcon({ format }: { format: string }) {
+  const landscape = <rect x="1" y="5" width="20" height="12" rx="2.5" />;
+  const portrait = <rect x="6" y="1" width="12" height="20" rx="2.5" />;
+  const both = format.includes(" or "); // "16:9 or portrait"; note "Portrait" alone also contains "or"
+  const wide = format === "16:9" || both;
+  const tall = format === "Portrait" || both;
+  return (
+    <span className="aspect" aria-hidden="true">
+      {wide && <svg width="28" height="22" viewBox="0 0 22 22" fill="none" stroke="currentColor" strokeWidth="1.6">{landscape}</svg>}
+      {tall && <svg width="20" height="22" viewBox="0 0 24 22" fill="none" stroke="currentColor" strokeWidth="1.6" preserveAspectRatio="xMidYMid meet">{portrait}</svg>}
+    </span>
+  );
+}
+
 function titleFrom(text: string): string {
   const words = text.trim().replace(/\s+/g, " ").split(" ").slice(0, 6).join(" ");
   return words.length > 60 ? words.slice(0, 60) : words;
@@ -76,6 +91,7 @@ function CreateForm() {
             type="button" key={c.id || "standard"} role="radio" aria-checked={channel === c.id}
             className={`channel ${channel === c.id ? "selected" : ""}`} onClick={() => setChannel(c.id)}
           >
+            <AspectIcon format={c.format} />
             <strong>{c.name}</strong>
             <span>{c.blurb}</span>
             <em>{c.format}</em>
@@ -114,7 +130,7 @@ function CreateForm() {
       )}
 
       {error && <div className="banner error" role="alert">{error}</div>}
-      <button className="btn primary" disabled={busy || !hasInput}>{busy ? "Creating…" : "Create project"}</button>
+      <button className="btn primary block" disabled={busy || !hasInput}>{busy ? "Creating…" : "Create project"}</button>
     </form>
   );
 }

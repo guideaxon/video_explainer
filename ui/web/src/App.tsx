@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import Sidebar from "./components/Sidebar";
+import TopBar from "./components/TopBar";
 import { parseRoute } from "./nav";
 import NewProject from "./screens/NewProject";
 import Preferences from "./screens/Preferences";
@@ -31,12 +32,15 @@ export default function App() {
   return (
     <div className="shell">
       <Sidebar collapsed={collapsed} onToggle={toggle} />
-      <main className="content">
-        {route.name === "new" && <NewProject />}
-        {route.name === "projects" && <Projects />}
-        {route.name === "preferences" && <Preferences />}
-        {route.name === "project" && <ProjectScreen key={route.id} id={route.id} />}
-      </main>
+      <div className="main-col">
+        <TopBar route={route} />
+        <main className="content">
+          {route.name === "new" && <NewProject />}
+          {route.name === "projects" && <Projects />}
+          {route.name === "preferences" && <Preferences />}
+          {route.name === "project" && <ProjectScreen key={route.id} id={route.id} />}
+        </main>
+      </div>
     </div>
   );
 }
