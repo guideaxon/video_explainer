@@ -21,7 +21,8 @@ A system for generating high-quality explainer videos from technical documents. 
 ### Visual Generation
 - **Remotion Animations** - React-based programmatic video generation
 - **AI Scene Generation** - Claude-powered scene component creation
-- **Visual Refinement** - 4-phase quality improvement system
+- **Refinement** - 5-phase quality improvement system (analyze, script, visual-cue, visual, sync)
+- **Channel Videos** - Seven styled channels (Vantage, Markets, Promo, Launch, Lyric, Leaderbot, Demo) with templates, kits and skills; pre-render review via `scripts/review_video.py`. See [docs/HowToUse.md](docs/HowToUse.md)
 
 ### Sound Design
 - **Automated SFX** - Intelligent sound effect planning and generation
@@ -187,9 +188,10 @@ python -m src.cli refine <project> --phase analyze     # Gap analysis
 python -m src.cli refine <project> --phase script      # Script refinement
 python -m src.cli refine <project> --phase visual-cue  # Visual spec refinement
 python -m src.cli refine <project> --phase visual      # AI visual inspection
+python -m src.cli refine <project> --phase sync --full  # Sync animations to voiceover
 ```
 
-See [docs/REFINEMENT.md](docs/REFINEMENT.md) for the 4-phase refinement process.
+See [docs/REFINEMENT.md](docs/REFINEMENT.md) for the 5-phase refinement process.
 
 ### Shorts Generation
 
@@ -327,7 +329,8 @@ Typography: Inter/SF Pro for text, JetBrains Mono for code
 ## Documentation
 
 - [CLI Reference](docs/CLI.md) - Complete command reference with all options
-- [Refinement System](docs/REFINEMENT.md) - 4-phase quality improvement process
+- [How To Use](docs/HowToUse.md) - Overview and map of which doc or feature to use when
+- [Refinement System](docs/REFINEMENT.md) - 5-phase quality improvement process
 - [Shorts Generation](docs/SHORTS.md) - Vertical video workflow and timing sync
 - [Sound Design](docs/SOUND.md) - SFX system and AI music generation
 

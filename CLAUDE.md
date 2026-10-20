@@ -29,17 +29,18 @@ prefixed with the channel name. A project selects its channel with `"channel": "
 | launch (playful consumer-app launch teasers, portrait 1080x1920 full videos) | `docs/launch_video_style_guide.md` | `remotion/src/components/launch/` | `templates/launch_video/`, `scripts/launch_new_video.py`, `scripts/launch_finalize_storyboard.py` | `.claude/skills/launch_make_video/` |
 | lyric (animated lyric / music videos, kawaii pixel pop, portrait 1080x1920 full videos) | `docs/lyric_video_style_guide.md` | `remotion/src/components/lyric/` | `templates/lyric_video/`, `scripts/lyric_new_video.py`, `scripts/lyric_finalize_storyboard.py` | `.claude/skills/lyric_make_video/` |
 | leaderbot (pixel-mosaic business explainers and satire starring a pixel "leader bot", portrait 1080x1920 full videos) | `docs/leaderbot_video_style_guide.md` | `remotion/src/components/leaderbot/` | `templates/leaderbot_video/`, `scripts/leaderbot_new_video.py`, `scripts/leaderbot_finalize_storyboard.py` | `.claude/skills/leaderbot_make_video/` |
+| demo (narrated product demos from real device screenshots, no screen recording; 1920x1080 or `--portrait`) | `docs/demo_video_style_guide.md` | `remotion/src/components/demo/` | `projects/<p>/manifest.json` (no scene templates), `scripts/demo_new_video.py`, `scripts/demo_build_scenes.py`, `scripts/demo_finalize_storyboard.py` | `.claude/skills/demo_make_video/` |
 
-To make a video for a channel, use its skill (`/vantage_make_short`, `/markets_make_video`, `/promo_make_video`, `/launch_make_video`, `/lyric_make_video`, `/leaderbot_make_video`).
-The five full-video channel skills (Markets, Promo, Launch, Lyric, Leaderbot) require the shared `video_make_core` skill, which holds the common workflow and a pre-render review (`scripts/review_video.py`, `docs/video_review_checklist.md`); run the review before `voiceover`.
+To make a video for a channel, use its skill (`/vantage_make_short`, `/markets_make_video`, `/promo_make_video`, `/launch_make_video`, `/lyric_make_video`, `/leaderbot_make_video`, `/demo_make_video`).
+The six full-video channel skills (Markets, Promo, Launch, Lyric, Leaderbot, Demo) require the shared `video_make_core` skill, which holds the common workflow and a pre-render review (`scripts/review_video.py`, `docs/video_review_checklist.md`); run the review before `voiceover`.
 The shorts scene generator hook (`channel_styles.py`) exists for Vantage only; Markets scenes are
-hand-adapted from the template, as are Promo, Launch, Lyric and Leaderbot scenes.
+hand-adapted from the template, as are Promo, Launch, Lyric and Leaderbot scenes. Demo needs Pillow (in `pyproject.toml`).
 
 ## Conventions
 
 - Shorts are 1080x1920 at 30 fps. Custom short scenes live in
   `projects/<p>/short/<variant>/scenes/` and get a beat-local frame clock from the player.
-- Full videos (Markets, Promo, Launch, Lyric and Leaderbot, all portrait 1080x1920) use `projects/<p>/scenes/index.ts` plus narration, voiceover and storyboard;
+- Demo videos are generated from `projects/<p>/manifest.json` (`demo_build_scenes.py` writes scenes and narration; never hand-edit them) and may be 1920x1080 landscape; the other full videos (Markets, Promo, Launch, Lyric and Leaderbot, all portrait 1080x1920) use `projects/<p>/scenes/index.ts` plus narration, voiceover and storyboard;
   registry keys must equal the slug of each scene title (see the channel style guides, section 6). A full video renders portrait
   (1080x1920) when the project's `video.resolution` is portrait; otherwise 16:9. Shared pacing helper:
   `scripts/_storyboard_pacing.py`.

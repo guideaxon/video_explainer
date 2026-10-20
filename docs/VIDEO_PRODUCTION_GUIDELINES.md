@@ -9,7 +9,10 @@ This document outlines the production standards for the video_explainer project.
 > [`markets_video_style_guide.md`](markets_video_style_guide.md) for the Markets channel and
 > [`promo_video_style_guide.md`](promo_video_style_guide.md) for the Promo channel and
 > [`launch_video_style_guide.md`](launch_video_style_guide.md) for the Launch channel and
-> [`lyric_video_style_guide.md`](lyric_video_style_guide.md) for the Lyric channel.
+> [`lyric_video_style_guide.md`](lyric_video_style_guide.md) for the Lyric channel and
+> [`leaderbot_video_style_guide.md`](leaderbot_video_style_guide.md) for the Leaderbot channel and
+> [`demo_video_style_guide.md`](demo_video_style_guide.md) for the Demo channel.
+> See [`HowToUse.md`](HowToUse.md) for a map of all docs.
 
 ---
 

@@ -33,6 +33,13 @@ For each problem report: **scene, original text, suggested replacement, reason**
 5. **Stale references**: dates, "today", "this week" or product names that will be wrong when published.
 6. **Overclaims**: superlatives and guarantees ("best", "guaranteed", "never fails") with no basis.
 
+## Demo channel addition
+
+Scenes come from `manifest.json`, which the script validates (files exist, regions inside 0..1, unique
+titles, no TODO). In the reviewer pass, **read each screenshot** and compare it with that scene's caption and
+narration: anything not visible in the image or the brief is an unsupported claim. Check that `focus`,
+`highlight` and `cursor` point at real elements and that screenshots hold no personal data.
+
 ## 3. Decision
 
 - Any script ERROR or any unsupported/fabricated claim: fix before voiceover.

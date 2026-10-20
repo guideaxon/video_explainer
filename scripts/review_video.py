@@ -1,4 +1,4 @@
-"""Pre-render review for a full-video project (Markets, Promo, Launch, Lyric).
+"""Pre-render review for a full-video project (Markets, Promo, Launch, Lyric, Leaderbot, Demo).
 
 Usage:
     python scripts/review_video.py <project> [--brief] [--projects-dir DIR]
@@ -25,6 +25,9 @@ sys.path.insert(0, str(REPO_ROOT))
 
 from src.cli.main import _title_to_scene_key  # noqa: E402
 
+sys.path.insert(0, str(REPO_ROOT / "scripts"))
+from _demo_manifest import load_manifest, validate_manifest  # noqa: E402
+
 # words: allowed spoken words per scene (None = not checked); required: phrases (any case) that must appear
 # somewhere in the scene text or narration. Mirrors each channel style guide, section "Copy and data rules".
 CHANNELS: dict[str, dict] = {
@@ -33,6 +36,8 @@ CHANNELS: dict[str, dict] = {
     "launch": {"words": (5, 12), "required": []},
     "lyric": {"words": None, "required": []},
     "leaderbot": {"words": (6, 12), "required": ["not business advice"], "headline_chars": 10},
+    # Demo: narration explains real screenshots, so it runs longer; landscape or portrait; text comes from manifest.json.
+    "demo": {"words": (5, 30), "required": [], "resolutions": [(1920, 1080), (1080, 1920)]},
 }
 # SAMPLE/TODO/FIXME are template tags (upper case only, whole word) so real copy like "free sample" or "Todoist" passes.
 PLACEHOLDER = re.compile(r"(?-i:\b(?:SAMPLE|TODO|FIXME)\b)|(?i:lumenstage\.example|\bplaceholder\b|lorem ipsum)")
@@ -81,8 +86,9 @@ def review(project_dir: Path) -> tuple[Report, dict]:
         return rep, {}
 
     res = config.get("video", {}).get("resolution", {})
-    if (res.get("width"), res.get("height")) != (1080, 1920):
-        rep.error(f"video.resolution is {res}; full videos must be 1080x1920 portrait")
+    allowed = rules.get("resolutions", [(1080, 1920)])
+    if (res.get("width"), res.get("height")) not in allowed:
+        rep.error(f"video.resolution is {res}; {channel} videos must be one of {allowed}")
 
     narration_path = project_dir / "narration" / "narrations.json"
     if not narration_path.exists():
@@ -115,6 +121,27 @@ def review(project_dir: Path) -> tuple[Report, dict]:
     if len(set(wanted)) != len(wanted):
         rep.error("two scene titles map to the same registry key")
 
+    # Demo channel: scenes are generated from manifest.json, so check the manifest and read its text.
+    manifest_text: list[str] = []
+    if channel == "demo":
+        if not (project_dir / "manifest.json").exists():
+            rep.error("manifest.json is missing")
+        else:
+            manifest = load_manifest(project_dir)
+            errs, warns = validate_manifest(manifest, project_dir)
+            for e in errs:
+                rep.error(f"manifest: {e}")
+            for w in warns:
+                rep.warn(f"manifest: {w}")
+            brand = manifest.get("brand", {})
+            manifest_text += [brand.get("name", ""), brand.get("tagline", "")]
+            for sc in manifest.get("scenes", []):
+                manifest_text += [sc.get("title", ""), sc.get("caption", ""), sc.get("sub", "")]
+            manifest_text = [t for t in manifest_text if t]
+            for t in manifest_text:
+                if PLACEHOLDER.search(t):
+                    rep.error(f"manifest.json: placeholder text left in: {t[:70]!r}")
+
     # Narration length per scene.
     if rules["words"]:
         lo, hi = rules["words"]
@@ -125,7 +152,7 @@ def review(project_dir: Path) -> tuple[Report, dict]:
 
     # Leftover template placeholders in narration and on-screen text.
     screen: dict[str, list[str]] = {}
-    for tsx in sorted(scenes_dir.glob("*.tsx")):
+    for tsx in sorted(scenes_dir.glob("*.tsx")) if channel != "demo" else []:
         source = _strip_comments(tsx.read_text(encoding="utf-8"))
         texts = _scene_text(source)
         screen[tsx.stem] = texts
@@ -149,6 +176,8 @@ def review(project_dir: Path) -> tuple[Report, dict]:
             rep.error(f"narration for {s['title']!r} contains placeholder text")
 
     # Channel-required phrases (e.g. Markets disclaimer).
+    if manifest_text:
+        screen["manifest.json"] = manifest_text
     haystack = " ".join(t for ts in screen.values() for t in ts) + " " + " ".join(s.get("narration", "") for s in scenes)
     for phrase in rules["required"]:
         if phrase.lower() not in haystack.lower():
@@ -162,7 +191,10 @@ def print_brief(bundle: dict) -> None:
     guide = REPO_ROOT / "docs" / f"{bundle['channel']}_video_style_guide.md"
     print("\n=== REVIEW BRIEF (for the reviewer) ===")
     print(f"Channel: {bundle['channel']}. Style guide: {guide.relative_to(REPO_ROOT)} (copy and data rules).")
-    print("Checklist: docs/video_review_checklist.md. Report per issue: scene, original text, suggested fix.\n")
+    print("Checklist: docs/video_review_checklist.md. Report per issue: scene, original text, suggested fix.")
+    if bundle["channel"] == "demo":
+        print("Demo: also compare every caption and narration line with its screenshot (read the image); anything not visible is unsupported.")
+    print()
     print("-- Narration --")
     for s in bundle["scenes"]:
         print(f"[{s['title']}] {s.get('narration', '')}")
