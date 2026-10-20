@@ -1,0 +1,123 @@
+import { useEffect, useState } from "react";
+import { api, ApiError } from "../api";
+import type { Project, Step } from "../types";
+import DocEditor from "./DocEditor";
+import JobLog from "./JobLog";
+
+const COSTLY: Record<string, string> = {
+  voiceover: "This generates the voiceover with your TTS provider and can take a few minutes.",
+  render: "Rendering can take a long time and uses a lot of CPU.",
+  script: "This calls Claude Code and uses tokens.",
+  narration: "This calls Claude Code and uses tokens.",
+  scenes: "This calls Claude Code once per scene and uses tokens.",
+};
+
+const HELP: Record<string, string> = {
+  stale: "An earlier step changed after this was generated. Re-run it, or accept it if the change does not affect this step.",
+  failed: "The last run failed. Read the log below, fix the cause and run it again.",
+  "needs review": "Check the output, then approve it to continue.",
+};
+
+interface Props {
+  project: Project;
+  step: Step;
+  refresh: () => Promise<void>;
+}
+
+export default function StepPanel({ project, step, refresh }: Props) {
+  const [jobId, setJobId] = useState<string | null>(null);
+  const [error, setError] = useState("");
+  const [provider, setProvider] = useState(project.tts_provider ?? "edge");
+  const busy = project.steps.some((s) => s.status === "running");
+  const hasOutput = step.output_time !== null;
+
+  // Attach to the newest job of this step (or the running one) when the step changes.
+  useEffect(() => {
+    setError("");
+    setJobId(null);
+    if (project.active_job?.step === step.id) { setJobId(project.active_job.id); return; }
+    api.jobs(project.id).then((jobs) => {
+      const last = jobs.find((j) => j.step === step.id);
+      if (last) setJobId(last.id);
+    }).catch(() => {});
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [project.id, step.id]);
+
+  async function run(opts: { force?: boolean; preview?: boolean } = {}) {
+    const warning = COSTLY[step.id];
+    if (warning && !window.confirm(`${warning}\n\nContinue?`)) return;
+    setError("");
+    try {
+      const job = await api.run(project.id, step.id, { ...opts, provider: step.id === "voiceover" ? provider : undefined });
+      setJobId(job.id);
+      await refresh();
+    } catch (e) {
+      if (e instanceof ApiError && e.jobId) setJobId(e.jobId);
+      setError(e instanceof Error ? e.message : String(e));
+    }
+  }
+
+  async function approve() {
+    setError("");
+    try { await api.approve(project.id, step.id); await refresh(); }
+    catch (e) { setError(e instanceof Error ? e.message : String(e)); }
+  }
+
+  async function cancel() {
+    if (!jobId) return;
+    try { await api.cancel(project.id, jobId); } catch (e) { setError(e instanceof Error ? e.message : String(e)); }
+    await refresh();
+  }
+
+  const canApprove = step.gated && step.status === "needs review";
+  const runLabel = hasOutput ? "Re-run" : "Run";
+  const showVideo = step.id === "render" && project.has_video && hasOutput;
+
+  return (
+    <section className="panel" aria-labelledby="step-title">
+      <div className="panel-head">
+        <h2 id="step-title">{step.title}</h2>
+        <span className={`status s-${step.status.replace(" ", "-")}`}>{step.status}</span>
+      </div>
+      {step.note && <p className="muted">{step.note}</p>}
+      {HELP[step.status] && <p className={step.status === "failed" ? "banner error" : "banner"}>{HELP[step.status]}</p>}
+      {!project.supported && <p className="banner error">This channel is run from the CLI, not this UI.</p>}
+
+      <div className="actions">
+        {step.can_run && project.supported && (
+          <>
+            {step.id === "voiceover" && (
+              <label className="inline">Voice
+                <select value={provider} onChange={(e) => setProvider(e.target.value)} disabled={busy}>
+                  <option value="edge">Edge</option><option value="elevenlabs">ElevenLabs</option><option value="mock">Mock</option>
+                </select>
+              </label>
+            )}
+            <button className="btn primary" onClick={() => run()} disabled={busy}>{runLabel}</button>
+            {hasOutput && step.force_flag && (
+              <button className="btn" onClick={() => run({ force: true })} disabled={busy}
+                title="Overwrite the existing output">Regenerate (overwrite)</button>
+            )}
+            {step.id === "render" && <button className="btn" onClick={() => run({ preview: true })} disabled={busy}>Quick preview</button>}
+          </>
+        )}
+        {canApprove && <button className="btn good" onClick={approve}>Approve and continue</button>}
+        {!step.can_run && step.mode === "manual" && !step.note && <span className="muted">Nothing to run for this project.</span>}
+      </div>
+      {error && <div className="banner error" role="alert">{error}</div>}
+
+      {(step.id === "script" || step.id === "narration") && (
+        <DocEditor project={project.id} kind={step.id} version={step.output_time} onSaved={refresh} />
+      )}
+
+      {showVideo && (
+        <div className="video">
+          <video controls preload="metadata" src={`${api.fileUrl(project.id, project.final_video)}?v=${step.output_time}`} />
+          <a className="btn small" href={api.fileUrl(project.id, project.final_video)} download>Download</a>
+        </div>
+      )}
+
+      {jobId && <JobLog project={project.id} jobId={jobId} onDone={() => { void refresh(); }} onCancel={cancel} />}
+    </section>
+  );
+}

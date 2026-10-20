@@ -3,6 +3,11 @@
 A map of what this project can do, which feature to pick for a given job, and which document to read.
 Start with the decision table, then follow the links.
 
+## Github repo
+Confirm the active account with a switch:
+gh auth switch -u guideaxon
+git push --dry-run
+
 ## 1. What this project is
 
 A pipeline that turns documents (or your own screenshots and ideas) into narrated, animated videos.
@@ -152,6 +157,27 @@ Vantage does not use `video_make_core`. It reuses the Family A short pipeline wi
    (copies `templates/vantage_short/`, sets the channel, adds the renderer stub).
 5. `short storyboard --skip-custom-scenes`, adapt `Beat*.tsx` scenes, `render <project> --short --variant <v>`.
 6. Inspect frames mid-beat and end-of-beat, then promote reusable changes to `templates/`.
+
+## 4a. The shared skill: video_make_core
+
+[`.claude/skills/video_make_core/SKILL.md`](../.claude/skills/video_make_core/SKILL.md) is the one skill common to
+channels. It is not invoked directly: a channel skill loads it first and supplies the channel's values
+(`<channel>`, style guide, kit, templates, scripts, narration length, pacing).
+
+**What it holds:** the common Windows setup, and the 11-step workflow: create project, scaffold, gather real
+content, edit scenes and narration (registry key = title slug), pre-render review, voiceover, finalize
+storyboard and pacing, render, verify (frames, audio levels), social export, promote reusable changes. It also
+lists common pitfalls and says to add channel-specific review rules in the `CHANNELS` dict of
+`scripts/review_video.py`.
+
+**Who uses it:** Markets, Promo, Launch, Lyric, Leaderbot and Demo (per `CLAUDE.md`).
+
+**What it does not cover:**
+- Vantage, which has its own skill (`vantage_make_short`) and the shorts pipeline (see B2).
+- The Family A explainer pipeline (`generate`, `refine`, `sound`); only the docs cover it, no skill wraps it.
+
+**Known inconsistency:** the skill's description still names only Markets, Promo, Launch and Lyric, so Leaderbot
+and Demo are not listed there even though they depend on it.
 
 ## 5. Channel cheat sheet
 

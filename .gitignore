@@ -75,3 +75,6 @@ animations/src/**/*.meta
 tmp/
 temp/
 *.tmp
+
+# Pipeline UI frontend
+ui/web/node_modules/
