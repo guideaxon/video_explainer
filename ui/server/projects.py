@@ -87,7 +87,39 @@ def _output_time(step: StepDef, ctx: Ctx, config: dict, jobs: list[Job]) -> floa
         ok = [j.finished for j in jobs if j.step == step.id and j.status == "succeeded" and j.finished]
         return max(ok) if ok else None
     times = [t for t in (_mtime(resolve_path(ctx.project_dir, config, o)) for o in v.outputs) if t is not None]
-    return max(times) if times else None
+    if not times:
+        return None
+    # A scaffold copies template files that keep their old modification times, so a successful run of
+    # the step counts as producing its output when the job finished.
+    ran = [j.finished for j in jobs if j.step == step.id and j.status == "succeeded" and j.finished]
+    return max(times + ran)
+
+
+def keep_user_settings(project_dir: Path):
+    """Snapshot the settings a user chose at creation; the returned function puts them back.
+
+    Channel scaffold scripts reset the project config (for example to edge TTS), which would silently
+    discard the voice and length picked on the Home screen.
+    """
+    config = load_config(project_dir)
+    kept = {
+        "provider": config.get("tts", {}).get("provider"),
+        "voice_id": config.get("tts", {}).get("voice_id"),
+        "target": config.get("video", {}).get("target_duration_seconds"),
+    }
+
+    def restore() -> None:
+        fresh = load_config(project_dir)
+        tts, video = fresh.setdefault("tts", {}), fresh.setdefault("video", {})
+        if kept["provider"] is not None:
+            tts["provider"] = kept["provider"]
+        if kept["voice_id"] is not None:
+            tts["voice_id"] = kept["voice_id"]
+        if kept["target"] is not None:
+            video["target_duration_seconds"] = kept["target"]
+        save_config(project_dir, fresh)
+
+    return restore
 
 
 def step_statuses(project_dir: Path, config: dict, jobs: list[Job]) -> list[dict]:
@@ -153,6 +185,9 @@ def project_summary(project_dir: Path, jobs: list[Job]) -> dict:
         "fps": config.get("video", {}).get("fps"),
         "target_seconds": config.get("video", {}).get("target_duration_seconds"),
         "tts_provider": config.get("tts", {}).get("provider"),
+        "voice_id": config.get("tts", {}).get("voice_id", ""),
+        "style": {k: config.get("style", {}).get(k, "") for k in
+                  ("primary_color", "secondary_color", "background_color", "font_family")},
         "steps": statuses,
         "progress": f"{len(finished)}/{len(active)}",
         "has_video": resolve_path(project_dir, config, "@final_video").is_file(),

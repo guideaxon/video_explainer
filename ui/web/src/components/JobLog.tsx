@@ -29,12 +29,14 @@ interface Props {
 export default function JobLog({ project, jobId, onDone, onCancel }: Props) {
   const [lines, setLines] = useState<string[]>([]);
   const [job, setJob] = useState<Job | null>(null);
+  const [onlyProblems, setOnlyProblems] = useState(false);
   const box = useRef<HTMLDivElement>(null);
   const stick = useRef(true);
 
   useEffect(() => {
     setLines([]);
     setJob(null);
+    setOnlyProblems(false);
     const es = new EventSource(api.eventsUrl(project, jobId));
     let buffer: string[] = [];
     const flush = window.setInterval(() => {
@@ -49,8 +51,10 @@ export default function JobLog({ project, jobId, onDone, onCancel }: Props) {
       const done = JSON.parse((e as MessageEvent).data) as Job;
       es.close();
       window.clearInterval(flush);
-      setLines((prev) => prev.concat(buffer));
+      // Take the pending lines now: the updater below runs later, after buffer is reassigned.
+      const rest = buffer;
       buffer = [];
+      setLines((prev) => prev.concat(rest));
       setJob(done);
       onDone(done);
     });
@@ -66,11 +70,20 @@ export default function JobLog({ project, jobId, onDone, onCancel }: Props) {
 
   const running = !job;
   const pct = running ? progressOf(lines) : null;
+  const errors = lines.filter((l) => lineClass(l) === "ln err").length;
+  const warnings = lines.filter((l) => lineClass(l) === "ln warn").length;
+  const shown = onlyProblems ? lines.filter((l) => lineClass(l) === "ln err" || lineClass(l) === "ln warn") : lines;
 
   return (
     <div className="joblog">
       <div className="joblog-head">
         <span>{running ? "Running…" : `${job.status} (exit ${job.exit_code ?? "?"})`}</span>
+        {errors + warnings > 0 && (
+          <label className="inline problems">
+            <input type="checkbox" checked={onlyProblems} onChange={(e) => setOnlyProblems(e.target.checked)} />
+            Problems only ({errors} errors, {warnings} warnings)
+          </label>
+        )}
         {running && onCancel && <button className="btn small danger" onClick={onCancel}>Cancel</button>}
       </div>
       {pct !== null && <progress value={pct} max={1} aria-label="Render progress" />}
@@ -83,7 +96,7 @@ export default function JobLog({ project, jobId, onDone, onCancel }: Props) {
         }}
       >
         {lines.length === 0 && <div className="ln muted">{running ? "Waiting for output…" : "No output."}</div>}
-        {lines.map((l, i) => <div key={i} className={lineClass(l)}>{l || " "}</div>)}
+        {shown.map((l, i) => <div key={i} className={lineClass(l)}>{l || " "}</div>)}
       </div>
     </div>
   );

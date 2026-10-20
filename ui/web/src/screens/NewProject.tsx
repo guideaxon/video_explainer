@@ -1,10 +1,11 @@
-import { useEffect, useState } from "react";
-import { go } from "../nav";
+import { useState } from "react";
 import { api, ApiError } from "../api";
 import EnvStrip from "../components/EnvStrip";
-import type { Project } from "../types";
+import MarkdownPreview from "../components/MarkdownPreview";
+import { go } from "../nav";
+import { loadPrefs } from "../prefs";
 
-const CHANNELS: { id: string; name: string; blurb: string; format: string }[] = [
+export const CHANNELS: { id: string; name: string; blurb: string; format: string }[] = [
   { id: "", name: "Standard", blurb: "Explainer from a document: script, narration, generated scenes", format: "16:9" },
   { id: "markets", name: "Markets", blurb: "Market-story explainers with charts and sentiment", format: "Portrait" },
   { id: "promo", name: "Promo", blurb: "SaaS product-launch promos, kinetic headlines", format: "Portrait" },
@@ -20,11 +21,12 @@ function titleFrom(text: string): string {
 }
 
 function CreateForm() {
+  const [prefs] = useState(loadPrefs); // Preferences seed the starting channel, length and voice (read once)
   const [prompt, setPrompt] = useState("");
   const [title, setTitle] = useState("");
-  const [channel, setChannel] = useState("");
-  const [seconds, setSeconds] = useState(90);
-  const [tts, setTts] = useState("edge");
+  const [channel, setChannel] = useState(prefs.defaultChannel);
+  const [seconds, setSeconds] = useState(prefs.defaultSeconds);
+  const [tts, setTts] = useState(prefs.defaultVoice);
   const [docOpen, setDocOpen] = useState(false);
   const [doc, setDoc] = useState("");
   const [busy, setBusy] = useState(false);
@@ -100,7 +102,11 @@ function CreateForm() {
       </button>
       {docOpen && (
         <div className="docbox">
-          <textarea rows={10} value={doc} onChange={(e) => setDoc(e.target.value)} placeholder="# Your topic&#10;&#10;Paste or write the content the video should be based on." />
+          <div className="split">
+            <textarea rows={12} value={doc} onChange={(e) => setDoc(e.target.value)} aria-label="Source document (Markdown)"
+              placeholder="# Your topic&#10;&#10;Paste or write the content the video should be based on." />
+            <MarkdownPreview text={doc} />
+          </div>
           <label className="upload">
             Upload a .md file <input type="file" accept=".md,.markdown,.txt" onChange={(e) => readFile(e.target.files?.[0])} />
           </label>
@@ -113,42 +119,13 @@ function CreateForm() {
   );
 }
 
-function ProjectList() {
-  const [projects, setProjects] = useState<Project[] | null>(null);
-  useEffect(() => { api.projects().then(setProjects).catch(() => setProjects([])); }, []);
-  if (projects === null) return <p className="muted">Loading projects…</p>;
-  if (projects.length === 0) return <p className="muted">No projects yet. Describe your first video above.</p>;
-  return (
-    <div className="projects">
-      {projects.map((p) => {
-        const [done, total] = p.progress.split("/").map(Number);
-        const running = p.steps.some((s) => s.status === "running");
-        return (
-          <a key={p.id} className="card project" href={`#/p/${p.id}`}>
-            <div className="project-top">
-              <strong>{p.title}</strong>
-              {p.channel && <span className="badge">{p.channel}</span>}
-              {!p.supported && <span className="badge warn">CLI only</span>}
-              {running && <span className="badge run">running</span>}
-            </div>
-            <div className="muted small">{p.resolution} · {p.id}</div>
-            <progress value={done} max={total || 1} aria-label={`${p.progress} steps done`} />
-            <div className="muted small">{p.progress} steps done{p.has_video ? " · video ready" : ""}</div>
-          </a>
-        );
-      })}
-    </div>
-  );
-}
-
-export default function Home() {
+/** File > Create New Project (also the landing page). */
+export default function NewProject() {
   return (
     <div className="page">
       <h1>Create a video</h1>
       <EnvStrip />
       <CreateForm />
-      <h2>Continue a project</h2>
-      <ProjectList />
     </div>
   );
 }

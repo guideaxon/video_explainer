@@ -15,6 +15,7 @@ import threading
 import time
 from dataclasses import dataclass, field
 from pathlib import Path
+from typing import Callable
 
 
 class BusyError(Exception):
@@ -37,6 +38,7 @@ class Job:
     exit_code: int | None = None
     lines: list[str] = field(default_factory=list)
     proc: subprocess.Popen | None = field(default=None, repr=False)
+    on_success: Callable[[], None] | None = field(default=None, repr=False)
 
     def summary(self) -> dict:
         return {
@@ -83,8 +85,12 @@ class JobManager:
         with self._lock:
             return next((j for j in self._live.values() if j.project == project and j.status == "running"), None)
 
-    def start(self, project: str, step: str, argv: list[str]) -> Job:
-        """argv is everything after the Python executable. Raises BusyError if the project has a job."""
+    def start(
+        self, project: str, step: str, argv: list[str], on_success: Callable[[], None] | None = None,
+    ) -> Job:
+        """argv is everything after the Python executable. Raises BusyError if the project has a job.
+
+        on_success runs once if the command exits 0, before the job is marked finished."""
         with self._lock:
             busy = next((j for j in self._live.values() if j.project == project and j.status == "running"), None)
             if busy:
@@ -93,7 +99,8 @@ class JobManager:
             stamp = time.strftime("%Y%m%d-%H%M%S", time.localtime(now))
             job_id = f"{stamp}{int(now * 1000) % 1000:03d}-{step}"
             d = self._jobs_dir(project)
-            job = Job(job_id, project, step, [sys.executable, *argv], d / f"{job_id}.json", d / f"{job_id}.log")
+            job = Job(job_id, project, step, [sys.executable, *argv], d / f"{job_id}.json", d / f"{job_id}.log",
+                      on_success=on_success)
             self._live[job_id] = job
             env = {**os.environ, "PYTHONUTF8": "1", "PYTHONIOENCODING": "utf-8"}
             try:
@@ -117,6 +124,11 @@ class JobManager:
                 log.write(line + "\n")
                 log.flush()
         code = job.proc.wait()
+        if code == 0 and job.status == "running" and job.on_success:
+            try:
+                job.on_success()
+            except Exception as e:  # the command worked; report the follow-up problem in the log
+                job.lines.append(f"WARN  follow-up after the command failed: {e}")
         job.exit_code, job.finished = code, time.time()
         if job.status == "running":
             job.status = "succeeded" if code == 0 else "failed"

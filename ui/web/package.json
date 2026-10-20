@@ -6,9 +6,12 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc --noEmit && vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "e2e": "node e2e/click-test.mjs"
   },
   "dependencies": {
+    "dompurify": "^3.4.17",
+    "marked": "^18.1.1",
     "react": "^19.3.1",
     "react-dom": "^19.3.1"
   },
@@ -16,6 +19,7 @@
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0",
     "@vitejs/plugin-react": "^6.1.2",
+    "puppeteer-core": "^25.15.0",
     "typescript": "^7.0.2",
     "vite": "^8.3.4"
   }

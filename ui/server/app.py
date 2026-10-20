@@ -20,7 +20,7 @@ from pydantic import BaseModel, Field
 
 from .jobs import BusyError, JobManager
 from .projects import (
-    NAME_RE, approve, load_config, project_channel, project_path, project_summary, resolve_path,
+    NAME_RE, approve, keep_user_settings, load_config, project_channel, project_path, project_summary, resolve_path,
     save_config, slugify, source_path, step_statuses,
 )
 from .steps import FULL_CHANNELS, STEP_IDS, Ctx, step_by_id
@@ -261,8 +261,9 @@ def create_app(
             if step_id != "render":
                 raise HTTPException(400, "preview applies to render only")
             argv = [*argv, "--preview"]
+        is_scaffold = argv[0].startswith("scripts/") and argv[0].endswith("_new_video.py")
         try:
-            job = jobs.start(name, step_id, argv)
+            job = jobs.start(name, step_id, argv, on_success=keep_user_settings(d) if is_scaffold else None)
         except BusyError as e:
             return JSONResponse({"detail": str(e), "job_id": e.job_id}, status_code=409)
         return job.summary()

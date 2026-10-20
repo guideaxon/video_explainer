@@ -78,6 +78,10 @@ video_explainer/
 │   ├── refine/                  # Refinement system
 │   └── short/                   # Shorts generation
 │
+├── ui/                          # Local web UI
+│   ├── server/                  # FastAPI backend (runs the CLI steps as jobs)
+│   └── web/                     # React + Vite frontend
+│
 └── remotion/                    # Remotion project (React)
     ├── src/components/          # Reusable components
     ├── src/scenes/              # Scene compositions
@@ -136,6 +140,79 @@ python -m src.cli voiceover my-video     # Generate TTS audio
 python -m src.cli storyboard my-video    # Create storyboard
 python -m src.cli render my-video        # Render final video
 ```
+
+### Web UI (local)
+
+A local web app walks you through the pipeline one reviewable step at a time: create a project from a
+prompt or a Markdown document, run each step, check its output, approve it, and watch the render. It
+runs the same CLI commands as above, so the CLI and the UI always agree. It listens on `127.0.0.1`
+only and has no login, so do not expose it to a network.
+
+**One-time setup** (after the Installation steps above):
+
+```powershell
+# Windows PowerShell, from the repo root
+.venv\Scripts\activate
+pip install -e ".[ui]"                  # adds FastAPI and uvicorn
+cd ui\web
+npm install
+npm run build                           # builds the frontend into ui\web\dist
+cd ..\..
+
+$env:PYTHONUTF8 = "1"
+python -m ui.server
+```
+
+On macOS or Linux use `source .venv/bin/activate` and `cd ui/web`.
+
+**Run it:**
+
+```powershell
+$env:PYTHONUTF8 = "1"                   # Windows: the CLI prints non-cp1252 characters
+python -m ui.server
+```
+
+Then open <http://127.0.0.1:8765>. The API docs are at <http://127.0.0.1:8765/api/docs>. The Create
+New Project screen shows green or red checks for Python, Node, ffmpeg, Claude Code, edge-tts and the Remotion
+dependencies; fix any red one first (LLM steps shell out to Claude Code).
+
+**Using it:**
+
+1. Use the menu on the left. **File → Create New Project** (also the landing page) is where you
+   describe the video (or write or upload a Markdown source document), pick a channel (Standard,
+   Markets, Promo, Launch, Lyric, Leaderbot or Demo), a length and a voice, then **Create project**.
+   **Open Recent** lists your latest projects; **All** opens the Continue a project screen with every
+   project and a filter. **Preferences** sets the theme, how many recent projects the menu shows, and
+   the default channel, length and voice for new projects. The menu collapses to icons with the
+   button at its bottom.
+2. In the project, work down the step list on the left. Each step has Run, an optional
+   Regenerate (overwrite), and Approve and continue. Steps that call an LLM, TTS or the renderer ask
+   for confirmation first. Job logs stream live, and a running job can be cancelled.
+3. Channel projects show the same nine steps. Script is skipped, narration is edited by hand
+   (JSON editor in the Narration step), Scenes is scaffolded once and then edited in
+   `projects/<project>/scenes/`, and Review runs `scripts/review_video.py` before Voiceover.
+4. The Render step plays the finished video. Settings (title, length, voice, colors, font) are in the
+   left list under Settings.
+
+A step shows `stale` when an earlier step changed after it ran, and `failed` when the last run
+exited with an error (read the log; **Problems only** filters it). Vantage shorts are listed but
+marked CLI only; make them with `/vantage_make_short`.
+
+**Frontend development** (hot reload): start the API with `python -m ui.server`, then in a second
+terminal run `cd ui\web && npm run dev` and open <http://localhost:5173>. It proxies `/api` to the
+server.
+
+**Tests:**
+
+```powershell
+python -m pytest tests/ui -q            # backend: status logic, jobs, API, protection checks
+cd ui\web; npm run build                # type-checks the frontend
+cd ui\web; npm run e2e -- <folder>      # browser click-through; needs the server running and Edge or Chrome
+```
+
+`npm run e2e` creates a throwaway project named `e2e-click-test` under `projects/`; delete it afterwards.
+Set `BROWSER_PATH` if your browser is not at the default Edge location. See
+[docs/UI_SPEC.md](docs/UI_SPEC.md) for the design, the API and what is not built yet.
 
 ## CLI Reference
 
@@ -330,6 +407,7 @@ Typography: Inter/SF Pro for text, JetBrains Mono for code
 
 - [CLI Reference](docs/CLI.md) - Complete command reference with all options
 - [How To Use](docs/HowToUse.md) - Overview and map of which doc or feature to use when
+- [Web UI Spec](docs/UI_SPEC.md) - Screens, API, step table and build status for the local web UI
 - [Refinement System](docs/REFINEMENT.md) - 5-phase quality improvement process
 - [Shorts Generation](docs/SHORTS.md) - Vertical video workflow and timing sync
 - [Sound Design](docs/SOUND.md) - SFX system and AI music generation

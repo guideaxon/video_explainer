@@ -34,6 +34,8 @@ export interface Project {
   fps: number | null;
   target_seconds: number | null;
   tts_provider: string | null;
+  voice_id: string;
+  style: { primary_color: string; secondary_color: string; background_color: string; font_family: string };
   steps: Step[];
   progress: string;
   has_video: boolean;

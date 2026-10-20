@@ -111,6 +111,15 @@ def test_source_roundtrip_and_settings(client):
     assert c.put("/api/projects/vid/settings", json={"tts_provider": "nope"}).status_code == 400
 
 
+def test_summary_exposes_voice_and_style_for_the_settings_screen(client):
+    c, _ = client
+    _create(c, id="vid")
+    c.put("/api/projects/vid/settings", json={"voice_id": "abc", "primary_color": "#112233"})
+    p = c.get("/api/projects/vid").json()
+    assert p["voice_id"] == "abc" and p["style"]["primary_color"] == "#112233"
+    assert set(p["style"]) == {"primary_color", "secondary_color", "background_color", "font_family"}
+
+
 def test_files_endpoint_blocks_path_escape(client):
     c, projects = client
     _create(c, id="vid")

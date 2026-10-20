@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { api } from "../api";
+import MarkdownPreview from "./MarkdownPreview";
 
 export default function SourceEditor({ project, onSaved }: { project: string; onSaved: () => void }) {
   const [text, setText] = useState("");
@@ -28,7 +29,11 @@ export default function SourceEditor({ project, onSaved }: { project: string; on
   return (
     <div>
       <p className="muted">The document the script is generated from (<code>input/source.md</code>). Changing it after the script exists makes later steps stale.</p>
-      <textarea className="source" rows={16} value={text} disabled={state === "loading"} onChange={(e) => setText(e.target.value)} />
+      <div className="split">
+        <textarea className="source" rows={16} value={text} disabled={state === "loading"} onChange={(e) => setText(e.target.value)}
+          aria-label="Source document (Markdown)" />
+        <MarkdownPreview text={text} />
+      </div>
       {state === "error" && <div className="banner error" role="alert">{error}</div>}
       <div className="actions">
         <button className="btn primary" onClick={save} disabled={state === "saving" || text === saved}>

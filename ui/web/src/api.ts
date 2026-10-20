@@ -32,6 +32,7 @@ export const api = {
   projects: () => call<Project[]>("/projects"),
   project: (id: string) => call<Project>(`/projects/${id}`),
   create: (body: CreateBody) => call<Project>("/projects", post(body)),
+  saveSettings: (id: string, body: Record<string, unknown>) => call<Project>(`/projects/${id}/settings`, put(body)),
   source: (id: string) => call<{ path: string; text: string }>(`/projects/${id}/source`),
   saveSource: (id: string, text: string) => call<{ path: string }>(`/projects/${id}/source`, put({ text })),
   doc: (id: string, kind: "script" | "narration") => call<unknown>(`/projects/${id}/doc/${kind}`),

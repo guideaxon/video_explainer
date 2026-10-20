@@ -1,28 +1,42 @@
 import { useEffect, useState } from "react";
-import Home from "./screens/Home";
+import Sidebar from "./components/Sidebar";
+import { parseRoute } from "./nav";
+import NewProject from "./screens/NewProject";
+import Preferences from "./screens/Preferences";
 import ProjectScreen from "./screens/ProjectScreen";
+import Projects from "./screens/Projects";
 
-// Hash routes: "#/" is Home, "#/p/<id>" is a project. No router dependency needed for two screens.
-function parseHash(): { projectId: string | null } {
-  const m = window.location.hash.match(/^#\/p\/([a-z0-9_-]+)/);
-  return { projectId: m ? m[1] : null };
+const COLLAPSED_KEY = "video-studio-sidebar-collapsed";
+
+function loadCollapsed(): boolean {
+  try { return window.localStorage.getItem(COLLAPSED_KEY) === "1"; } catch { return false; }
 }
 
 export default function App() {
-  const [route, setRoute] = useState(parseHash);
+  const [route, setRoute] = useState(parseRoute);
+  const [collapsed, setCollapsed] = useState(loadCollapsed);
+
   useEffect(() => {
-    const onChange = () => setRoute(parseHash());
+    const onChange = () => setRoute(parseRoute());
     window.addEventListener("hashchange", onChange);
     return () => window.removeEventListener("hashchange", onChange);
   }, []);
 
+  const toggle = () => {
+    const next = !collapsed;
+    setCollapsed(next);
+    try { window.localStorage.setItem(COLLAPSED_KEY, next ? "1" : "0"); } catch { /* not persisted */ }
+  };
+
   return (
-    <div className="app">
-      <header className="topbar">
-        <a href="#/" className="brand">Video Studio</a>
-        {route.projectId && <span className="crumb">/ {route.projectId}</span>}
-      </header>
-      <main>{route.projectId ? <ProjectScreen key={route.projectId} id={route.projectId} /> : <Home />}</main>
+    <div className="shell">
+      <Sidebar collapsed={collapsed} onToggle={toggle} />
+      <main className="content">
+        {route.name === "new" && <NewProject />}
+        {route.name === "projects" && <Projects />}
+        {route.name === "preferences" && <Preferences />}
+        {route.name === "project" && <ProjectScreen key={route.id} id={route.id} />}
+      </main>
     </div>
   );
 }

@@ -17,6 +17,7 @@ export default function DocEditor({ project, kind, version, onSaved }: Props) {
 
   useEffect(() => {
     setError("");
+    if (version === null) { setText(""); setSaved(""); return; } // nothing on disk yet: skip the 404
     api.doc(project, kind)
       .then((d) => { const t = JSON.stringify(d, null, 2); setText(t); setSaved(t); })
       .catch((e) => { if (!(e instanceof ApiError && e.status === 404)) setError(e.message); setText(""); setSaved(""); });

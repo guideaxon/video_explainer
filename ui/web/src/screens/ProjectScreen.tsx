@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { api } from "../api";
+import SettingsPanel from "../components/SettingsPanel";
 import SourceEditor from "../components/SourceEditor";
 import StepPanel from "../components/StepPanel";
 import type { Project, Step } from "../types";
@@ -72,12 +73,16 @@ export default function ProjectScreen({ id }: { id: string }) {
               <span className="rail-text">{i + 1}. {s.title}<small>{s.status}</small></span>
             </button>
           ))}
+          <button className={`rail-item ${selected === "settings" ? "active" : ""}`} onClick={() => setSelected("settings")}>
+            <span className="icon">⚙</span> Settings
+          </button>
         </nav>
 
         <div className="main">
           {selected === "source" && (
             <section className="panel"><h2>Source document</h2><SourceEditor project={id} onSaved={refresh} /></section>
           )}
+          {selected === "settings" && <SettingsPanel key={project.title + project.tts_provider} project={project} onSaved={refresh} />}
           {step && <StepPanel key={step.id} project={project} step={step} refresh={refresh} />}
         </div>
       </div>

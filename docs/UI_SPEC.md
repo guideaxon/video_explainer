@@ -15,9 +15,19 @@ Status: draft for review. Nothing is built yet.
   source editor, and the Render step with a video player. Build with `cd ui\web && npm install &&
   npm run build`; then `python -m ui.server` serves it at `http://127.0.0.1:8765`. For development run
   `npm run dev` (port 5173, proxies `/api`).
-- **Not yet built:** Markdown preview in the document editor, PDF and URL import, scene previews with
-  the Remotion Player (Screen 5), the storyboard timeline (Screen 7), settings screen (Screen 9), a
-  jobs history screen (Screen 10), and the treatment step.
+- **Also built:** sanitized Markdown preview beside the document editors (Home and Source), a settings
+  panel (Screen 9: title, length, voice, colors, font), a "problems only" filter on job logs, and
+  `ui/web/e2e/click-test.mjs`, a 38-check browser click-through (`npm run e2e`, needs a running server
+  and Edge or Chrome).
+- **Left menu (replaces the single Home screen):** File → Create New Project (`#/new`, also `#/`),
+  Open Recent → the latest projects plus **All** (`#/projects`, the Continue a project screen with a
+  filter), and Preferences (`#/preferences`: theme, recent count, default channel, length and voice,
+  stored in the browser). Collapsible to icons; the state is remembered.
+- **Behaviour worth knowing:** a channel scaffold script resets the project config (for example to edge
+  TTS); the server restores the voice and length chosen at creation after it runs. A successful run
+  of a step counts as producing its output, so copied template files with old timestamps are not stale.
+- **Not yet built:** PDF and URL import, scene previews with the Remotion Player (Screen 5), the
+  storyboard timeline (Screen 7), a jobs history screen (Screen 10), and the treatment step.
 
 ## 1. Goal and scope
 

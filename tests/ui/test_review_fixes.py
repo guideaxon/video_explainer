@@ -68,6 +68,51 @@ def test_failed_start_does_not_leave_project_busy(tmp_path, monkeypatch):
     assert job.status == "succeeded"
 
 
+def test_scaffold_with_old_template_mtimes_is_not_stale_after_a_successful_run(client):
+    from ui.server.jobs import Job
+
+    c, projects = client
+    assert c.post("/api/projects", json={"title": "x", "id": "vid", "channel": "promo"}).status_code == 201
+    d = projects / "vid"
+    _touch(d / "scenes" / "index.ts", age=10_000)  # copied template files keep their old mtimes
+    _touch(d / "narration" / "narrations.json", age=0)
+    assert _by_id(step_statuses(d, load_config(d), []))["scenes"]["status"] == "stale"
+    ran = Job("j", "vid", "scenes", [], d / "a.json", d / "a.log", status="succeeded", finished=time.time() + 1)
+    assert _by_id(step_statuses(d, load_config(d), [ran]))["scenes"]["status"] == "needs review"
+
+
+def test_keep_user_settings_restores_voice_and_length_after_a_scaffold(client):
+    from ui.server.projects import keep_user_settings, save_config
+
+    c, projects = client
+    body = {"title": "x", "id": "vid", "channel": "promo", "tts_provider": "mock", "target_seconds": 45}
+    assert c.post("/api/projects", json=body).status_code == 201
+    d = projects / "vid"
+    restore = keep_user_settings(d)
+    config = load_config(d)  # what a scaffold script does: reset to its own defaults
+    config["tts"]["provider"], config["video"]["target_duration_seconds"] = "edge", 60
+    config["video"]["resolution"] = {"width": 1080, "height": 1920}
+    save_config(d, config)
+    restore()
+    after = load_config(d)
+    assert after["tts"]["provider"] == "mock" and after["video"]["target_duration_seconds"] == 45
+    assert after["video"]["resolution"] == {"width": 1080, "height": 1920}  # the scaffold's change stays
+
+
+def test_on_success_runs_only_when_the_command_succeeds(tmp_path):
+    (tmp_path / "projects" / "vid").mkdir(parents=True)
+    jm = JobManager(tmp_path, tmp_path / "projects")
+    calls = []
+    ok = jm.start("vid", "scenes", ["-c", "print(1)"], on_success=lambda: calls.append("ok"))
+    _wait(ok)
+    bad = jm.start("vid", "scenes", ["-c", "import sys; sys.exit(2)"], on_success=lambda: calls.append("bad"))
+    _wait(bad)
+    boom = jm.start("vid", "scenes", ["-c", "print(1)"], on_success=lambda: 1 / 0)
+    _wait(boom)
+    assert calls == ["ok"]
+    assert boom.status == "succeeded" and any("follow-up" in line for line in boom.lines)
+
+
 def test_back_to_back_jobs_get_distinct_ids_and_logs(tmp_path):
     (tmp_path / "projects" / "vid").mkdir(parents=True)
     jm = JobManager(tmp_path, tmp_path / "projects")
