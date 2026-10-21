@@ -1,11 +1,11 @@
-"""Scaffold a Markets-channel video (portrait 1080x1920): scenes, starter narration and project config.
+"""Scaffold a Markets style bundle video (portrait 1080x1920): scenes, starter narration and project config.
 
 Usage:
     python scripts/markets_new_video.py <project> [--force]
 
 Copies ``templates/markets_video/scenes/`` to ``projects/<project>/scenes/``, writes a starter
 ``narration/narrations.json`` (one scene per chapter, SAMPLE text and data), and sets the project
-config for the markets channel (1080x1920 portrait, 30 fps, edge TTS). Then replace the sample narration and
+config for the markets style bundle (1080x1920 portrait, 30 fps, edge TTS). Then replace the sample narration and
 data, and run: voiceover, storyboard, render (see ``.claude/skills/markets_make_video``).
 """
 
@@ -75,7 +75,7 @@ def main(argv: list[str] | None = None) -> int:
     narration_path.write_text(json.dumps({"scenes": scenes}, indent=2), encoding="utf-8")
 
     config = json.loads(config_path.read_text(encoding="utf-8"))
-    config["channel"] = "markets"
+    config["style_bundle"] = "markets"
     config.setdefault("video", {}).update({"resolution": {"width": 1080, "height": 1920}, "fps": 30, "target_duration_seconds": 50})
     config.setdefault("tts", {})["provider"] = "edge"
     config["style"] = {
@@ -88,7 +88,7 @@ def main(argv: list[str] | None = None) -> int:
 
     print(f"Scenes copied to {scenes_dir}")
     print(f"Starter narration written to {narration_path} (SAMPLE text, replace it)")
-    print('Project config set to "channel": "markets", 1080x1920 portrait')
+    print('Project config set to "style_bundle": "markets", 1080x1920 portrait')
     print(f"Next: edit scenes/data and narration, then: voiceover, storyboard, render {args.project}")
     return 0
 

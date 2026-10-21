@@ -1,4 +1,4 @@
-"""Demo channel: manifest validation, screenshot analysis and scene generation."""
+"""Demo style bundle: manifest validation, screenshot analysis and scene generation."""
 
 import json
 import sys

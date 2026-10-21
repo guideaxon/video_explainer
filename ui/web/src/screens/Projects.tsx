@@ -8,7 +8,7 @@ export default function Projects() {
   const [query, setQuery] = useState("");
   useEffect(() => { api.projects().then(setProjects).catch(() => setProjects([])); }, []);
 
-  const shown = (projects ?? []).filter((p) => `${p.title} ${p.id} ${p.channel}`.toLowerCase().includes(query.toLowerCase()));
+  const shown = (projects ?? []).filter((p) => `${p.title} ${p.id} ${p.style_bundle}`.toLowerCase().includes(query.toLowerCase()));
 
   return (
     <div className="page">
@@ -19,7 +19,7 @@ export default function Projects() {
       )}
       {projects !== null && projects.length > 0 && (
         <>
-          <input className="search" type="search" placeholder="Filter by title, id or channel" value={query}
+          <input className="search" type="search" placeholder="Filter by title, id or style bundle" value={query}
             onChange={(e) => setQuery(e.target.value)} aria-label="Filter projects" />
           {shown.length === 0 && <p className="muted">No project matches “{query}”.</p>}
           <div className="projects">
@@ -30,7 +30,7 @@ export default function Projects() {
                 <a key={p.id} className="card project" href={`#/p/${p.id}`}>
                   <div className="project-top">
                     <strong>{p.title}</strong>
-                    {p.channel && <span className="badge">{p.channel}</span>}
+                    {p.style_bundle && <span className="badge">{p.style_bundle}</span>}
                     {!p.supported && <span className="badge warn">CLI only</span>}
                     {running && <span className="badge run">running</span>}
                   </div>

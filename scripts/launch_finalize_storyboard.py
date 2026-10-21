@@ -1,4 +1,4 @@
-"""Tighten pacing and build the storyboard for a Launch-channel video.
+"""Tighten pacing and build the storyboard for a Launch style bundle video.
 
 Usage:
     python scripts/launch_finalize_storyboard.py <project>

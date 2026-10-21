@@ -1,4 +1,4 @@
-"""Tighten pacing and build the storyboard for a Demo-channel video.
+"""Tighten pacing and build the storyboard for a Demo style bundle video.
 
 Usage:
     python scripts/demo_finalize_storyboard.py <project> [--keep-audio]

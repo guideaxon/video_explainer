@@ -11,12 +11,14 @@ This module coordinates the full SFX generation pipeline:
 8. Update storyboard.json
 """
 
+import re
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Optional
 
 from .models import SoundMoment, SFXCue, SceneAnalysisResult
 from .scene_analyzer import SceneAnalyzer, find_scene_files
+from .kit_analyzer import analyze_kit_scene
 from .ts_analyzer import TypeScriptAnalyzer
 from .semantic_mapper import SemanticSoundMapper
 from .cue_generator import CueGenerator, SceneSFXGenerator
@@ -122,6 +124,9 @@ class SFXOrchestrator:
 
         # Try project's scenes directory first
         project_scenes_dir = self.project_dir / "scenes"
+        registered = self._registry_scene_file(project_scenes_dir, scene_name)
+        if registered is not None:
+            return registered
         if project_scenes_dir.exists():
             # Try various naming conventions
             candidates = [
@@ -154,6 +159,32 @@ class SFXOrchestrator:
         except FileNotFoundError:
             pass
 
+        return None
+
+    @staticmethod
+    def _registry_scene_file(scenes_dir: Path, key: str) -> Optional[Path]:
+        """Resolve a scene key through scenes/index.ts (`key: Component` plus `import Component from "./file"`).
+
+        Style bundle projects name files freely (the `bull_run` scene is title.tsx), so the registry is the
+        only reliable link from a storyboard scene to its file.
+        """
+        index = scenes_dir / "index.ts"
+        if not index.is_file():
+            return None
+        source = index.read_text(encoding="utf-8")
+        block = re.search(r"SCENE_REGISTRY[^{]*\{([^}]+)\}", source, re.S)
+        if not block:
+            return None
+        component = dict(re.findall(r"^\s*(\w+):\s*(\w+),?", block.group(1), re.M)).get(key)
+        if component is None:
+            return None
+        module = re.search(rf'import\s+{re.escape(component)}\s+from\s+"\./([^"]+)"', source)
+        if module is None:
+            return None
+        for suffix in (".tsx", ".ts"):
+            candidate = scenes_dir / f"{module.group(1)}{suffix}"
+            if candidate.is_file():
+                return candidate
         return None
 
     def _to_pascal_case(self, name: str) -> str:
@@ -270,6 +301,13 @@ class SFXOrchestrator:
                     analysis_notes=[f"Analysis error: {e}"],
                 )
                 return result
+
+        # Style bundle scenes hold no interpolate/spring of their own; read the kit components' timing.
+        if not result.moments:
+            kit_moments = analyze_kit_scene(scene_file)
+            if kit_moments:
+                result.moments.extend(kit_moments)
+                analysis_notes.append(f"Analyzed with kit component timing ({len(kit_moments)} components)")
 
         # Update result with correct metadata
         result.scene_id = scene_id

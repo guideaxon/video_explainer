@@ -39,8 +39,8 @@ const submitBtn = await page.$("button.btn.primary");
 check("create disabled with empty prompt", await submitBtn.evaluate((b) => b.disabled));
 await page.type("#prompt", "A teacher explaining Physics to kids");
 check("create enabled after typing", !(await submitBtn.evaluate((b) => b.disabled)));
-check("channel card selectable", await clickText("button.channel", "Promo"));
-check("promo card selected", (await page.$$eval("button.channel.selected", (e) => e.map((x) => x.innerText))).join().includes("Promo"));
+check("style bundle card selectable", await clickText("button.style-bundle", "Promo"));
+check("promo card selected", (await page.$$eval("button.style-bundle.selected", (e) => e.map((x) => x.innerText))).join().includes("Promo"));
 await page.$eval("input[placeholder='Optional']", (el) => (el.value = ""));
 await page.type("input[placeholder='Optional']", "E2E click test");
 await page.select("select", "mock");
@@ -57,8 +57,9 @@ await page.waitForSelector(".rail", { timeout: 10000 });
 
 // ----- Project page
 const railText = await textOf(".rail");
-check("rail shows 8 steps + source (no treatment)", /Source document/.test(railText) && /8\. Verify/.test(railText) && !/Treatment/.test(railText));
-check("script step is skipped/disabled for channel", await page.$$eval(".rail-item", (els) => els.some((e) => /Script/.test(e.innerText) && e.disabled)));
+check("rail shows 9 steps + source (no treatment), Sound marked optional",
+  /Source document/.test(railText) && /9\. Verify/.test(railText) && /7\. Sound\s*optional/.test(railText) && !/Treatment/.test(railText));
+check("script step is skipped/disabled for style bundle", await page.$$eval(".rail-item", (els) => els.some((e) => /Script/.test(e.innerText) && e.disabled)));
 check("header shows PROMO + summary tiles with mock voice", /promo/i.test(await textOf(".proj-head")) && /mock/.test(await textOf(".stats")) && /\d+ × \d+/.test(await textOf(".stats")));
 
 // Source editor: edit, save
@@ -203,10 +204,10 @@ check("default length commits on blur", JSON.parse(await page.evaluate(() => loc
 await page.select(".card.settings select", "light");
 await page.$$eval(".card.settings select", (s) => s.length);
 const selects = await page.$$(".card.settings select");
-await selects[2].select("promo"); // default channel
+await selects[2].select("promo"); // default style bundle
 await page.click("a.side-child[href='#/new']").catch(async () => { await clickText("button.side-item", "File"); await page.click("a.side-child[href='#/new']"); });
-await page.waitForSelector(".channel");
-check("default channel from Preferences preselects Promo", (await page.$$eval("button.channel.selected", (e) => e.map((x) => x.innerText))).join().includes("Promo"));
+await page.waitForSelector(".style-bundle");
+check("default style bundle from Preferences preselects Promo", (await page.$$eval("button.style-bundle.selected", (e) => e.map((x) => x.innerText))).join().includes("Promo"));
 await page.goto(`${BASE}/#/preferences`, { waitUntil: "networkidle0" });
 await clickText("button", "Reset to defaults");
 check("reset restores system theme", (await page.$eval("html", (e) => e.getAttribute("data-theme-pref"))) === "system");
@@ -231,8 +232,8 @@ await shot("9-create-dark");
 await page.click(".theme-btn");
 check("toggle switches back to light", (await themeNow()) === "light/light" && (await page.$eval("body", (b) => getComputedStyle(b).backgroundColor)) === "rgb(243, 245, 249)");
 await shot("10-create-light");
-const iconCounts = await page.$$eval(".channel", (cs) => Object.fromEntries(cs.map((c) => [c.querySelector("strong").innerText, c.querySelectorAll(".aspect svg").length])));
-check("aspect icons: one shape per channel, two for Demo (16:9 or portrait)",
+const iconCounts = await page.$$eval(".style-bundle", (cs) => Object.fromEntries(cs.map((c) => [c.querySelector("strong").innerText, c.querySelectorAll(".aspect svg").length])));
+check("aspect icons: one shape per style bundle, two for Demo (16:9 or portrait)",
   iconCounts.Standard === 1 && iconCounts.Promo === 1 && iconCounts.Markets === 1 && iconCounts.Demo === 2, JSON.stringify(iconCounts));
 check("menu uses a plain chevron, not a filled triangle", (await page.$$eval(".side-caret", (c) => c.every((x) => x.textContent.trim() === "" && x.querySelector("svg path")))) && !(await side()).includes("▶"));
 check("segmented Create/Projects switch marks the current page", (await page.$eval(".seg.nav [aria-current='page']", (b) => b.innerText)) === "Create");

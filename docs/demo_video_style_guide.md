@@ -1,8 +1,8 @@
-# Demo Channel: Video Style Guide
+# Demo Style Bundle: Video Style Guide
 
-Style for the **Demo** channel: narrated, captioned **product demos built from real screenshots**, with no
+Style for the **Demo** style bundle: narrated, captioned **product demos built from real screenshots**, with no
 screen recording. Landscape **1920x1080** by default (website, YouTube, sales); `--portrait` gives 1080x1920.
-Other channels have their own guide, kit and skill; do not mix styles. Unlike Promo (abstract glass mockups),
+Other style bundles have their own guide, kit and skill; do not mix styles. Unlike Promo (abstract glass mockups),
 Demo shows the **real product screens** the user supplies.
 
 Implementation: kit `remotion/src/components/demo/kit.tsx`, shared helpers `scripts/_demo_manifest.py`,

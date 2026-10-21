@@ -3,15 +3,15 @@
 This document outlines the production standards for the video_explainer project. All scenes and components must adhere to these guidelines to ensure consistent, professional, and accessible video content.
 
 
-> **Channel styles:** these are the general guidelines. Channels with their own look follow a
-> channel guide instead of the dark-theme defaults below, for example
-> [`vantage_video_style_guide.md`](vantage_video_style_guide.md) for the Vantage channel and
-> [`markets_video_style_guide.md`](markets_video_style_guide.md) for the Markets channel and
-> [`promo_video_style_guide.md`](promo_video_style_guide.md) for the Promo channel and
-> [`launch_video_style_guide.md`](launch_video_style_guide.md) for the Launch channel and
-> [`lyric_video_style_guide.md`](lyric_video_style_guide.md) for the Lyric channel and
-> [`leaderbot_video_style_guide.md`](leaderbot_video_style_guide.md) for the Leaderbot channel and
-> [`demo_video_style_guide.md`](demo_video_style_guide.md) for the Demo channel.
+> **Style bundles:** these are the general guidelines. Style bundles with their own look follow a
+> style bundle guide instead of the dark-theme defaults below, for example
+> [`vantage_video_style_guide.md`](vantage_video_style_guide.md) for the Vantage style bundle and
+> [`markets_video_style_guide.md`](markets_video_style_guide.md) for the Markets style bundle and
+> [`promo_video_style_guide.md`](promo_video_style_guide.md) for the Promo style bundle and
+> [`launch_video_style_guide.md`](launch_video_style_guide.md) for the Launch style bundle and
+> [`lyric_video_style_guide.md`](lyric_video_style_guide.md) for the Lyric style bundle and
+> [`leaderbot_video_style_guide.md`](leaderbot_video_style_guide.md) for the Leaderbot style bundle and
+> [`demo_video_style_guide.md`](demo_video_style_guide.md) for the Demo style bundle.
 > See [`HowToUse.md`](HowToUse.md) for a map of all docs.
 
 ---

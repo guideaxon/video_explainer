@@ -1,12 +1,12 @@
-# Lyric Channel: Video Style Guide
+# Lyric Style Bundle: Video Style Guide
 
-Style for the **Lyric** channel: animated lyric / music videos in a kawaii retro-pixel Y2K pastel-pop
+Style for the **Lyric** style bundle: animated lyric / music videos in a kawaii retro-pixel Y2K pastel-pop
 look, **portrait 1080x1920 (9:16, mobile-first)** for TikTok, Reels and Shorts, 30 to 90 s. Each
-lyric line becomes its own comedic vignette. Other channels (Vantage, Markets, Promo, Launch) have
+lyric line becomes its own comedic vignette. Other style bundles (Vantage, Markets, Promo, Launch) have
 their own guide, kit and skill; do not mix styles.
 
 Derived from the reference clip `projects/samples/5/CMAF_96.mp4`, a 3-minute animated song video,
-which is only 170x96 px and 16:9 (this channel re-lays the style out for phones). Look, motion and
+which is only 170x96 px and 16:9 (this style bundle re-lays the style out for phones). Look, motion and
 structure are read from it directly; fonts and exact colours are approximations. **Only the style is
 reused**: no characters, lyrics, jokes, credits or brand from the reference. The template tells an
 original sample story (trading a desk job for a bakery) with an original pixel-art character.
@@ -100,7 +100,7 @@ Keep 6 to 10 scenes for 30 to 45 s; add vignettes for longer songs.
   step), then `render`.
 - Output loudness for TTS is about -20 LUFS; normalise for social with
   `ffmpeg -i final.mp4 -c:v copy -af loudnorm=I=-14:TP=-1.5:LRA=11 -c:a aac -b:a 192k final_social.mp4`.
-- The shorts scene generator hook (`src/short/channel_styles.py`) is Vantage-only; Lyric scenes are
+- The shorts scene generator hook (`src/short/style_bundles.py`) is Vantage-only; Lyric scenes are
   hand-adapted from the template.
 
 <!-- LLM-BRIEF-START -->

@@ -1,6 +1,6 @@
 ---
 name: lyric_make_video
-description: Produce a vertical (1080x1920, mobile-first) animated lyric / music video for the Lyric channel (kawaii retro-pixel pastel pop: bubble and slam type, retro windows, props, a pixel character) from the template scenes. Use when asked to make or restyle a Lyric channel video.
+description: Produce a vertical (1080x1920, mobile-first) animated lyric / music video for the Lyric style bundle (kawaii retro-pixel pastel pop: bubble and slam type, retro windows, props, a pixel character) from the template scenes. Use when asked to make or restyle a Lyric style bundle video.
 metadata:
   tags: lyric, music-video, kawaii, pixel, mobile, remotion, video
 ---
@@ -9,18 +9,18 @@ metadata:
 
 ## Requirements
 
-You must use the `video_make_core` skill first and follow its workflow with the channel details below.
+You must use the `video_make_core` skill first and follow its workflow with the style bundle details below.
 Do not continue from this file alone. Steps 6 and 7 are overridden here (audio choice, see below).
 
 Style source of truth: `docs/lyric_video_style_guide.md` (read it first). Kit:
 `remotion/src/components/lyric/kit.tsx`. Template scenes: `templates/lyric_video/scenes/`.
 Scripts: `scripts/lyric_new_video.py`, `scripts/lyric_finalize_storyboard.py`.
-Only for the Lyric channel; others have their own skills (`vantage_make_short`, `markets_make_video`,
+Only for the Lyric style bundle; others have their own skills (`vantage_make_short`, `markets_make_video`,
 `promo_make_video`, `launch_make_video`).
 
-## Channel details for the core workflow
+## Style Bundle details for the core workflow
 
-- `<channel>` = `lyric`.
+- `<style_bundle>` = `lyric`.
 - **Step 3, lyrics first**: write the real lyrics (yours or licensed; never another song's). Split them into
   lines, one scene per line or couplet, each with a visual gag (prop) in mind.
 - **Step 4, scenes**: lyric text, props, background per scene, character hat/pose. Add or drop scenes; keep

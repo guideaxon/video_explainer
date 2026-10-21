@@ -1965,15 +1965,7 @@ def cmd_sound(args: argparse.Namespace) -> int:
             return 0
 
         elif args.download or args.generate:
-            print(f"Generating SFX library for {project.id}")
-
-            generated = library.generate_all()
-            print(f"Generated {len(generated)} sounds to: {sfx_dir}")
-
-            for name in generated:
-                print(f"  - {name}.wav")
-
-            return 0
+            return _generate_sound_library(project, library, args)
 
         else:
             print("Usage: python -m src.cli sound <project> library [options]")
@@ -1988,6 +1980,12 @@ def cmd_sound(args: argparse.Namespace) -> int:
     elif args.sound_command == "generate":
         return _cmd_sound_generate(project, args)
 
+    elif args.sound_command == "build":
+        return _cmd_sound_build(project, args)
+
+    elif args.sound_command == "check":
+        return _cmd_sound_check(project)
+
     elif args.sound_command == "clear":
         return _cmd_sound_clear(project, args)
 
@@ -1996,6 +1994,89 @@ def cmd_sound(args: argparse.Namespace) -> int:
         return 1
 
     return 0
+
+
+def _generate_sound_library(project, library, args: argparse.Namespace) -> int:
+    """Write the SFX files for a project with the chosen engine and palette; print what was made."""
+    from ..sound import earshot_backend as eb
+
+    config = json.loads((project.root_dir / "config.json").read_text(encoding="utf-8"))
+    engine = getattr(args, "engine", "builtin")
+    palette = getattr(args, "palette", None) or eb.palette_for_project(config)
+    overrides = eb.overrides_for_project(config)
+    if palette not in eb.palette_names():
+        print(f"Error: unknown palette {palette!r}. Use one of: {', '.join(eb.palette_names())}", file=sys.stderr)
+        return 1
+    if engine == "earshot" and not eb.status().available:
+        st = eb.status()
+        print(f"Error: Earshot is not available ({st.detail}). {st.fix}", file=sys.stderr)
+        return 1
+
+    print(f"Generating SFX library for {project.id} (engine: {engine}, palette: {palette})")
+    if overrides and engine != "builtin":
+        print(f"Per-sound overrides from config.json: {', '.join(f'{k}={v}' for k, v in overrides.items())}")
+    generated = library.generate_all(
+        engine=engine, palette=palette, write_manifest=not getattr(args, "defer_manifest", False), overrides=overrides,
+    )
+    report = library.last_report
+    print(f"Engine used: {report['engine']}")
+    print(f"Generated {len(generated)} sounds to: {library.sfx_dir}")
+    for name, entry in report["sounds"].items():
+        source = entry.get("bank") or "built-in"
+        note = f"  [fallback: {entry['fallback_reason']}]" if entry.get("fallback_reason") else ""
+        print(f"  - {name}.wav  {entry['engine']:8} {source} ({entry['seconds']}s){note}")
+        for w in entry.get("warnings", []):
+            print(f"      WARN {w}")
+    return 0
+
+
+def _cmd_sound_build(project, args: argparse.Namespace) -> int:
+    """The UI's Sound step: SFX files, then SFX cues in the storyboard, then an audit of what will play."""
+    from ..sound import earshot_backend as eb
+    from ..sound.library import SoundLibrary
+
+    library = SoundLibrary(project.root_dir / "sfx")
+    args.defer_manifest = True
+    code = _generate_sound_library(project, library, args)
+    if code:
+        return code
+
+    print("\nGenerating SFX cues...")
+    args.dry_run = False
+    args.scene = None
+    args.theme = "tech_ai"
+    args.max_density = 3.0
+    args.min_gap = 10
+    args.no_llm = not args.llm
+    code = _cmd_sound_generate(project, args)
+    report = library.last_report
+    # Written last so the Sound step is newer than the storyboard it just updated (otherwise it reads as stale).
+    eb.write_manifest(library.sfx_dir, report["engine"], report["palette"], report["sounds"])
+    if code:
+        return code
+
+    print()
+    code = _cmd_sound_check(project)
+    if code:
+        return code
+    # A run that places no cues has not done the step's job: the render would have no sound effects. Fail it
+    # so the UI shows the step as failed with this reason, instead of a green "done".
+    if not eb.count_cues(project.root_dir):
+        print("\nERROR No SFX cues were placed, so nothing will play in the render. These scenes have no animation "
+              "the analyzers recognise.\n      The sound files are ready in sfx/; add cues by hand in "
+              "storyboard.json (sfx_cues) if you want them.", file=sys.stderr)
+        return 1
+    return 0
+
+
+def _cmd_sound_check(project) -> int:
+    """Model-free audit of the SFX a project will play. Exits 1 if a cue names a sound with no file."""
+    from ..sound import earshot_backend as eb
+
+    results = eb.audit_project(project.root_dir)
+    for level, message in results:
+        print(f"{level:5} {message}")
+    return 1 if any(level == "ERROR" for level, _ in results) else 0
 
 
 def _cmd_sound_analyze(project, args: argparse.Namespace) -> int:
@@ -4083,6 +4164,36 @@ For manual voiceover recording:
         "--download",
         action="store_true",
         help="Alias for --generate (for backwards compatibility)",
+    )
+
+    def add_engine_args(p: argparse.ArgumentParser) -> None:
+        p.add_argument(
+            "--engine", choices=["auto", "builtin", "earshot"], default="builtin",
+            help="Sound engine: builtin (numpy, default), earshot (opt in, richer sounds) or auto (Earshot if installed)",
+        )
+        p.add_argument(
+            "--palette", default=None,
+            help="Earshot starting palette (default: the project's style bundle, else 'default'); "
+                 "config.json sound.overrides can swap single sounds",
+        )
+
+    add_engine_args(sound_library_parser)
+
+    # sound build - library + cues + audit (the UI's Sound step)
+    sound_build_parser = sound_subparsers.add_parser(
+        "build",
+        help="Generate SFX files and cues, then audit them",
+    )
+    add_engine_args(sound_build_parser)
+    sound_build_parser.add_argument(
+        "--llm", action="store_true",
+        help="Use Claude Code for semantic scene analysis (uses tokens; default is pattern-only)",
+    )
+
+    # sound check - audit
+    sound_subparsers.add_parser(
+        "check",
+        help="Audit the SFX a project will play (missing files, Earshot warnings)",
     )
 
     # sound analyze - analyze scenes for sound moments

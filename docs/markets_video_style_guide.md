@@ -1,11 +1,11 @@
-# Markets Channel: Video Style Guide
+# Markets Style Bundle: Video Style Guide
 
-Style for the **Markets** channel: **portrait 1080x1920 (9:16, mobile-first)** market-story explainers about rallies, sectors,
-sentiment and money flows. Other channels (for example Vantage) have their own guide, kit and
+Style for the **Markets** style bundle: **portrait 1080x1920 (9:16, mobile-first)** market-story explainers about rallies, sectors,
+sentiment and money flows. Other style bundles (for example Vantage) have their own guide, kit and
 skill; do not mix styles.
 
 Derived from the reference clip `projects/samples/2/CMAF_96.mp4` ("BULL RUN", Market Story Nº ##),
-which is only 170x96 px and 16:9; the channel re-lays that look out for phones. Structure, surfaces, chart types and colour logic are read from it directly;
+which is only 170x96 px and 16:9; the style bundle re-lays that look out for phones. Structure, surfaces, chart types and colour logic are read from it directly;
 fonts and exact hex values are close approximations (marked below).
 
 Implementation: kit `remotion/src/components/markets/kit.tsx`, template scenes
@@ -98,7 +98,7 @@ Drop or reorder chapters to fit the story; keep a title, at least one terminal m
   config would render 16:9 but the kit's coordinates are portrait-only.
 - Output loudness is about -20 LUFS. For social upload normalise:
   `ffmpeg -i final.mp4 -c:v copy -af loudnorm=I=-14:TP=-1.5:LRA=11 -c:a aac -b:a 192k final_social.mp4`.
-- The shorts generator hook (`src/short/channel_styles.py`) is Vantage-only; this channel uses the
+- The shorts generator hook (`src/short/style_bundles.py`) is Vantage-only; this style bundle uses the
   full-video path and hand-adapted template scenes. The scene generator is not wired to this style.
 
 <!-- LLM-BRIEF-START -->

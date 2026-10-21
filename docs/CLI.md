@@ -331,11 +331,17 @@ See [SOUND.md](SOUND.md) for detailed documentation.
 
 ```bash
 python -m src.cli sound <project> library --list     # List sounds
-python -m src.cli sound <project> library --generate # Generate SFX files
+python -m src.cli sound <project> library --generate # Generate SFX files (built-in engine)
+python -m src.cli sound <project> library --generate --engine earshot   # Optional Earshot engine
 python -m src.cli sound <project> analyze            # Preview detection
 python -m src.cli sound <project> generate           # Write SFX cues
+python -m src.cli sound <project> build              # Files + cues + audit (the UI's Sound step)
+python -m src.cli sound <project> check              # Audit: missing files, Earshot warnings
 python -m src.cli sound <project> clear              # Remove SFX cues
 ```
+
+`--engine` is `builtin` (default), `earshot` (opt in) or `auto` (Earshot if installed). `--palette <name>`
+picks the Earshot starting palette; the default is the project's style bundle.
 
 ### music
 

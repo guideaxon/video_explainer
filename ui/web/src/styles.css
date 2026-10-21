@@ -94,16 +94,16 @@ label.inline select { width: auto; }
 .upload input { border: 0; padding: 4px 0; background: none; }
 .search { max-width: 380px; margin-bottom: 16px; }
 
-/* Channel cards, like the Landscape / Portrait / Square picker in the reference design. */
-.channels { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 10px; }
-.channel { display: flex; flex-direction: column; align-items: flex-start; gap: 4px; padding: 14px; text-align: left; cursor: pointer; font: inherit; color: var(--text);
+/* Style bundle cards, like the Landscape / Portrait / Square picker in the reference design. */
+.style-bundles { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 10px; }
+.style-bundle { display: flex; flex-direction: column; align-items: flex-start; gap: 4px; padding: 14px; text-align: left; cursor: pointer; font: inherit; color: var(--text);
   background: var(--surface-2); border: 1px solid var(--line); border-radius: 14px; }
-.channel:hover { border-color: var(--muted); }
-.channel span { font-size: 13px; color: var(--muted); }
-.channel em { font-size: 12px; color: var(--muted); font-style: normal; }
-.channel .aspect { color: var(--muted); margin-bottom: 4px; display: flex; gap: 4px; align-items: center; }
-.channel.selected { border-color: var(--accent); background: var(--accent-soft); box-shadow: 0 0 0 1px var(--accent) inset; }
-.channel.selected .aspect, .channel.selected strong { color: var(--accent); }
+.style-bundle:hover { border-color: var(--muted); }
+.style-bundle span { font-size: 13px; color: var(--muted); }
+.style-bundle em { font-size: 12px; color: var(--muted); font-style: normal; }
+.style-bundle .aspect { color: var(--muted); margin-bottom: 4px; display: flex; gap: 4px; align-items: center; }
+.style-bundle.selected { border-color: var(--accent); background: var(--accent-soft); box-shadow: 0 0 0 1px var(--accent) inset; }
+.style-bundle.selected .aspect, .style-bundle.selected strong { color: var(--accent); }
 
 .btn { font: inherit; font-weight: 500; border: 1px solid var(--line); background: var(--surface); color: var(--text); padding: 9px 16px; border-radius: 12px; cursor: pointer; }
 .btn:hover:not(:disabled) { border-color: var(--accent); }
@@ -120,7 +120,7 @@ label.inline select { width: auto; }
 .banner.error { background: var(--bad-bg); color: var(--bad); }
 .env-strip { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 18px; }
 .chip { font-size: 12px; padding: 3px 10px; border-radius: 999px; border: 1px solid var(--line); background: var(--surface); }
-.chip.ok { color: var(--good); } .chip.bad { color: var(--bad); border-color: var(--bad); } .chip em { font-style: normal; }
+.chip.opt { color: var(--muted); } .chip.ok { color: var(--good); } .chip.bad { color: var(--bad); border-color: var(--bad); } .chip em { font-style: normal; }
 
 /* ---- projects ---- */
 .projects { display: grid; grid-template-columns: repeat(auto-fill, minmax(270px, 1fr)); gap: 14px; }
@@ -174,3 +174,19 @@ progress { width: 100%; height: 6px; border-radius: 999px; overflow: hidden; acc
 @media (max-width: 760px) { .settings { grid-template-columns: 1fr; } }
 .colorrow { display: flex; gap: 8px; } .colorrow input[type="color"] { width: 46px; padding: 3px; height: 40px; }
 em.bad { color: var(--bad); font-style: normal; } input[aria-invalid="true"] { border-color: var(--bad); }
+
+/* Clipboard icon that copies a step's CLI command. */
+.copy-btn { display: inline-flex; align-items: center; justify-content: center; width: 30px; height: 30px; padding: 0; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); color: var(--muted); cursor: pointer; }
+.copy-btn:hover { color: var(--accent); border-color: var(--accent); }
+.copy-btn:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+.copy-btn.copied { color: var(--good); border-color: var(--good); }
+.copy-btn.failed { color: var(--bad); border-color: var(--bad); }
+/* Sound step: per-sound table with in-browser preview, and the cue audit list. */
+.sound-table { width: 100%; border-collapse: collapse; font-size: 13px; margin-top: 10px; }
+.sound-table th { text-align: left; color: var(--muted); font-weight: 600; padding: 6px 8px; border-bottom: 1px solid var(--line); }
+.sound-table td { padding: 6px 8px; border-bottom: 1px solid var(--line); vertical-align: middle; }
+.sound-table audio { height: 32px; width: 220px; max-width: 100%; }
+.sound-table .warn { color: var(--warn); display: block; } .sound-table .bad { color: var(--bad); display: block; }
+.audit { list-style: none; margin: 8px 0; padding: 0; font-size: 13px; }
+.audit li { padding: 2px 0; } .audit-error { color: var(--bad); } .audit-warn { color: var(--warn); } .audit-info { color: var(--muted); }
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }

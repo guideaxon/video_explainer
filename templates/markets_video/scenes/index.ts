@@ -1,5 +1,5 @@
 /**
- * Markets channel scene registry (template). Keys must equal the slug of each scene title (see src/cli/main.py _title_to_scene_key)
+ * Markets style bundle scene registry (template). Keys must equal the slug of each scene title (see src/cli/main.py _title_to_scene_key)
  * and are listed unquoted, with component names ending in "Scene", because the storyboard CLI and
  * render-utils.mjs parse this registry with regexes.
  */

@@ -72,7 +72,7 @@ def test_scaffold_with_old_template_mtimes_is_not_stale_after_a_successful_run(c
     from ui.server.jobs import Job
 
     c, projects = client
-    assert c.post("/api/projects", json={"title": "x", "id": "vid", "channel": "promo"}).status_code == 201
+    assert c.post("/api/projects", json={"title": "x", "id": "vid", "style_bundle": "promo"}).status_code == 201
     d = projects / "vid"
     _touch(d / "scenes" / "index.ts", age=10_000)  # copied template files keep their old mtimes
     _touch(d / "narration" / "narrations.json", age=0)
@@ -85,7 +85,7 @@ def test_keep_user_settings_restores_voice_and_length_after_a_scaffold(client):
     from ui.server.projects import keep_user_settings, save_config
 
     c, projects = client
-    body = {"title": "x", "id": "vid", "channel": "promo", "tts_provider": "mock", "target_seconds": 45}
+    body = {"title": "x", "id": "vid", "style_bundle": "promo", "tts_provider": "mock", "target_seconds": 45}
     assert c.post("/api/projects", json=body).status_code == 201
     d = projects / "vid"
     restore = keep_user_settings(d)

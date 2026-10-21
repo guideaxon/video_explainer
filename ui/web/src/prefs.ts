@@ -2,13 +2,14 @@ export type Theme = "system" | "light" | "dark";
 
 export interface Prefs {
   theme: Theme;
-  defaultChannel: string; // "" = Standard
+  defaultStyleBundle: string; // "" = Standard
   defaultSeconds: number;
   defaultVoice: string;
   recentCount: number; // projects listed under Open Recent
+  soundEngine: "auto" | "builtin" | "earshot"; // the Sound step's engine; Earshot is opt-in, "auto" uses it when installed
 }
 
-export const DEFAULT_PREFS: Prefs = { theme: "system", defaultChannel: "", defaultSeconds: 90, defaultVoice: "edge", recentCount: 5 };
+export const DEFAULT_PREFS: Prefs = { theme: "system", defaultStyleBundle: "", defaultSeconds: 90, defaultVoice: "edge", recentCount: 5, soundEngine: "builtin" };
 
 const KEY = "video-studio-prefs";
 
@@ -16,7 +17,11 @@ const KEY = "video-studio-prefs";
 export function loadPrefs(): Prefs {
   try {
     const raw = window.localStorage.getItem(KEY);
-    return { ...DEFAULT_PREFS, ...(raw ? JSON.parse(raw) : {}) };
+    const stored = raw ? JSON.parse(raw) : {};
+    // Prefs saved before the channel -> style bundle rename keep their default.
+    if (stored.defaultChannel !== undefined && stored.defaultStyleBundle === undefined) stored.defaultStyleBundle = stored.defaultChannel;
+    delete stored.defaultChannel;
+    return { ...DEFAULT_PREFS, ...stored };
   } catch {
     return DEFAULT_PREFS;
   }

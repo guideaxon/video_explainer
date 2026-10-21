@@ -1,12 +1,16 @@
 import { useEffect, useState } from "react";
+import { api } from "../api";
 import { DEFAULT_PREFS, loadPrefs, savePrefs, type Prefs, type Theme } from "../prefs";
-import { CHANNELS } from "./NewProject";
+import { STYLE_BUNDLES } from "./NewProject";
 
 /** App-wide preferences, stored in this browser only. Per-project settings live in each project. */
 export default function Preferences() {
   const [prefs, setPrefs] = useState<Prefs>(loadPrefs);
   const [saved, setSaved] = useState(false);
   const [secondsText, setSecondsText] = useState(String(prefs.defaultSeconds));
+  const [earshot, setEarshot] = useState<boolean | null>(null); // null until the health check answers
+
+  useEffect(() => { api.health().then((h) => setEarshot(h.earshot.ok)).catch(() => setEarshot(null)); }, []);
 
   // The top-bar theme toggle also writes preferences; keep this page in step with it.
   useEffect(() => {
@@ -37,9 +41,9 @@ export default function Preferences() {
             {[3, 5, 8, 10].map((n) => <option key={n} value={n}>{n}</option>)}
           </select>
         </label>
-        <label>Default channel
-          <select value={prefs.defaultChannel} onChange={(e) => update({ defaultChannel: e.target.value })}>
-            {CHANNELS.map((c) => <option key={c.id || "standard"} value={c.id}>{c.name}</option>)}
+        <label>Default Style Bundle
+          <select value={prefs.defaultStyleBundle} onChange={(e) => update({ defaultStyleBundle: e.target.value })}>
+            {STYLE_BUNDLES.map((c) => <option key={c.id || "standard"} value={c.id}>{c.name}</option>)}
           </select>
         </label>
         <label>Default length (seconds)
@@ -55,6 +59,16 @@ export default function Preferences() {
           <select value={prefs.defaultVoice} onChange={(e) => update({ defaultVoice: e.target.value })}>
             <option value="edge">Edge (free)</option><option value="elevenlabs">ElevenLabs</option><option value="mock">Mock (silent test)</option>
           </select>
+        </label>
+        <label>Sound effects engine
+          <select value={prefs.soundEngine} onChange={(e) => update({ soundEngine: e.target.value as Prefs["soundEngine"] })}>
+            <option value="builtin">Built-in (default)</option>
+            <option value="earshot" disabled={earshot === false}>Earshot (opt in){earshot === false ? " - not installed" : ""}</option>
+            <option value="auto">Automatic (Earshot if installed)</option>
+          </select>
+          {earshot === false && (
+            <span className="small">Earshot is optional and gives richer sounds. Install it with <code>pip install -e ".[earshot]"</code> (about 1.2 GB).</span>
+          )}
         </label>
       </div>
       <div className="actions">

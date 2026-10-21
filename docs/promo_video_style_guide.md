@@ -1,7 +1,7 @@
-# Promo Channel: Video Style Guide
+# Promo Style Bundle: Video Style Guide
 
-Style for the **Promo** channel: dark, glossy SaaS product-launch videos, **portrait 1080x1920
-(9:16, mobile-first)** for TikTok, Reels and Shorts. Other channels (Vantage, Markets) have their own
+Style for the **Promo** style bundle: dark, glossy SaaS product-launch videos, **portrait 1080x1920
+(9:16, mobile-first)** for TikTok, Reels and Shorts. Other style bundles (Vantage, Markets) have their own
 guide, kit and skill; do not mix styles.
 
 Derived from the reference clip `projects/samples/3/CMAF_96 (1).mp4`, a 66 s launch video for a live
@@ -95,7 +95,7 @@ Drop features that do not apply; keep hook, reveal, at least three features, one
   the player's 1.0 s buffer per scene). With it: about 50 s of timeline.
 - Output loudness is about -20 LUFS. Normalise for social:
   `ffmpeg -i final.mp4 -c:v copy -af loudnorm=I=-14:TP=-1.5:LRA=11 -c:a aac -b:a 192k final_social.mp4`.
-- The shorts scene generator hook (`src/short/channel_styles.py`) is Vantage-only; Promo scenes are
+- The shorts scene generator hook (`src/short/style_bundles.py`) is Vantage-only; Promo scenes are
   hand-adapted from the template.
 
 <!-- LLM-BRIEF-START -->

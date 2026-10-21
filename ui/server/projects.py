@@ -4,14 +4,15 @@ from __future__ import annotations
 
 import json
 import re
+import shlex
 import time
 from pathlib import Path
 
 from .jobs import Job
-from .steps import DEFAULT_PATHS, FULL_CHANNELS, HIDDEN, MANUAL, RUN, SKIPPED, STEPS, Ctx, StepDef
+from .steps import DEFAULT_PATHS, FULL_STYLE_BUNDLES, HIDDEN, MANUAL, RUN, SKIPPED, STEPS, Ctx, StepDef
 
 NAME_RE = re.compile(r"^[a-z0-9][a-z0-9_-]{0,63}$")
-# One command can write several steps' files a few milliseconds apart (a channel scaffold writes the
+# One command can write several steps' files a few milliseconds apart (a style bundle scaffold writes the
 # scenes and then the narration). Real edits are minutes apart, so ignore differences smaller than this.
 STALE_TOLERANCE_SECONDS = 5.0
 
@@ -77,8 +78,8 @@ def approve(project_dir: Path, step_id: str) -> None:
     _state_path(project_dir).write_text(json.dumps(state, indent=2), encoding="utf-8")
 
 
-def project_channel(config: dict) -> str:
-    return config.get("channel") or ""
+def project_style_bundle(config: dict) -> str:
+    return config.get("style_bundle") or ""
 
 
 def _output_time(step: StepDef, ctx: Ctx, config: dict, jobs: list[Job]) -> float | None:
@@ -98,7 +99,7 @@ def _output_time(step: StepDef, ctx: Ctx, config: dict, jobs: list[Job]) -> floa
 def keep_user_settings(project_dir: Path):
     """Snapshot the settings a user chose at creation; the returned function puts them back.
 
-    Channel scaffold scripts reset the project config (for example to edge TTS), which would silently
+    Style bundle scaffold scripts reset the project config (for example to edge TTS), which would silently
     discard the voice and length picked on the Home screen.
     """
     config = load_config(project_dir)
@@ -122,9 +123,21 @@ def keep_user_settings(project_dir: Path):
     return restore
 
 
+def _copyable_commands(step_id: str, argv: list[str] | None) -> list[dict]:
+    """Shell commands the UI offers to copy for a step: the CLI equivalent of its Run button."""
+    if argv is None:
+        return []
+    cmds = [{"label": "Copy command", "text": "python " + " ".join(shlex.quote(a) for a in argv)}]
+    if step_id == "render":
+        # Remotion Studio is where you preview scenes before rendering the final video.
+        cmds = [{"label": "Copy preview command", "text": "cd remotion && npm run dev"},
+                {"label": "Copy render command", "text": cmds[0]["text"]}]
+    return cmds
+
+
 def step_statuses(project_dir: Path, config: dict, jobs: list[Job]) -> list[dict]:
     """Status of all nine steps. `jobs` is newest first. A pure function of files and job records."""
-    ctx = Ctx(project_dir.name, project_channel(config), project_dir)
+    ctx = Ctx(project_dir.name, project_style_bundle(config), project_dir)
     approved = load_state(project_dir).get("approved", {})
     out: list[dict] = []
     upstream_times: list[float] = []  # outputs of earlier active steps, for staleness
@@ -137,6 +150,7 @@ def step_statuses(project_dir: Path, config: dict, jobs: list[Job]) -> list[dict
         entry = {
             "id": step.id, "title": step.title, "mode": mode, "note": v.note, "gated": step.gated,
             "can_run": argv is not None, "force_flag": v.force_flag, "output_time": None,
+            "commands": _copyable_commands(step.id, argv), "optional": step.optional,
         }
         if mode in (HIDDEN, SKIPPED):
             entry["status"] = mode
@@ -162,25 +176,39 @@ def step_statuses(project_dir: Path, config: dict, jobs: list[Job]) -> list[dict
         entry["status"] = status
         out.append(entry)
 
-        prev_active_has_output = out_time is not None
+        if not step.optional:  # an optional step that has not run must not make the next step look blocked
+            prev_active_has_output = out_time is not None
         # A review or verify run produces no content, so it must not make later steps stale.
         if out_time is not None and not v.job_output:
             upstream_times.append(out_time)
     return out
 
 
+def sound_summary(config: dict) -> dict:
+    """The Sound step's palette: the effective one, any per-project override, and the choices."""
+    from src.sound import earshot_backend as eb  # lazy: importing src.sound pulls in numpy and scipy
+
+    return {
+        "palette": eb.palette_for_project(config),
+        "override": (config.get("sound") or {}).get("palette", ""),
+        "palettes": eb.palette_names(),
+    }
+
+
 def project_summary(project_dir: Path, jobs: list[Job]) -> dict:
     config = load_config(project_dir)
     statuses = step_statuses(project_dir, config, jobs)
-    active = [s for s in statuses if s["status"] not in ("hidden", "skipped")]
+    # An optional step counts toward progress only once it has produced output.
+    active = [s for s in statuses
+              if s["status"] not in ("hidden", "skipped") and not (s["optional"] and s["output_time"] is None)]
     finished = [s for s in active if s["status"] in ("approved", "done")]
     res = config.get("video", {}).get("resolution", {})
     return {
         "id": project_dir.name,
         "title": config.get("title", project_dir.name),
-        "channel": project_channel(config),
-        # Vantage shorts (and any unknown channel) are run from the CLI, not this UI.
-        "supported": project_channel(config) in ("", *FULL_CHANNELS),
+        "style_bundle": project_style_bundle(config),
+        # Vantage shorts (and any unknown style bundle) are run from the CLI, not this UI.
+        "supported": project_style_bundle(config) in ("", *FULL_STYLE_BUNDLES),
         "resolution": f"{res.get('width', '?')}x{res.get('height', '?')}",
         "fps": config.get("video", {}).get("fps"),
         "target_seconds": config.get("video", {}).get("target_duration_seconds"),
@@ -189,6 +217,7 @@ def project_summary(project_dir: Path, jobs: list[Job]) -> dict:
         "style": {k: config.get("style", {}).get(k, "") for k in
                   ("primary_color", "secondary_color", "background_color", "font_family")},
         "steps": statuses,
+        "sound": sound_summary(config),
         "progress": f"{len(finished)}/{len(active)}",
         "has_video": resolve_path(project_dir, config, "@final_video").is_file(),
         "final_video": resolve_path(project_dir, config, "@final_video").relative_to(project_dir).as_posix(),

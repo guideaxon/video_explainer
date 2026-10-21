@@ -1,4 +1,4 @@
-"""Generate scenes and narration for a Demo-channel video from its manifest.
+"""Generate scenes and narration for a Demo style bundle video from its manifest.
 
 Usage:
     python scripts/demo_build_scenes.py <project>

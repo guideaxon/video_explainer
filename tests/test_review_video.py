@@ -25,7 +25,7 @@ def _project(tmp_path):
     scenes = [{"scene_id": i, "title": t, "narration": n} for i, t, n in scaffold.SAMPLE_SCENES]
     (pdir / "narration" / "narrations.json").write_text(json.dumps({"scenes": scenes}), encoding="utf-8")
     (pdir / "config.json").write_text(
-        json.dumps({"channel": "markets", "video": {"resolution": {"width": 1080, "height": 1920}}}),
+        json.dumps({"style_bundle": "markets", "video": {"resolution": {"width": 1080, "height": 1920}}}),
         encoding="utf-8",
     )
     return pdir
@@ -37,14 +37,14 @@ def test_template_is_flagged_for_sample_text(tmp_path):
     assert not any("registry" in e for e in rep.errors)  # template keys match its titles
 
 
-def test_unknown_channel_is_an_error(tmp_path):
+def test_unknown_style_bundle_is_an_error(tmp_path):
     pdir = _project(tmp_path)
-    (pdir / "config.json").write_text(json.dumps({"channel": "nope"}), encoding="utf-8")
+    (pdir / "config.json").write_text(json.dumps({"style_bundle": "nope"}), encoding="utf-8")
     rep, _ = _load("review_video").review(pdir)
-    assert rep.errors and "channel" in rep.errors[0]
+    assert rep.errors and "style_bundle" in rep.errors[0]
 
 
-def _mini(tmp_path, channel, scene_src, narration="Short line here for the test."):
+def _mini(tmp_path, style_bundle, scene_src, narration="Short line here for the test."):
     """One-scene project: scenes/hook.tsx with `scene_src`, registered as key `hook`."""
     pdir = tmp_path / "mini"
     (pdir / "scenes").mkdir(parents=True)
@@ -57,7 +57,7 @@ def _mini(tmp_path, channel, scene_src, narration="Short line here for the test.
         json.dumps({"scenes": [{"scene_id": "hook", "title": "Hook", "narration": narration}]}), encoding="utf-8"
     )
     (pdir / "config.json").write_text(
-        json.dumps({"channel": channel, "video": {"resolution": {"width": 1080, "height": 1920}}}), encoding="utf-8"
+        json.dumps({"style_bundle": style_bundle, "video": {"resolution": {"width": 1080, "height": 1920}}}), encoding="utf-8"
     )
     return pdir
 

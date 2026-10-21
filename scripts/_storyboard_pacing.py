@@ -1,8 +1,8 @@
-"""Shared pacing helper for channel finalize scripts (full-video path).
+"""Shared pacing helper for style bundle finalize scripts (full-video path).
 
 ``finalize(project, buffer_seconds, transition, trim=True)`` trims TTS silence in ``voiceover/`` (keeping the
 originals in ``voiceover/original/``), rebuilds the storyboard from the trimmed audio and writes the
-channel's pacing (scene buffer and transition) into it. Pass ``trim=False`` for music clips. Needs ffmpeg on PATH. Safe to re-run:
+style bundle's pacing (scene buffer and transition) into it. Pass ``trim=False`` for music clips. Needs ffmpeg on PATH. Safe to re-run:
 trimming always starts from the originals.
 """
 

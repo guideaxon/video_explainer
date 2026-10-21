@@ -104,7 +104,7 @@ export interface AudioConfig {
 }
 
 /**
- * Optional per-storyboard transition override (channels with a crisp style use short plain fades).
+ * Optional per-storyboard transition override (style bundles with a crisp style use short plain fades).
  * Defaults to the cinematic transitions when omitted.
  */
 export interface TransitionConfig {
@@ -318,7 +318,7 @@ const MissingScene: React.FC<{ sceneType: string }> = ({ sceneType }) => {
   );
 };
 
-// Storyboards may opt into plain fades (crisp channel styles); default is the cinematic set above.
+// Storyboards may opt into plain fades (crisp style bundle styles); default is the cinematic set above.
 const getPresentation = (
   transitions: TransitionConfig | undefined,
   style: TransitionStyle,

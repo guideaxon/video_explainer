@@ -9,7 +9,7 @@ Status: draft for review. Nothing is built yet.
   `http://127.0.0.1:8765/api/docs`. Tests: `tests/ui/`.
 - Added beyond this spec: status `done` for ungated steps (storyboard, review), a `supported` flag
   (Vantage projects are shown but not runnable), and `ui/server/verify.py` as the step 8 check.
-- **Frontend: thin slice built** in `ui/web/` (Vite, React, TypeScript). Home (prompt, channel cards,
+- **Frontend: thin slice built** in `ui/web/` (Vite, React, TypeScript). Home (prompt, style bundle cards,
   typed or uploaded Markdown, environment strip, project list), the project overview with the stepper,
   a step panel (run, regenerate, approve, cancel, live log, JSON editor for script and narration), the
   source editor, and the Render step with a video player. Build with `cd ui\web && npm install &&
@@ -21,14 +21,14 @@ Status: draft for review. Nothing is built yet.
   and Edge or Chrome).
 - **Left menu (replaces the single Home screen):** File → Create New Project (`#/new`, also `#/`),
   Open Recent → the latest projects plus **All** (`#/projects`, the Continue a project screen with a
-  filter), and Preferences (`#/preferences`: theme, recent count, default channel, length and voice,
+  filter), and Preferences (`#/preferences`: theme, recent count, default style bundle, length and voice,
   stored in the browser). Collapsible to icons; the state is remembered.
 - **Themes and look:** light and dark palettes (tokens in `ui/web/src/styles.css`), a top bar with a
   Create / Projects switch and a single light/dark button (it shows the theme you would switch to;
   "follow system" is in Preferences), rounded cards, summary tiles on the
-  project page, aspect-ratio icons on channel cards, and a terminal-style job log. JS resolves
+  project page, aspect-ratio icons on style bundle cards, and a terminal-style job log. JS resolves
   "system" to `data-theme` on `<html>` (an inline script in `index.html` sets it before first paint).
-- **Behaviour worth knowing:** a channel scaffold script resets the project config (for example to edge
+- **Behaviour worth knowing:** a style bundle scaffold script resets the project config (for example to edge
   TTS); the server restores the voice and length chosen at creation after it runs. A successful run
   of a step counts as producing its output, so copied template files with old timestamps are not stale.
 - **Not yet built:** PDF and URL import, scene previews with the Remotion Player (Screen 5), the
@@ -42,7 +42,7 @@ reviewable step at a time. It is a wrapper over the existing `python -m src.cli`
 
 In scope for v1:
 - Single user, runs on their own machine (`localhost`), no accounts.
-- Create or pick a project, pick a channel, run each pipeline step, review and edit its output, approve.
+- Create or pick a project, pick a style bundle, run each pipeline step, review and edit its output, approve.
 - Live progress and logs for the slow steps (voiceover, render).
 - Preview of scenes and the final video.
 
@@ -89,31 +89,47 @@ Steps follow the `config.json` `paths` block. Status comes from file checks.
 | 3 | Scenes | `scenes <p>` | scene `.tsx` + `scenes/index.ts` | LLM | review report clean |
 | 4 | Review | `scripts/review_video.py <p> --brief` | printed report | no | 0 errors |
 | 5 | Voiceover | `voiceover <p>` | `voiceover/manifest.json` + audio | TTS | approve |
-| 6 | Storyboard | `storyboard <p>` or channel finalize script | `storyboard/storyboard.json` | no | none |
-| 7 | Render | `render <p>` | `output/final.mp4` | CPU, long | approve |
-| 8 | Verify and export | ffprobe, contact sheet, social export | `output/` | no | approve |
+| 6 | Storyboard | `storyboard <p>` or style bundle finalize script | `storyboard/storyboard.json` | no | none |
+| 7 | Sound (optional) | `sound <p> build [--engine builtin\|earshot\|auto]` | `sfx/manifest.json`, `sfx/*.wav`, `sfx_cues` in the storyboard | CPU, about 1 min with Earshot | none |
+| 8 | Render | `render <p>` | `output/final.mp4` | CPU, long | approve |
+| 9 | Verify and export | ffprobe, contact sheet, social export, sound audit | `output/` | no | approve |
 
-### One nine-step list, two variants
+### One ten-step list, two variants
 
-Every project shows the same nine steps. A step can be **required**, **optional** or **skipped**, and
-its command depends on the project type. The type is read from `"channel"` in `config.json`
+Every project shows the same ten steps. A step can be **required**, **optional** or **skipped**, and
+its command depends on the project type. The type is read from `"style_bundle"` in `config.json`
 (absent or empty means a standard project).
 
-| # | Step | Standard project | Channel project (Markets, Promo, Launch, Lyric, Leaderbot, Demo) |
+| # | Step | Standard project | Style Bundle project (Markets, Promo, Launch, Lyric, Leaderbot, Demo) |
 |---|---|---|---|
 | 0 | Treatment | optional (hidden until built) | optional (hidden until built) |
 | 1 | Script | required, `script` | **skipped** (content gathering is part of step 3) |
 | 2 | Narration | required, `narration` | required, edit `narration/narrations.json` (`narration` command only seeds it) |
-| 3 | Scenes | required, `scenes` | required, `<channel>_new_video.py` scaffold, then edit scenes; Demo uses `demo_build_scenes.py` and is never hand-edited |
-| 4 | Review | required | required, with the channel's rules from `CHANNELS` |
+| 3 | Scenes | required, `scenes` | required, `<style_bundle>_new_video.py` scaffold, then edit scenes; Demo uses `demo_build_scenes.py` and is never hand-edited |
+| 4 | Review | required | required, with the style bundle's rules from `STYLE_BUNDLES` |
 | 5 | Voiceover | required | required |
-| 6 | Storyboard | `storyboard` | `<channel>_finalize_storyboard.py` (not the plain command) |
-| 7 | Render | required | required |
-| 8 | Verify and export | required | required |
+| 6 | Storyboard | `storyboard` | `<style_bundle>_finalize_storyboard.py` (not the plain command) |
+| 7 | Sound | optional, `sound build` | optional, `sound build` |
+| 8 | Render | required | required |
+| 9 | Verify and export | required | required |
+
+**Sound** is optional in a stricter sense than the others: it never makes Render look blocked, and it does
+not count toward the "steps done" total until it has run. It runs the built-in numpy sounds by default;
+**Earshot is opt-in** (see [SOUND.md](SOUND.md#earshot-optional-engine)). The UI surfaces this in four places:
+
+- **Environment strip:** an "Earshot" chip. Missing is shown neutral ("optional, not installed", install
+  command in the tooltip), never red.
+- **Preferences:** "Sound effects engine" (Built-in default, Earshot, Automatic). Earshot is disabled
+  with the install hint while it is not installed. The Sound step's own engine picker starts from this.
+- **Project Settings:** "Starting sound palette". The style bundle chooses the palette, which is only a
+  starting point: a project can pick another palette, or swap single sounds under `sound.overrides` in
+  `config.json`.
+- **Sound step panel:** the engine and palette used, the cue audit (ERROR/WARN/INFO), and a table of every
+  sound with its source, length, Earshot warnings, any fallback reason, and an in-browser play control.
 
 A **skipped** step shows greyed with the reason, and counts as satisfied for the steps after it. The
 mapping lives in one table in the backend (step id, applies-to, command, output file), so adding a
-channel or an optional step is a one-row change. Demo has its own input (`manifest.json` and
+style bundle or an optional step is a one-row change. Demo has its own input (`manifest.json` and
 screenshots) in place of narration editing; model it as a variant of steps 2 and 3, not a new step.
 
 Step status values: `not started`, `ready` (inputs exist), `running`, `needs review`, `approved`,
@@ -130,7 +146,7 @@ Layout, top to bottom:
 
 1. **Prompt box**, large, with placeholder "Describe your video, e.g. a teacher explaining Physics to
    kids". Below it:
-   - Channel selector (cards: Vantage, Markets, Promo, Launch, Lyric, Leaderbot, Demo, plus Auto).
+   - Style bundle selector (cards: Vantage, Markets, Promo, Launch, Lyric, Leaderbot, Demo, plus Auto).
      `Auto` lets the treatment step choose. Each card shows its format (portrait 1080x1920 or 16:9)
      and a one-line description from `CLAUDE.md`.
    - Target length (seconds), voice provider (edge, elevenlabs).
@@ -143,7 +159,7 @@ Layout, top to bottom:
    - **Paste a URL**; fetched by the existing URL ingestion.
    The typed text and the prompt box are the same thing at different lengths: a one-line prompt seeds
    `source.md` with that line.
-3. **Continue a project**: list of existing projects (`list` command), each row showing title, channel,
+3. **Continue a project**: list of existing projects (`list` command), each row showing title, style bundle,
    a step progress bar, last-run time, and a thumbnail if `output/final.mp4` exists. Click opens
    Screen 2.
 4. **Environment check strip**: green or red chips for Python venv, Node, ffmpeg, Claude Code, TTS
@@ -156,7 +172,7 @@ banner with the command to start it).
 ### Screen 2: Project overview (stepper)
 
 Persistent left rail listing steps 0 to 8 with status icons; the main area shows the current step.
-Header: project name, channel badge, resolution and fps, target length. Top-right: **Open folder**,
+Header: project name, style bundle badge, resolution and fps, target length. Top-right: **Open folder**,
 **Settings** (Screen 9).
 
 The main area on first open is a summary card for the next ready step: what it will do, what inputs it
@@ -173,8 +189,8 @@ Changing an approved item marks later steps `stale`.
 
 ### Screen 4: Narration review
 
-One card per scene: scene title, narration text (editable), word count with the channel's allowed range
-(from the `CHANNELS` dict in `review_video.py`), and a status chip (in range, too long, too short).
+One card per scene: scene title, narration text (editable), word count with the style bundle's allowed range
+(from the `STYLE_BUNDLES` dict in `review_video.py`), and a status chip (in range, too long, too short).
 Actions per card: **Regenerate**, **Edit**. Global: **Approve narration**.
 
 ### Screen 5: Scenes and review
@@ -217,9 +233,9 @@ it (check `src/storyboard/models.py` before promising this).
 
 ### Screen 9: Settings
 
-Per-project: channel, resolution (portrait or 16:9), fps, TTS provider and voice, brand colors and font
+Per-project: style bundle, resolution (portrait or 16:9), fps, TTS provider and voice, brand colors and font
 (maps to the `style` block in `config.json`). Global: path to venv, LLM model id (currently
-`claude-sonnet-5-5`), default channel. Changes write to `config.json`.
+`claude-sonnet-5-5`), default style bundle. Changes write to `config.json`.
 
 ### Screen 10: Jobs and logs
 
@@ -228,7 +244,7 @@ because failed steps must be debuggable without a terminal.
 
 ## 6. Key flows
 
-**A. New video from a prompt:** Screen 1 (prompt, channel, length) -> create project -> treatment
+**A. New video from a prompt:** Screen 1 (prompt, style bundle, length) -> create project -> treatment
 (Screen 3) -> approve -> script/narration (Screen 4) -> scenes and review (5) -> voiceover (6) ->
 storyboard (7) -> render and verify (8).
 
@@ -243,7 +259,7 @@ re-run voiceover only if narration changed, then storyboard, then render.
 |---|---|---|
 | GET | `/api/health` | environment checks for the Home strip |
 | GET | `/api/projects` | list with step statuses |
-| POST | `/api/projects` | create (prompt or document, channel, length) |
+| POST | `/api/projects` | create (prompt or document, style bundle, length) |
 | GET | `/api/projects/{p}` | config plus step statuses |
 | PUT | `/api/projects/{p}/config` | update settings |
 | GET/PUT | `/api/projects/{p}/{script,narration}` | read and edit the JSON |
@@ -260,13 +276,13 @@ Only one running job per project; a second `run` returns 409 with the running jo
 - Step run while its input changed: mark stale rather than silently using old data.
 - Backend restarted mid-job: the job record shows `interrupted`; the step offers Re-run.
 - Windows specifics: set `PYTHONUTF8=1`, read logs as UTF-8, use `.venv\Scripts\python.exe`.
-- Channel projects have different step sets and a registry key rule; the review step must surface it.
+- Style bundle projects have different step sets and a registry key rule; the review step must surface it.
 - LLM steps shell out to Claude Code; if it is not logged in, the job fails with its message shown.
 - Very long renders: the browser can close; the job continues and the page re-attaches on reload.
 
 ## 9. Decisions
 
-1. **Channel flow:** one nine-step list with required, optional and skipped steps (section 4).
+1. **Style bundle flow:** one ten-step list with required, optional and skipped steps (section 4).
 2. **Treatment step:** not in v1. Ship the thin slice first (section 10). The Home prompt only seeds
    `input/source.md`; Screen 3 shows the script half only.
 3. **Scene editing:** "Ask Claude to change this scene" only. Options for later are in 9a.
@@ -284,7 +300,7 @@ Only one running job per project; a second `run` returns 409 with the running jo
 | Text-strings editor | Edits on-screen words in a form (headline, labels, numbers) | Medium | Fast, free, safe, covers most small fixes | Needs a reliable way to find strings in the `.tsx` (a rough extractor exists in `review_video.py`) |
 | Props panel | Edits values (colors, durations, items) exposed as scene props | Medium to high | Live preview updates, no code touched | Scenes must be rewritten to take props; big change to templates and kits |
 | Code editor (Monaco) with live preview | Edits the `.tsx` directly | Medium | Full control, no model cost | Users must know React; easy to break the registry key rule or syntax |
-| Scene swap | Picks a different template scene from the kit for a beat | Medium | Fits the channel kits well | Limited to existing templates |
+| Scene swap | Picks a different template scene from the kit for a beat | Medium | Fits the style bundle kits well | Limited to existing templates |
 | Open in IDE | Button opens the file in VS Code | Very low | Power users already have this | Leaves the UI |
 
 Suggested next step after v1: the **text-strings editor**, since most post-review fixes are wording or

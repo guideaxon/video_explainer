@@ -1,11 +1,11 @@
-"""Scaffold a Leader Bot-channel video (portrait 1080x1920): scenes, starter narration, project config.
+"""Scaffold a Leader Bot style bundle video (portrait 1080x1920): scenes, starter narration, project config.
 
 Usage:
     python scripts/leaderbot_new_video.py <project> [--force]
 
 Copies ``templates/leaderbot_video/scenes/`` to ``projects/<project>/scenes/``, writes a starter
 ``narration/narrations.json`` (SAMPLE text for the placeholder "Leader bot") and sets the project config for
-the leaderbot channel (1080x1920, 30 fps, edge TTS). Replace the sample story and data, then run: voiceover,
+the leaderbot style bundle (1080x1920, 30 fps, edge TTS). Replace the sample story and data, then run: voiceover,
 ``scripts/leaderbot_finalize_storyboard.py``, render (see ``.claude/skills/leaderbot_make_video``).
 """
 
@@ -71,7 +71,7 @@ def main(argv: list[str] | None = None) -> int:
     narration_path.write_text(json.dumps({"scenes": scenes}, indent=2), encoding="utf-8")
 
     config = json.loads(config_path.read_text(encoding="utf-8"))
-    config["channel"] = "leaderbot"
+    config["style_bundle"] = "leaderbot"
     config.setdefault("video", {}).update({"resolution": {"width": 1080, "height": 1920}, "fps": 30, "target_duration_seconds": 30})
     config.setdefault("tts", {})["provider"] = "edge"
     config["style"] = {
@@ -84,7 +84,7 @@ def main(argv: list[str] | None = None) -> int:
 
     print(f"Scenes copied to {scenes_dir}")
     print(f"Starter narration written to {narration_path} (SAMPLE text, replace it)")
-    print('Project config set to "channel": "leaderbot", 1080x1920 portrait')
+    print('Project config set to "style_bundle": "leaderbot", 1080x1920 portrait')
     print(f"Next: edit scenes/data and narration, review_video, then: voiceover, leaderbot_finalize_storyboard, render {args.project}")
     return 0
 

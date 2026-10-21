@@ -1,6 +1,6 @@
 ---
 name: markets_make_video
-description: Produce a vertical (1080x1920, mobile-first) market-story explainer video for the Markets channel (charts, sectors, sentiment, money flows) in the Markets data-journalism style, from the template scenes. Use when asked to make or restyle a Markets channel video.
+description: Produce a vertical (1080x1920, mobile-first) market-story explainer video for the Markets style bundle (charts, sectors, sentiment, money flows) in the Markets data-journalism style, from the template scenes. Use when asked to make or restyle a Markets style bundle video.
 metadata:
   tags: markets, finance, charts, remotion, video
 ---
@@ -9,17 +9,17 @@ metadata:
 
 ## Requirements
 
-You must use the `video_make_core` skill first and follow its workflow with the channel details below.
+You must use the `video_make_core` skill first and follow its workflow with the style bundle details below.
 Do not continue from this file alone.
 
 Style source of truth: `docs/markets_video_style_guide.md` (read it first). Kit:
 `remotion/src/components/markets/kit.tsx`. Template scenes: `templates/markets_video/scenes/`.
 Scripts: `scripts/markets_new_video.py`, `scripts/markets_finalize_storyboard.py`.
-Only for the Markets channel; do not use it for Vantage (see `vantage_make_short`).
+Only for the Markets style bundle; do not use it for Vantage (see `vantage_make_short`).
 
-## Channel details for the core workflow
+## Style Bundle details for the core workflow
 
-- `<channel>` = `markets`.
+- `<style_bundle>` = `markets`.
 - **Step 3, gather real data** for every chart you keep (series, OHLC, sector moves, allocation, sentiment
   value, tickers) with a source and date. Never invent numbers. Footer source and date must be real.
 - **Step 4, narration**: 8 to 14 words of insight per scene. Keep one chart per scene. Keep a title, at

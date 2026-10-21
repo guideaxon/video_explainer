@@ -63,6 +63,16 @@ def main(argv: list[str] | None = None) -> int:
         ["ffmpeg", "-v", "error", "-i", str(video), "-f", "null", "-"], capture_output=True, text=True,
     )
     check(decode.returncode == 0 and not decode.stderr.strip(), "decodes without errors")
+
+    # Sound effects: a cue naming a missing file fails; Earshot warnings and clipped sounds are advice.
+    sys.path.insert(0, str(REPO_ROOT))
+    from src.sound.earshot_backend import audit_project
+
+    for level, message in audit_project(project_dir, config.get("video", {}).get("fps") or 30):
+        if level == "ERROR":
+            check(False, f"sound: {message}")
+        else:
+            print(f"{level:5} sound: {message}")
     return 1 if failures else 0
 
 

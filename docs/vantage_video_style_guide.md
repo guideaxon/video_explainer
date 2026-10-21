@@ -1,7 +1,7 @@
-# Vantage Channel: Video Style Guide
+# Vantage Style Bundle: Video Style Guide
 
-Style for the **Vantage** channel (GuideAxon's private, on-device AI life coach). Vertical shorts for
-TikTok, Reels and YouTube Shorts. Other channels get their own `<channel>_video_style_guide.md`,
+Style for the **Vantage** style bundle (GuideAxon's private, on-device AI life coach). Vertical shorts for
+TikTok, Reels and YouTube Shorts. Other style bundles get their own `<style_bundle>_video_style_guide.md`,
 templates and skill, so nothing here applies to them.
 
 Reference implementation: `templates/vantage_short/` (scenes) and
@@ -78,7 +78,7 @@ duplicate them word for word.
 ## 6. Pitfalls we already hit
 
 - The pipeline's own scene generator (before this style existed) produced empty, emoji-heavy
-  scenes. Use `"channel": "vantage"` in the project config.json (see the skill) so it uses this kit.
+  scenes. Use `"style_bundle": "vantage"` in the project config.json (see the skill) so it uses this kit.
 - `claude-sonnet-4-20250514` is retired. Use `claude-sonnet-5-5`.
 - On Windows set `PYTHONUTF8=1`, and make sure ffmpeg is on PATH.
 - Renders need a `projects/<name>/scenes/index.ts` stub exporting `PROJECT_SCENES`, even for
@@ -91,7 +91,7 @@ duplicate them word for word.
 <!-- LLM-BRIEF-START -->
 ## Scene brief for the scene generator (vantage style)
 
-You are writing one Remotion scene for the Vantage channel. Follow these rules exactly.
+You are writing one Remotion scene for the Vantage style bundle. Follow these rules exactly.
 
 IMPORTS. Use only React, remotion (`useCurrentFrame`, `Sequence`, `interpolate`) and the shared kit:
 `import { Scene, Art, Draw, Headline, Label, NeuralNet, PhonePath, LockGlyph, THEMES, SERIF, MONO, prog, usePop } from "@remotion-components/vantage/kit";`

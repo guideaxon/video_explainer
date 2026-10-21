@@ -1,5 +1,5 @@
 /**
- * Launch channel kit: building blocks for vertical (1080x1920, 9:16, mobile-first) playful consumer-app
+ * Launch style bundle kit: building blocks for vertical (1080x1920, 9:16, mobile-first) playful consumer-app
  * launch teasers: a friendly evolving mascot, bold two-line headlines, phone mockups with floating
  * callout chips, widgets, and a store pill. All art is original/abstract (placeholder mascot and UI).
  * See docs/launch_video_style_guide.md.

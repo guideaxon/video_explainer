@@ -53,24 +53,24 @@ This clip follows a **financial data-journalism style**, like a market-explainer
 | Feel | Cinematic and reflective | Informative and playful |
 | Format | 16:9 film | 16:9 explainer |
 
-The Vantage style is based on sample 1. Sample 2's ideas that could carry over are the paper-versus-terminal alternation, the hand-written annotations with arrows, and the gauge and big-number readouts, but only for channels that show data.
+The Vantage style is based on sample 1. Sample 2's ideas that could carry over are the paper-versus-terminal alternation, the hand-written annotations with arrows, and the gauge and big-number readouts, but only for style bundles that show data.
 
 ## Next step
-To build this as its own channel, I'd follow the same pattern as Vantage:
+To build this as its own style bundle, I'd follow the same pattern as Vantage:
 - a `<name>_video_style_guide.md`,
 - a `remotion/src/components/<name>/` kit with chart primitives,
 - `templates/<name>_short/`,
 - a skill, and
-- an entry in `channel_styles.py` and the `CLAUDE.md` table.
+- an entry in `style_bundles.py` and the `CLAUDE.md` table.
 
-What should this channel be called (for example `markets_`)? Is it 16:9 or vertical, and what content will it cover? I'd also ask for a higher-resolution copy, because I'm inferring fonts and exact colors from a 170-pixel-wide clip.
+What should this style bundle be called (for example `markets_`)? Is it 16:9 or vertical, and what content will it cover? I'd also ask for a higher-resolution copy, because I'm inferring fonts and exact colors from a 170-pixel-wide clip.
 
 ## Compare with PostAll - https://postall.live/evidence/   https://github.com/qingxuantang/postall
 PostAll and video_explainer aren't direct competitors. They cover different stages of content production, so the comparison is mostly about where each one is strong.
 
 ## What each one is
 - **PostAll** is a text-and-image content automation pipeline. It generates posts from a brand voice and content pillars. A second AI, the "Director", grades them. Posts that pass are scheduled and published to Twitter/X, LinkedIn, Instagram, Pinterest, Threads and Xiaohongshu. It runs as a daemon and has an RLHF-style feedback loop.
-- **video_explainer** (ours) turns documents into narrated, animated videos using Python and Remotion/React. We have five channel styles (vantage, markets, promo, launch, lyric), each with a style guide, component kit, templates and skill.
+- **video_explainer** (ours) turns documents into narrated, animated videos using Python and Remotion/React. We have five style bundles (vantage, markets, promo, launch, lyric), each with a style guide, component kit, templates and skill.
 
 ## Where PostAll is stronger
 - **Publishing:** it goes all the way to the platform APIs. We stop at a rendered file.
@@ -83,7 +83,7 @@ PostAll and video_explainer aren't direct competitors. They cover different stag
 
 ## Where we are stronger
 - **Video:** PostAll doesn't produce video at all. Ours is a full pipeline of storyboard, narration, voiceover and Remotion rendering.
-- **Craft and consistency:** each channel has its own style guide, kit and templates, and styles are never mixed. PostAll's per-brand control is mostly a config file plus prompts.
+- **Craft and consistency:** each style bundle has its own style guide, kit and templates, and styles are never mixed. PostAll's per-brand control is mostly a config file plus prompts.
 - **Visual verification:** we inspect rendered frames at mid-beat and end-of-beat. PostAll's Director only reviews content for quality, not rendered output.
 - **Deterministic output:** templates and kits give predictable, on-brand results. Pure LLM generation drifts more.
 - **Code-driven animation:** React components are reusable and testable, and they give precise timing control.

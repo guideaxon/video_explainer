@@ -37,21 +37,21 @@ def _create(client, **body):
 
 
 # ----- step status -------------------------------------------------------------------------------
-def test_standard_project_shows_nine_steps_with_treatment_hidden_and_review_skipped(client):
+def test_standard_project_shows_ten_steps_with_treatment_hidden_and_review_skipped(client):
     c, projects = client
     p = _create(c)
     steps = _by_id(p["steps"])
     assert list(steps) == ["treatment", "script", "narration", "scenes", "review", "voiceover",
-                           "storyboard", "render", "verify"]
+                           "storyboard", "sound", "render", "verify"]
     assert steps["treatment"]["status"] == "hidden"
-    assert steps["review"]["status"] == "skipped"  # the review script covers channel projects only
+    assert steps["review"]["status"] == "skipped"  # the review script covers style bundle projects only
     assert steps["script"]["status"] == "ready"
     assert steps["narration"]["status"] == "not started"
 
 
-def test_channel_project_skips_script_and_makes_narration_manual(client):
+def test_style_bundle_project_skips_script_and_makes_narration_manual(client):
     c, _ = client
-    steps = _by_id(_create(c, channel="promo")["steps"])
+    steps = _by_id(_create(c, style_bundle="promo")["steps"])
     assert steps["script"]["status"] == "skipped"
     assert steps["narration"]["mode"] == "manual" and not steps["narration"]["can_run"]
     assert steps["scenes"]["can_run"]  # scaffold available until scenes/index.ts exists
@@ -60,7 +60,7 @@ def test_channel_project_skips_script_and_makes_narration_manual(client):
 
 def test_scenes_scaffold_not_offered_once_scenes_exist(client):
     c, projects = client
-    _create(c, channel="promo", id="vid")
+    _create(c, style_bundle="promo", id="vid")
     _touch(projects / "vid" / "scenes" / "index.ts")
     scenes = _by_id(c.get("/api/projects/vid").json()["steps"])["scenes"]
     assert scenes["mode"] == "manual" and not scenes["can_run"]
@@ -84,6 +84,83 @@ def test_output_then_approval_then_stale_when_upstream_changes(client):
     assert steps["script"]["status"] == "needs review"  # edited after approval
 
 
+def test_optional_sound_step_never_blocks_render_or_counts_until_it_has_run(client):
+    c, projects = client
+    _create(c, id="vid")
+    d = projects / "vid"
+    for rel, age in (("script/script.json", 90), ("narration/narrations.json", 80), ("scenes/index.ts", 70),
+                     ("voiceover/manifest.json", 60), ("storyboard/storyboard.json", 50)):
+        _touch(d / rel, "{}", age=age)
+    steps = _by_id(step_statuses(d, load_config(d), []))
+    assert steps["sound"]["optional"] and steps["sound"]["status"] == "ready"
+    assert steps["render"]["status"] == "ready"  # not "not started": sound was skipped, not required
+    before = c.get("/api/projects/vid").json()["progress"].split("/")[1]
+
+    _touch(d / "sfx" / "manifest.json", "{}", age=10)
+    assert _by_id(step_statuses(d, load_config(d), []))["sound"]["status"] == "done"
+    assert int(c.get("/api/projects/vid").json()["progress"].split("/")[1]) == int(before) + 1  # now counted
+
+    _touch(d / "storyboard" / "storyboard.json", "{}", age=0)  # storyboard regenerated after the sound step
+    assert _by_id(step_statuses(d, load_config(d), []))["sound"]["status"] == "stale"
+
+
+def test_sound_engine_option_is_validated_and_earshot_needs_to_be_installed(client, monkeypatch):
+    from src.sound import earshot_backend as eb
+
+    c, _ = client
+    _create(c, id="vid")
+    assert c.post("/api/projects/vid/steps/narration/run", json={"sound_engine": "builtin"}).status_code == 400
+    assert c.post("/api/projects/vid/steps/sound/run", json={"sound_engine": "nope"}).status_code == 400
+    monkeypatch.setattr(eb, "status", lambda refresh=False: eb.Status(False, detail="not installed", fix="pip install"))
+    r = c.post("/api/projects/vid/steps/sound/run", json={"sound_engine": "earshot"})
+    assert r.status_code == 400 and "not installed" in r.json()["detail"]
+
+
+def test_a_server_on_another_projects_folder_refuses_to_run_steps(client):
+    # Steps shell out to the CLI, which reads the repo's projects/ folder; running them for a project in
+    # any other folder would silently modify a different project of the same name.
+    c, projects = client
+    _create(c, id="vid")
+    r = c.post("/api/projects/vid/steps/script/run")
+    assert r.status_code == 409 and "projects/" in r.json()["detail"]
+    assert not (projects / "vid" / ".ui" / "jobs").exists()  # nothing was started
+
+
+def test_health_reports_earshot_as_an_optional_chip(client, monkeypatch):
+    from src.sound import earshot_backend as eb
+
+    c, _ = client
+    monkeypatch.setattr(eb, "status", lambda refresh=False: eb.Status(False, detail="not installed", fix="Optional: pip install"))
+    chip = c.get("/api/health").json()["earshot"]
+    assert chip["optional"] is True and chip["ok"] is False and "pip install" in chip["fix"]
+    monkeypatch.setattr(eb, "status", lambda refresh=False: eb.Status(True, "x/earshot", "201 sounds in the bank"))
+    chip = c.get("/api/health").json()["earshot"]
+    assert chip["ok"] is True and chip["fix"] == ""
+
+
+def test_sound_palette_setting_roundtrip_and_validation(client):
+    c, _ = client
+    _create(c, id="vid", style_bundle="markets")
+    assert c.get("/api/projects/vid").json()["sound"] == {
+        "palette": "markets", "override": "", "palettes": ["default", "vantage", "markets", "promo", "launch", "lyric", "leaderbot", "demo"],
+    }
+    assert c.put("/api/projects/vid/settings", json={"sound_palette": "lyric"}).json()["sound"]["palette"] == "lyric"
+    assert c.put("/api/projects/vid/settings", json={"sound_palette": "nope"}).status_code == 400
+    cleared = c.put("/api/projects/vid/settings", json={"sound_palette": ""}).json()["sound"]
+    assert cleared["palette"] == "markets" and cleared["override"] == ""  # back to following the style bundle
+
+
+def test_sound_endpoint_returns_manifest_and_audit(client):
+    c, projects = client
+    _create(c, id="vid")
+    assert c.get("/api/projects/vid/sound").json()["manifest"] is None
+    _touch(projects / "vid" / "sfx" / "manifest.json", json.dumps(
+        {"engine": "builtin", "palette": "default", "generated": 1, "earshot": "", "sounds": {}}))
+    body = c.get("/api/projects/vid/sound").json()
+    # A manifest with no cues means the Sound step ran but nothing will play: a warning, not just info.
+    assert body["manifest"]["engine"] == "builtin" and body["audit"][0][0] == "WARN"
+
+
 # ----- API ---------------------------------------------------------------------------------------
 def test_create_writes_source_from_prompt_and_typed_text_wins(client):
     c, projects = client
@@ -95,7 +172,7 @@ def test_create_writes_source_from_prompt_and_typed_text_wins(client):
 
 def test_create_rejects_vantage_bad_ids_and_duplicates(client):
     c, _ = client
-    assert c.post("/api/projects", json={"title": "x", "channel": "vantage"}).status_code == 400
+    assert c.post("/api/projects", json={"title": "x", "style_bundle": "vantage"}).status_code == 400
     assert c.post("/api/projects", json={"title": "x", "id": "../evil"}).status_code == 400
     _create(c, id="dup")
     assert c.post("/api/projects", json={"title": "x", "id": "dup"}).status_code == 409
@@ -132,10 +209,10 @@ def test_unknown_project_and_step_and_manual_step_are_rejected(client):
     c, _ = client
     assert c.get("/api/projects/nope").status_code == 404
     assert c.get("/api/projects/..").status_code == 404
-    _create(c, id="vid", channel="promo")
+    _create(c, id="vid", style_bundle="promo")
     assert c.post("/api/projects/vid/steps/bogus/run").status_code == 404
-    assert c.post("/api/projects/vid/steps/narration/run").status_code == 400  # manual for channels
-    assert c.post("/api/projects/vid/steps/script/run").status_code == 400  # skipped for channels
+    assert c.post("/api/projects/vid/steps/narration/run").status_code == 400  # manual for style bundles
+    assert c.post("/api/projects/vid/steps/script/run").status_code == 400  # skipped for style bundles
     assert c.post("/api/projects/vid/steps/render/run", json={"force": True}).status_code == 400
 
 
@@ -187,7 +264,7 @@ def test_failed_job_marks_step_failed_and_success_of_review_counts_as_done(clien
     from ui.server.jobs import Job
 
     c, projects = client
-    _create(c, id="vid", channel="promo")
+    _create(c, id="vid", style_bundle="promo")
     d = projects / "vid"
 
     def job(step, status, finished):
@@ -203,7 +280,7 @@ def test_review_run_does_not_make_later_steps_stale(client):
     from ui.server.jobs import Job
 
     c, projects = client
-    _create(c, id="vid", channel="promo")
+    _create(c, id="vid", style_bundle="promo")
     d = projects / "vid"
     _touch(d / "narration" / "narrations.json", age=100)
     _touch(d / "voiceover" / "manifest.json", age=50)
@@ -213,11 +290,11 @@ def test_review_run_does_not_make_later_steps_stale(client):
     assert steps["voiceover"]["status"] == "needs review"  # not stale
 
 
-def test_unsupported_channel_is_flagged_and_cannot_run(client):
+def test_unsupported_style_bundle_is_flagged_and_cannot_run(client):
     c, projects = client
     _create(c, id="vid")
     cfg = json.loads((projects / "vid" / "config.json").read_text(encoding="utf-8"))
-    cfg["channel"] = "vantage"
+    cfg["style_bundle"] = "vantage"
     (projects / "vid" / "config.json").write_text(json.dumps(cfg), encoding="utf-8")
     assert c.get("/api/projects/vid").json()["supported"] is False
     assert c.post("/api/projects/vid/steps/voiceover/run").status_code == 400
@@ -225,9 +302,17 @@ def test_unsupported_channel_is_flagged_and_cannot_run(client):
 
 def test_files_written_together_by_one_command_are_not_stale(client):
     c, projects = client
-    _create(c, id="vid", channel="promo")
+    _create(c, id="vid", style_bundle="promo")
     d = projects / "vid"
     _touch(d / "scenes" / "index.ts", age=0.05)  # scaffold writes scenes, then narration, ms apart
     _touch(d / "narration" / "narrations.json", age=0.0)
     steps = _by_id(step_statuses(d, load_config(d), []))
     assert steps["scenes"]["status"] == "needs review"
+
+
+def test_steps_expose_copyable_cli_commands(client):
+    c, _ = client
+    steps = _by_id(_create(c, id="vid")["steps"])
+    assert steps["script"]["commands"] == [{"label": "Copy command", "text": "python -m src.cli script vid"}]
+    assert [x["text"] for x in steps["render"]["commands"]] == ["cd remotion && npm run dev", "python -m src.cli render vid"]
+    assert _by_id(_create(c, id="vid2", style_bundle="promo")["steps"])["script"]["commands"] == []

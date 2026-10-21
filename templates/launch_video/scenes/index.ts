@@ -1,5 +1,5 @@
 /**
- * Launch channel scene registry (template, portrait 1080x1920). Keys must equal the slug of each scene
+ * Launch style bundle scene registry (template, portrait 1080x1920). Keys must equal the slug of each scene
  * title (see src/cli/main.py _title_to_scene_key); they are listed unquoted and component names end in
  * "Scene" because the storyboard CLI and render-utils.mjs parse this registry with regexes.
  */

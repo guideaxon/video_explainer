@@ -1,11 +1,11 @@
-"""Scaffold a Launch-channel video (portrait 1080x1920): scenes, starter narration, project config.
+"""Scaffold a Launch style bundle video (portrait 1080x1920): scenes, starter narration, project config.
 
 Usage:
     python scripts/launch_new_video.py <project> [--force]
 
 Copies ``templates/launch_video/scenes/`` to ``projects/<project>/scenes/``, writes a starter
 ``narration/narrations.json`` (SAMPLE text for the placeholder app "Gymbud" and mascot "Bud") and sets
-the project config for the launch channel (1080x1920, 30 fps, edge TTS). Replace the sample brand,
+the project config for the launch style bundle (1080x1920, 30 fps, edge TTS). Replace the sample brand,
 copy and content, then run: voiceover, ``scripts/launch_finalize_storyboard.py``, render.
 """
 
@@ -72,7 +72,7 @@ def main(argv: list[str] | None = None) -> int:
     narration_path.write_text(json.dumps({"scenes": scenes}, indent=2), encoding="utf-8")
 
     config = json.loads(config_path.read_text(encoding="utf-8"))
-    config["channel"] = "launch"
+    config["style_bundle"] = "launch"
     config.setdefault("video", {}).update({"resolution": {"width": 1080, "height": 1920}, "fps": 30, "target_duration_seconds": 30})
     config.setdefault("tts", {})["provider"] = "edge"
     config["style"] = {
@@ -85,7 +85,7 @@ def main(argv: list[str] | None = None) -> int:
 
     print(f"Scenes copied to {scenes_dir}")
     print(f"Starter narration written to {narration_path} (SAMPLE text, replace it)")
-    print('Project config set to "channel": "launch", 1080x1920 portrait')
+    print('Project config set to "style_bundle": "launch", 1080x1920 portrait')
     print(f"Next: edit scenes/data and narration, then: voiceover, launch_finalize_storyboard, render {args.project}")
     return 0
 

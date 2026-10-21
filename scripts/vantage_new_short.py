@@ -1,10 +1,10 @@
-"""Scaffold a Vantage-channel short: copy the reference scenes into a project variant.
+"""Scaffold a Vantage style bundle short: copy the reference scenes into a project variant.
 
 Usage:
     python scripts/vantage_new_short.py <project> [--variant summary] [--force]
 
 Creates ``projects/<project>/short/<variant>/scenes/`` from ``templates/vantage_short/scenes/``,
-sets ``"channel": "vantage"`` in the project config and adds the stub
+sets ``"style_bundle": "vantage"`` in the project config and adds the stub
 ``projects/<project>/scenes/index.ts`` that the renderer requires. Edit the copied scenes to match
 your narration, then render with ``python -m src.cli render <project> --short --variant <v>``.
 """
@@ -50,7 +50,7 @@ def main(argv: list[str] | None = None) -> int:
         shutil.copy2(src, scenes_dir / src.name)
 
     config = json.loads(config_path.read_text(encoding="utf-8"))
-    config["channel"] = "vantage"
+    config["style_bundle"] = "vantage"
     config_path.write_text(json.dumps(config, indent=2), encoding="utf-8")
 
     stub = project_dir / "scenes" / "index.ts"
@@ -59,7 +59,7 @@ def main(argv: list[str] | None = None) -> int:
         stub.write_text(SCENES_STUB, encoding="utf-8")
 
     print(f"Scenes copied to {scenes_dir}")
-    print('Project config set to "channel": "vantage"')
+    print('Project config set to "style_bundle": "vantage"')
     print("Next: edit the Beat*Scene.tsx files to match the narration, then render.")
     return 0
 

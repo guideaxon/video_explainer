@@ -1,13 +1,13 @@
-# Leader Bot Channel: Video Style Guide
+# Leader Bot Style Bundle: Video Style Guide
 
-Style for the **Leader Bot** channel: short, punchy business explainers and satire starring a pixel "Leader bot",
-**portrait 1080x1920 (9:16, mobile-first)** for TikTok, Reels and Shorts, 25 to 35 s. Other channels
+Style for the **Leader Bot** style bundle: short, punchy business explainers and satire starring a pixel "Leader bot",
+**portrait 1080x1920 (9:16, mobile-first)** for TikTok, Reels and Shorts, 25 to 35 s. Other style bundles
 (Vantage, Markets, Promo, Launch, Lyric) have their own guide, kit and skill; do not mix styles.
 
 Derived from the reference clip `projects/samples/3/171138_1_08db-ceo-bot_wg_720p.mp4` (720x720, 2 s loop with
 audio): a 3x3 mosaic of flat pixel-art businessperson avatars on loud primary-colour tiles, visible grid lines,
 every tile glitching between palettes while one tile stays a clean smooth vector face. The look is read from
-it directly (it is square; this channel re-lays it out for phones). **Only the style is reused**: the bot,
+it directly (it is square; this style bundle re-lays it out for phones). **Only the style is reused**: the bot,
 palettes and copy here are original placeholders.
 
 Implementation: kit `remotion/src/components/leaderbot/kit.tsx`, template scenes `templates/leaderbot_video/scenes/`,
@@ -87,7 +87,7 @@ Drop or repeat the data scenes to fit the story; keep the hook, one stat or char
   `storyboard` step), then `render`.
 - Output loudness is about -20 LUFS; normalise for social with
   `ffmpeg -i final.mp4 -c:v copy -af loudnorm=I=-14:TP=-1.5:LRA=11 -c:a aac -b:a 192k final_social.mp4`.
-- The shorts scene generator hook (`src/short/channel_styles.py`) is Vantage-only; Leader Bot scenes are
+- The shorts scene generator hook (`src/short/style_bundles.py`) is Vantage-only; Leader Bot scenes are
   hand-adapted from the template.
 
 <!-- LLM-BRIEF-START -->

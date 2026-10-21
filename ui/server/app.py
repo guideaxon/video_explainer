@@ -20,10 +20,10 @@ from pydantic import BaseModel, Field
 
 from .jobs import BusyError, JobManager
 from .projects import (
-    NAME_RE, approve, keep_user_settings, load_config, project_channel, project_path, project_summary, resolve_path,
+    NAME_RE, approve, keep_user_settings, load_config, project_style_bundle, project_path, project_summary, resolve_path,
     save_config, slugify, source_path, step_statuses,
 )
-from .steps import FULL_CHANNELS, STEP_IDS, Ctx, step_by_id
+from .steps import FULL_STYLE_BUNDLES, STEP_IDS, Ctx, step_by_id
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 TTS_PROVIDERS = ("edge", "elevenlabs", "mock")
@@ -34,7 +34,7 @@ DOC_KINDS = {"script": "@script", "narration": "@narration"}
 class CreateProject(BaseModel):
     title: str = Field(min_length=1, max_length=120)
     id: str | None = None
-    channel: str = ""  # "" = standard project
+    style_bundle: str = ""  # "" = standard project
     prompt: str = ""  # a one-line idea; seeds input/source.md
     source_text: str = ""  # typed or pasted Markdown; wins over prompt
     target_seconds: int = Field(default=90, ge=10, le=1800)
@@ -53,9 +53,14 @@ class RunOptions(BaseModel):
     force: bool = False
     provider: str | None = None  # voiceover only
     preview: bool = False  # render only
+    sound_engine: str | None = None  # sound only: auto, builtin or earshot
+
+
+SOUND_ENGINES = ("auto", "builtin", "earshot")
 
 
 class SettingsBody(BaseModel):
+    sound_palette: str | None = None  # "" clears the override (falls back to the style bundle's palette)
     title: str | None = None
     target_seconds: int | None = Field(default=None, ge=10, le=1800)
     tts_provider: str | None = None
@@ -112,8 +117,13 @@ def create_app(
             edge = True
         except ImportError:
             edge = False
+        from src.sound import earshot_backend as eb
+
+        es = eb.status()
         return {
             "python": chip(True, sys.version.split()[0], ""),
+            # Optional: a missing Earshot is not a problem, so the UI shows it neutral, not red.
+            "earshot": {**chip(es.available, es.detail or "installed", es.fix), "optional": True},
             "node": chip(bool(shutil.which("node")), shutil.which("node") or "not found", "Install Node 22"),
             "ffmpeg": chip(bool(shutil.which("ffmpeg")), shutil.which("ffmpeg") or "not found",
                            "winget install Gyan.FFmpeg"),
@@ -122,7 +132,7 @@ def create_app(
             "tts_edge": chip(edge, "edge-tts" if edge else "missing", "pip install edge-tts"),
             "remotion": chip((repo_root / "remotion" / "node_modules").is_dir(), "remotion/node_modules",
                              "cd remotion && npm install"),
-            "channels": list(FULL_CHANNELS),
+            "style_bundles": list(FULL_STYLE_BUNDLES),
         }
 
     # ----- projects ------------------------------------------------------------------------------
@@ -143,8 +153,8 @@ def create_app(
     def create_project(body: CreateProject) -> dict:
         from src.project.loader import create_project as make
 
-        if body.channel and body.channel not in FULL_CHANNELS:
-            raise HTTPException(400, f"Unsupported channel {body.channel!r}. Use one of {list(FULL_CHANNELS)} "
+        if body.style_bundle and body.style_bundle not in FULL_STYLE_BUNDLES:
+            raise HTTPException(400, f"Unsupported style bundle {body.style_bundle!r}. Use one of {list(FULL_STYLE_BUNDLES)} "
                                      "or leave it empty. Vantage shorts are run from the CLI.")
         if body.tts_provider not in TTS_PROVIDERS:
             raise HTTPException(400, f"tts_provider must be one of {list(TTS_PROVIDERS)}")
@@ -159,8 +169,8 @@ def create_app(
         config = load_config(d)
         config["video"]["target_duration_seconds"] = body.target_seconds
         config["tts"]["provider"] = body.tts_provider
-        if body.channel:
-            config["channel"] = body.channel
+        if body.style_bundle:
+            config["style_bundle"] = body.style_bundle
         save_config(d, config)
         text = body.source_text.strip() or body.prompt.strip()
         if text:
@@ -183,6 +193,15 @@ def create_app(
         config = load_config(d)
         if body.tts_provider and body.tts_provider not in TTS_PROVIDERS:
             raise HTTPException(400, f"tts_provider must be one of {list(TTS_PROVIDERS)}")
+        if body.sound_palette is not None:
+            from src.sound import earshot_backend as eb
+
+            if body.sound_palette and body.sound_palette not in eb.palette_names():
+                raise HTTPException(400, f"sound_palette must be one of {eb.palette_names()} or empty")
+            if body.sound_palette:
+                config.setdefault("sound", {})["palette"] = body.sound_palette
+            else:
+                config.get("sound", {}).pop("palette", None)
         if body.title is not None:
             config["title"] = body.title
         if body.target_seconds is not None:
@@ -242,9 +261,9 @@ def create_app(
         if step is None:
             raise HTTPException(404, f"Unknown step {step_id!r}; use one of {list(STEP_IDS)}")
         config = load_config(d)
-        if project_channel(config) not in ("", *FULL_CHANNELS):
-            raise HTTPException(400, f"Channel {project_channel(config)!r} is run from the CLI, not this UI")
-        ctx = Ctx(name, project_channel(config), d)
+        if project_style_bundle(config) not in ("", *FULL_STYLE_BUNDLES):
+            raise HTTPException(400, f"Style bundle {project_style_bundle(config)!r} is run from the CLI, not this UI")
+        ctx = Ctx(name, project_style_bundle(config), d)
         variant = step.variant(ctx)
         argv = variant.build(ctx) if variant.build else None
         if variant.mode != "run" or argv is None:
@@ -261,6 +280,21 @@ def create_app(
             if step_id != "render":
                 raise HTTPException(400, "preview applies to render only")
             argv = [*argv, "--preview"]
+        if body.sound_engine:
+            if step_id != "sound" or body.sound_engine not in SOUND_ENGINES:
+                raise HTTPException(400, f"sound_engine applies to the sound step only: {list(SOUND_ENGINES)}")
+            if body.sound_engine == "earshot":
+                from src.sound import earshot_backend as eb
+
+                es = eb.status()
+                if not es.available:
+                    raise HTTPException(400, f"Earshot is not available ({es.detail}). {es.fix}")
+            argv = [*argv, "--engine", body.sound_engine]
+        # Steps run the CLI and scripts, which read the repo's own projects/ folder. A server pointed at any
+        # other folder would run them against the wrong project, so refuse rather than write there.
+        if projects_dir.resolve() != (repo_root / "projects").resolve():
+            raise HTTPException(409, f"This server's projects folder ({projects_dir}) is not the repo's projects/ "
+                                     "folder, and steps always act on the latter, so it cannot run steps")
         is_scaffold = argv[0].startswith("scripts/") and argv[0].endswith("_new_video.py")
         try:
             job = jobs.start(name, step_id, argv, on_success=keep_user_settings(d) if is_scaffold else None)
@@ -323,6 +357,16 @@ def create_app(
         if not jobs.cancel(job):
             raise HTTPException(409, f"Job is not running (status: {job.status})")
         return {"cancelled": job_id}
+
+    # ----- sound ---------------------------------------------------------------------------------
+    @app.get("/api/projects/{name}/sound")
+    def get_sound(name: str) -> dict:
+        """What the Sound step produced: the manifest (engine, palette, per-sound detail) and its audit."""
+        from src.sound import earshot_backend as eb
+
+        d = need_project(name)
+        fps = load_config(d).get("video", {}).get("fps") or 30
+        return {"manifest": eb.read_manifest(d / "sfx"), "audit": eb.audit_project(d, fps)}
 
     # ----- files (video, audio, images) ----------------------------------------------------------
     @app.get("/api/projects/{name}/files/{path:path}")

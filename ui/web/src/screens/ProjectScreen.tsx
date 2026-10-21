@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { api } from "../api";
+import CopyButton from "../components/CopyButton";
 import SettingsPanel from "../components/SettingsPanel";
 import SourceEditor from "../components/SourceEditor";
 import StepPanel from "../components/StepPanel";
@@ -54,7 +55,13 @@ export default function ProjectScreen({ id }: { id: string }) {
     <div className="page wide">
       <div className="proj-head">
         <h1>{project.title}</h1>
-        {project.channel && <span className="badge">{project.channel}</span>}
+        {project.style_bundle && <span className="badge">{project.style_bundle}</span>}
+        {!project.style_bundle && (
+          <>
+            <CopyButton text={`python -m src.cli create ${project.id}`} label="Copy create-project command" />
+            <CopyButton text={`python -m src.cli generate ${project.id}`} label="Copy generate-video command" />
+          </>
+        )}
       </div>
       <div className="stats" aria-label="Project summary">
         <div className="stat"><strong>{project.progress}</strong><span>Steps done</span></div>
@@ -75,7 +82,7 @@ export default function ProjectScreen({ id }: { id: string }) {
               title={s.status === "skipped" ? s.note : undefined}
             >
               <span className="icon">{ICON[s.status] ?? "○"}</span>
-              <span className="rail-text">{i + 1}. {s.title}<small>{s.status}</small></span>
+              <span className="rail-text">{i + 1}. {s.title}<small>{s.optional && !s.output_time ? "optional" : s.status}</small></span>
             </button>
           ))}
           <button className={`rail-item ${selected === "settings" ? "active" : ""}`} onClick={() => setSelected("settings")}>

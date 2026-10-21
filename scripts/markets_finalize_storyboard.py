@@ -1,4 +1,4 @@
-"""Tighten pacing and build the storyboard for a Markets-channel video.
+"""Tighten pacing and build the storyboard for a Markets style bundle video.
 
 Usage:
     python scripts/markets_finalize_storyboard.py <project>

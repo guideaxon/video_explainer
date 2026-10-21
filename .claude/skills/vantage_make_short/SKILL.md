@@ -1,6 +1,6 @@
 ---
 name: vantage_make_short
-description: Produce a vertical TikTok/Reels/Shorts video for the Vantage channel (GuideAxon private on-device AI life coach) in the Vantage editorial line-art style. Use when asked to make, redo or restyle a Vantage short or marketing video.
+description: Produce a vertical TikTok/Reels/Shorts video for the Vantage style bundle (GuideAxon private on-device AI life coach) in the Vantage editorial line-art style. Use when asked to make, redo or restyle a Vantage short or marketing video.
 metadata:
   tags: vantage, shorts, tiktok, remotion, video
 ---
@@ -9,7 +9,7 @@ metadata:
 
 Style source of truth: `docs/vantage_video_style_guide.md` (read it first, in full). Shared
 building blocks: `remotion/src/components/vantage/kit.tsx`. Reference scenes:
-`templates/vantage_short/scenes/`. Only use this skill for the Vantage channel.
+`templates/vantage_short/scenes/`. Only use this skill for the Vantage style bundle.
 
 ## Environment (Windows)
 
@@ -30,13 +30,13 @@ $env:PYTHONUTF8 = "1"                       # required for CLI output
    Then **edit `short/<v>/short_script.json`** by hand: set `condensed_narration` (70 to 80 words,
    follows the 6-beat structure in the guide), `cta_narration` ("... Link in bio."),
    `cta_text`, `hook_question`. The generated CTA ("full breakdown in the description") is wrong
-   for this channel.
+   for this style bundle.
 5. **Voice**: `python -m src.cli short voiceover <project> --variant <v> --provider edge`.
    Check the duration is about 36 to 45 s.
 6. **Scaffold scenes**: `python scripts/vantage_new_short.py <project> --variant <v>`
-   (copies the reference scenes, sets `"channel": "vantage"`, adds the renderer stub).
+   (copies the reference scenes, sets `"style_bundle": "vantage"`, adds the renderer stub).
    Alternative: let the generator write them with the style (`python -m src.cli short storyboard
-   <project> --variant <v>` after setting the channel); review the result critically, it is a
+   <project> --variant <v>` after setting the style bundle); review the result critically, it is a
    starting point, not final.
 7. **Storyboard**: `python -m src.cli short storyboard <project> --variant <v> --skip-custom-scenes`
    (builds beats from the word timestamps; keeps your hand-edited scenes). Then read

@@ -1,8 +1,8 @@
-# Video Pre-render Review Checklist (all full-video channels)
+# Video Pre-render Review Checklist (all full-video style bundles)
 
 Run before `voiceover`, after scenes and narration are edited. Two parts: a script for hard checks and a
-reviewer pass (Claude) for claims and tone. Channel-specific copy and data rules live in each
-`docs/<channel>_video_style_guide.md` (section "Copy and data rules"); this file is only the common part.
+reviewer pass (Claude) for claims and tone. Style-bundle-specific copy and data rules live in each
+`docs/<style_bundle>_video_style_guide.md` (section "Copy and data rules"); this file is only the common part.
 
 ```powershell
 $env:PYTHONUTF8 = "1"
@@ -11,11 +11,11 @@ $env:PYTHONUTF8 = "1"
 
 ## 1. Hard checks (script, blocks on ERROR)
 
-- Channel set in `config.json` and resolution is 1080x1920.
+- Style bundle set in `config.json` and resolution is 1080x1920.
 - Every scene title has a registry key (title slug) in `scenes/index.ts`; components end in `Scene`.
 - No placeholder text left (SAMPLE, lorem ipsum, TODO, sample domains) in scenes or narration.
-- Channel-required phrases present (Markets: "not financial advice").
-- Warnings: spoken words per scene outside the channel range; registry keys with no scene.
+- Style-bundle-required phrases present (Markets: "not financial advice").
+- Warnings: spoken words per scene outside the style bundle range; registry keys with no scene.
 
 ## 2. Reviewer pass (Claude, advisory)
 
@@ -29,11 +29,11 @@ For each problem report: **scene, original text, suggested replacement, reason**
 2. **Fabricated proof**: invented testimonials, users, quotes or case studies with no source.
 3. **Narration vs screen**: narration states a figure that the scene shows differently, or the scene
    shows data the narration never supports.
-4. **Style**: wording that breaks the channel style guide (tone, person, jargon, banned claims).
+4. **Style**: wording that breaks the style guide (tone, person, jargon, banned claims).
 5. **Stale references**: dates, "today", "this week" or product names that will be wrong when published.
 6. **Overclaims**: superlatives and guarantees ("best", "guaranteed", "never fails") with no basis.
 
-## Demo channel addition
+## Demo style bundle addition
 
 Scenes come from `manifest.json`, which the script validates (files exist, regions inside 0..1, unique
 titles, no TODO). In the reviewer pass, **read each screenshot** and compare it with that scene's caption and

@@ -20,7 +20,8 @@ dependencies = [
     "click>=8.0",
     "edge-tts>=6.0",
     "numpy>=1.21.0",
-    "pillow>=10.0",  # Demo channel: decode screenshots, read their size, downsample for colour analysis
+    "scipy>=1.11",  # src/sound/generator.py (SFX filters); `import src.sound` fails without it
+    "pillow>=10.0",  # Demo style bundle: decode screenshots, read their size, downsample for colour analysis
     "pymupdf>=1.23.0",
     "beautifulsoup4>=4.12.0",
 ]
@@ -39,6 +40,11 @@ ui = [
 ]
 whisper = [
     "openai-whisper>=20231117",
+]
+# Optional, better SFX (docs/SOUND.md). About 1.2 GB (PyTorch CPU). Not the PyPI package named "earshot",
+# which is an unrelated voice-activity detector, so install from the repo, pinned to the tested commit.
+earshot = [
+    "earshot @ git+https://github.com/Leonxlnx/earshot@925ebe56a1b755e5d354ab642bb8f344440cfa9c",
 ]
 
 [project.scripts]

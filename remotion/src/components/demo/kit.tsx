@@ -1,5 +1,5 @@
 /**
- * Demo channel kit: a data-driven product demo built from real screenshots (no screen recording).
+ * Demo style bundle kit: a data-driven product demo built from real screenshots (no screen recording).
  * One component, `DemoScene`, renders an intro, a screenshot step or an outro from `manifest.json`;
  * the scene files in a project are generated from that manifest (scripts/demo_build_scenes.py).
  * Works at 1920x1080 (default) and 1080x1920: all layout comes from `useVideoConfig()`.

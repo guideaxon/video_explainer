@@ -1,4 +1,4 @@
-"""Tighten pacing and build the storyboard for a Leader Bot-channel video.
+"""Tighten pacing and build the storyboard for a Leader Bot style bundle video.
 
 Usage:
     python scripts/leaderbot_finalize_storyboard.py <project>

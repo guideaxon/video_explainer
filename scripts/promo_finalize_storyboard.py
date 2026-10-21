@@ -1,4 +1,4 @@
-"""Tighten pacing and build the storyboard for a Promo-channel video.
+"""Tighten pacing and build the storyboard for a Promo style bundle video.
 
 Usage:
     python scripts/promo_finalize_storyboard.py <project>

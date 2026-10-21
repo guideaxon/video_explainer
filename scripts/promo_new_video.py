@@ -1,11 +1,11 @@
-"""Scaffold a Promo-channel video (portrait 1080x1920): scenes, starter narration, project config.
+"""Scaffold a Promo style bundle video (portrait 1080x1920): scenes, starter narration, project config.
 
 Usage:
     python scripts/promo_new_video.py <project> [--force]
 
 Copies ``templates/promo_video/scenes/`` to ``projects/<project>/scenes/``, writes a starter
 ``narration/narrations.json`` (SAMPLE text for the placeholder brand "Lumen Stage") and sets the
-project config for the promo channel (1080x1920, 30 fps, edge TTS). Replace the sample brand, copy
+project config for the promo style bundle (1080x1920, 30 fps, edge TTS). Replace the sample brand, copy
 and data, then run: voiceover, ``scripts/promo_finalize_storyboard.py``, render.
 """
 
@@ -81,7 +81,7 @@ def main(argv: list[str] | None = None) -> int:
     narration_path.write_text(json.dumps({"scenes": scenes}, indent=2), encoding="utf-8")
 
     config = json.loads(config_path.read_text(encoding="utf-8"))
-    config["channel"] = "promo"
+    config["style_bundle"] = "promo"
     config.setdefault("video", {}).update({"resolution": {"width": 1080, "height": 1920}, "fps": 30, "target_duration_seconds": 60})
     config.setdefault("tts", {})["provider"] = "edge"
     config["style"] = {
@@ -94,7 +94,7 @@ def main(argv: list[str] | None = None) -> int:
 
     print(f"Scenes copied to {scenes_dir}")
     print(f"Starter narration written to {narration_path} (SAMPLE text, replace it)")
-    print('Project config set to "channel": "promo", 1080x1920 portrait')
+    print('Project config set to "style_bundle": "promo", 1080x1920 portrait')
     print(f"Next: edit scenes/data and narration, then: voiceover, promo_finalize_storyboard, render {args.project}")
     return 0
 

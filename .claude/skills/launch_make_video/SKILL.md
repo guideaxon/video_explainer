@@ -1,6 +1,6 @@
 ---
 name: launch_make_video
-description: Produce a vertical (1080x1920, mobile-first) playful consumer-app launch teaser for the Launch channel (evolving mascot, bold two-line headlines, phone mockups with floating chips, store pill) from the template scenes. Use when asked to make or restyle a Launch channel video.
+description: Produce a vertical (1080x1920, mobile-first) playful consumer-app launch teaser for the Launch style bundle (evolving mascot, bold two-line headlines, phone mockups with floating chips, store pill) from the template scenes. Use when asked to make or restyle a Launch style bundle video.
 metadata:
   tags: launch, app, mascot, mobile, remotion, video
 ---
@@ -9,18 +9,18 @@ metadata:
 
 ## Requirements
 
-You must use the `video_make_core` skill first and follow its workflow with the channel details below.
+You must use the `video_make_core` skill first and follow its workflow with the style bundle details below.
 Do not continue from this file alone.
 
 Style source of truth: `docs/launch_video_style_guide.md` (read it first). Kit:
 `remotion/src/components/launch/kit.tsx`. Template scenes: `templates/launch_video/scenes/`.
 Scripts: `scripts/launch_new_video.py`, `scripts/launch_finalize_storyboard.py`.
-Only for the Launch channel; others have their own skills (`vantage_make_short`, `markets_make_video`,
+Only for the Launch style bundle; others have their own skills (`vantage_make_short`, `markets_make_video`,
 `promo_make_video`).
 
-## Channel details for the core workflow
+## Style Bundle details for the core workflow
 
-- `<channel>` = `launch`.
+- `<style_bundle>` = `launch`.
 - **Step 3, brief**: the real app name, mascot (or none), 3 to 5 real features, release status and store.
   Do not copy another brand's name, mascot, copy or screens. Do not invent features or numbers.
 - **Step 4, scenes**: brand name and tagline (`finale`, `hook`), mascot name, feature headlines and chips

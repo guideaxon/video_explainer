@@ -1,8 +1,11 @@
 import { useEffect, useState } from "react";
 import { api, ApiError } from "../api";
-import type { Project, Step } from "../types";
+import { loadPrefs } from "../prefs";
+import type { Project, SoundEngine, Step } from "../types";
+import CopyButton from "./CopyButton";
 import DocEditor from "./DocEditor";
 import JobLog from "./JobLog";
+import SoundPanel from "./SoundPanel";
 
 const COSTLY: Record<string, string> = {
   voiceover: "This generates the voiceover with your TTS provider and can take a few minutes.",
@@ -28,6 +31,7 @@ export default function StepPanel({ project, step, refresh }: Props) {
   const [jobId, setJobId] = useState<string | null>(null);
   const [error, setError] = useState("");
   const [provider, setProvider] = useState(project.tts_provider ?? "edge");
+  const [engine, setEngine] = useState<SoundEngine>(() => loadPrefs().soundEngine); // the Sound step's engine, seeded from Preferences
   const busy = project.steps.some((s) => s.status === "running");
   const hasOutput = step.output_time !== null;
 
@@ -48,7 +52,11 @@ export default function StepPanel({ project, step, refresh }: Props) {
     if (warning && !window.confirm(`${warning}\n\nContinue?`)) return;
     setError("");
     try {
-      const job = await api.run(project.id, step.id, { ...opts, provider: step.id === "voiceover" ? provider : undefined });
+      const job = await api.run(project.id, step.id, {
+        ...opts,
+        provider: step.id === "voiceover" ? provider : undefined,
+        sound_engine: step.id === "sound" ? engine : undefined,
+      });
       setJobId(job.id);
       await refresh();
     } catch (e) {
@@ -81,7 +89,7 @@ export default function StepPanel({ project, step, refresh }: Props) {
       </div>
       {step.note && <p className="muted">{step.note}</p>}
       {HELP[step.status] && <p className={step.status === "failed" ? "banner error" : "banner"}>{HELP[step.status]}</p>}
-      {!project.supported && <p className="banner error">This channel is run from the CLI, not this UI.</p>}
+      {!project.supported && <p className="banner error">This style bundle is run from the CLI, not this UI.</p>}
 
       <div className="actions">
         {step.can_run && project.supported && (
@@ -93,6 +101,13 @@ export default function StepPanel({ project, step, refresh }: Props) {
                 </select>
               </label>
             )}
+            {step.id === "sound" && (
+              <label className="inline">Engine
+                <select value={engine} onChange={(e) => setEngine(e.target.value as SoundEngine)} disabled={busy}>
+                  <option value="builtin">Built-in</option><option value="earshot">Earshot (opt in)</option><option value="auto">Automatic</option>
+                </select>
+              </label>
+            )}
             <button className="btn primary" onClick={() => run()} disabled={busy}>{runLabel}</button>
             {hasOutput && step.force_flag && (
               <button className="btn" onClick={() => run({ force: true })} disabled={busy}
@@ -101,6 +116,7 @@ export default function StepPanel({ project, step, refresh }: Props) {
             {step.id === "render" && <button className="btn" onClick={() => run({ preview: true })} disabled={busy}>Quick preview</button>}
           </>
         )}
+        {step.commands.map((c) => <CopyButton key={c.label} text={c.text} label={c.label} />)}
         {canApprove && <button className="btn good" onClick={approve}>Approve and continue</button>}
         {!step.can_run && step.mode === "manual" && !step.note && <span className="muted">Nothing to run for this project.</span>}
       </div>
@@ -109,6 +125,8 @@ export default function StepPanel({ project, step, refresh }: Props) {
       {(step.id === "script" || step.id === "narration") && (
         <DocEditor project={project.id} kind={step.id} version={step.output_time} onSaved={refresh} />
       )}
+
+      {step.id === "sound" && <SoundPanel project={project} step={step} />}
 
       {showVideo && (
         <div className="video">

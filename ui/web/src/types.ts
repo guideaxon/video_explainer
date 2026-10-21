@@ -8,8 +8,10 @@ export interface Step {
   mode: "run" | "manual" | "skipped" | "hidden";
   note: string;
   gated: boolean;
+  optional: boolean;
   can_run: boolean;
   force_flag: string | null;
+  commands: { label: string; text: string }[];
   output_time: number | null;
   status: StepStatus;
 }
@@ -28,7 +30,7 @@ export interface Job {
 export interface Project {
   id: string;
   title: string;
-  channel: string;
+  style_bundle: string;
   supported: boolean;
   resolution: string;
   fps: number | null;
@@ -37,6 +39,7 @@ export interface Project {
   voice_id: string;
   style: { primary_color: string; secondary_color: string; background_color: string; font_family: string };
   steps: Step[];
+  sound: { palette: string; override: string; palettes: string[] };
   progress: string;
   has_video: boolean;
   final_video: string;
@@ -44,15 +47,27 @@ export interface Project {
   active_job?: Job | null;
 }
 
-export interface Chip { ok: boolean; detail: string; fix: string }
+export interface Chip { ok: boolean; detail: string; fix: string; optional?: boolean }
 export interface Health {
-  python: Chip; node: Chip; ffmpeg: Chip; claude: Chip; tts_edge: Chip; remotion: Chip;
-  channels: string[];
+  python: Chip; node: Chip; ffmpeg: Chip; claude: Chip; tts_edge: Chip; remotion: Chip; earshot: Chip;
+  style_bundles: string[];
 }
+
+export type SoundEngine = "auto" | "builtin" | "earshot";
+
+export interface SoundEntry {
+  engine: "earshot" | "builtin";
+  bank?: string;
+  seconds: number;
+  warnings: string[];
+  fallback_reason?: string;
+}
+export interface SoundManifest { engine: SoundEngine; palette: string; generated: number; earshot: string; sounds: Record<string, SoundEntry> }
+export interface SoundInfo { manifest: SoundManifest | null; audit: [string, string][] }
 
 export interface CreateBody {
   title: string;
-  channel: string;
+  style_bundle: string;
   prompt: string;
   source_text: string;
   target_seconds: number;

@@ -1,5 +1,5 @@
 /**
- * Leader Bot channel kit: building blocks for vertical (1080x1920, 9:16, mobile-first) pixel-mosaic business
+ * Leader Bot style bundle kit: building blocks for vertical (1080x1920, 9:16, mobile-first) pixel-mosaic business
  * explainers starring a "Leader bot": flat 12x12 pixel avatars on loud primary-colour tiles with visible grid
  * lines, glitch/scramble bursts, hard-shadow stat cards and pixel bar charts. All art is original
  * (placeholder bot, abstract data). See docs/leaderbot_video_style_guide.md.
@@ -156,7 +156,7 @@ export const PixelBot: React.FC<{ x: number; y: number; size?: number; look?: nu
   );
 };
 
-/** 3x3 mosaic of bots (the channel's signature). The centre tile is the clean vector bot unless `clean` is false. */
+/** 3x3 mosaic of bots (the style bundle's signature). The centre tile is the clean vector bot unless `clean` is false. */
 export const BotGrid: React.FC<{ y: number; cell?: number; glitch?: (frame: number) => number; clean?: boolean; from?: number }> = ({ y, cell = 320, glitch, clean = true, from = 0 }) => {
   const frame = useCurrentFrame();
   const g = glitch ? glitch(frame) : 0;

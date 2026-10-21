@@ -1,5 +1,5 @@
 /**
- * Promo channel kit: building blocks for vertical (1080x1920, 9:16, mobile-first) dark SaaS
+ * Promo style bundle kit: building blocks for vertical (1080x1920, 9:16, mobile-first) dark SaaS
  * product-launch videos. Kinetic type, 3D glass UI mockups, glowing inputs, gradient stats.
  * Scenes pass content props; all UI is abstract (skeleton lines, tiles), never a real product's screens.
  * See docs/promo_video_style_guide.md.

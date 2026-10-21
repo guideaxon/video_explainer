@@ -9,7 +9,7 @@ steps). It runs deterministic hard checks and exits 1 on any ERROR; WARN lines a
 reviewer (Claude) to check claims and tone; see ``docs/video_review_checklist.md``.
 
 Hard checks cannot verify that data is true. They only catch what a script can: leftover SAMPLE text,
-registry key/title mismatches, narration length, missing channel disclaimers.
+registry key/title mismatches, narration length, missing style bundle disclaimers.
 """
 
 from __future__ import annotations
@@ -29,8 +29,8 @@ sys.path.insert(0, str(REPO_ROOT / "scripts"))
 from _demo_manifest import load_manifest, validate_manifest  # noqa: E402
 
 # words: allowed spoken words per scene (None = not checked); required: phrases (any case) that must appear
-# somewhere in the scene text or narration. Mirrors each channel style guide, section "Copy and data rules".
-CHANNELS: dict[str, dict] = {
+# somewhere in the scene text or narration. Mirrors each style bundle style guide, section "Copy and data rules".
+STYLE_BUNDLES: dict[str, dict] = {
     "markets": {"words": (8, 14), "required": ["not financial advice"]},
     "promo": {"words": (4, 10), "required": []},
     "launch": {"words": (5, 12), "required": []},
@@ -79,16 +79,16 @@ def _scene_text(source: str) -> list[str]:
 def review(project_dir: Path) -> tuple[Report, dict]:
     rep = Report()
     config = json.loads((project_dir / "config.json").read_text(encoding="utf-8"))
-    channel = config.get("channel")
-    rules = CHANNELS.get(channel)
+    style_bundle = config.get("style_bundle")
+    rules = STYLE_BUNDLES.get(style_bundle)
     if rules is None:
-        rep.error(f"config.json channel is {channel!r}; expected one of {sorted(CHANNELS)}")
+        rep.error(f"config.json style_bundle is {style_bundle!r}; expected one of {sorted(STYLE_BUNDLES)}")
         return rep, {}
 
     res = config.get("video", {}).get("resolution", {})
     allowed = rules.get("resolutions", [(1080, 1920)])
     if (res.get("width"), res.get("height")) not in allowed:
-        rep.error(f"video.resolution is {res}; {channel} videos must be one of {allowed}")
+        rep.error(f"video.resolution is {res}; {style_bundle} videos must be one of {allowed}")
 
     narration_path = project_dir / "narration" / "narrations.json"
     if not narration_path.exists():
@@ -121,9 +121,9 @@ def review(project_dir: Path) -> tuple[Report, dict]:
     if len(set(wanted)) != len(wanted):
         rep.error("two scene titles map to the same registry key")
 
-    # Demo channel: scenes are generated from manifest.json, so check the manifest and read its text.
+    # Demo style bundle: scenes are generated from manifest.json, so check the manifest and read its text.
     manifest_text: list[str] = []
-    if channel == "demo":
+    if style_bundle == "demo":
         if not (project_dir / "manifest.json").exists():
             rep.error("manifest.json is missing")
         else:
@@ -152,7 +152,7 @@ def review(project_dir: Path) -> tuple[Report, dict]:
 
     # Leftover template placeholders in narration and on-screen text.
     screen: dict[str, list[str]] = {}
-    for tsx in sorted(scenes_dir.glob("*.tsx")) if channel != "demo" else []:
+    for tsx in sorted(scenes_dir.glob("*.tsx")) if style_bundle != "demo" else []:
         source = _strip_comments(tsx.read_text(encoding="utf-8"))
         texts = _scene_text(source)
         screen[tsx.stem] = texts
@@ -175,7 +175,7 @@ def review(project_dir: Path) -> tuple[Report, dict]:
         if PLACEHOLDER.search(s.get("narration", "")):
             rep.error(f"narration for {s['title']!r} contains placeholder text")
 
-    # Channel-required phrases (e.g. Markets disclaimer).
+    # Style-bundle-required phrases (e.g. Markets disclaimer).
     if manifest_text:
         screen["manifest.json"] = manifest_text
     haystack = " ".join(t for ts in screen.values() for t in ts) + " " + " ".join(s.get("narration", "") for s in scenes)
@@ -183,16 +183,25 @@ def review(project_dir: Path) -> tuple[Report, dict]:
         if phrase.lower() not in haystack.lower():
             rep.error(f"required phrase missing from scenes and narration: {phrase!r}")
 
-    bundle = {"channel": channel, "scenes": scenes, "screen_text": screen}
+    # Sound effects (present once the Sound step has run): a cue naming a missing file is an error.
+    from src.sound.earshot_backend import audit_project
+
+    for level, message in audit_project(project_dir, config.get("video", {}).get("fps") or 30):
+        if level == "ERROR":
+            rep.error(f"sound: {message}")
+        elif level == "WARN":
+            rep.warn(f"sound: {message}")
+
+    bundle = {"style_bundle": style_bundle, "scenes": scenes, "screen_text": screen}
     return rep, bundle
 
 
 def print_brief(bundle: dict) -> None:
-    guide = REPO_ROOT / "docs" / f"{bundle['channel']}_video_style_guide.md"
+    guide = REPO_ROOT / "docs" / f"{bundle['style_bundle']}_video_style_guide.md"
     print("\n=== REVIEW BRIEF (for the reviewer) ===")
-    print(f"Channel: {bundle['channel']}. Style guide: {guide.relative_to(REPO_ROOT)} (copy and data rules).")
+    print(f"Style bundle: {bundle['style_bundle']}. Style guide: {guide.relative_to(REPO_ROOT)} (copy and data rules).")
     print("Checklist: docs/video_review_checklist.md. Report per issue: scene, original text, suggested fix.")
-    if bundle["channel"] == "demo":
+    if bundle["style_bundle"] == "demo":
         print("Demo: also compare every caption and narration line with its screenshot (read the image); anything not visible is unsupported.")
     print()
     print("-- Narration --")

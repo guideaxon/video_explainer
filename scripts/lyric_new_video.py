@@ -1,11 +1,11 @@
-"""Scaffold a Lyric-channel video (portrait 1080x1920): scenes, starter narration, project config.
+"""Scaffold a Lyric style bundle video (portrait 1080x1920): scenes, starter narration, project config.
 
 Usage:
     python scripts/lyric_new_video.py <project> [--force]
 
 Copies ``templates/lyric_video/scenes/`` to ``projects/<project>/scenes/``, writes a starter
 ``narration/narrations.json`` (SAMPLE lyrics about trading a desk job for a bakery) and sets
-the project config for the lyric channel (1080x1920, 30 fps, edge TTS). Replace the sample lyrics
+the project config for the lyric style bundle (1080x1920, 30 fps, edge TTS). Replace the sample lyrics
 and scenes, then run: voiceover, ``scripts/lyric_finalize_storyboard.py``, render.
 """
 
@@ -74,7 +74,7 @@ def main(argv: list[str] | None = None) -> int:
     narration_path.write_text(json.dumps({"scenes": scenes}, indent=2), encoding="utf-8")
 
     config = json.loads(config_path.read_text(encoding="utf-8"))
-    config["channel"] = "launch"
+    config["style_bundle"] = "lyric"
     config.setdefault("video", {}).update({"resolution": {"width": 1080, "height": 1920}, "fps": 30, "target_duration_seconds": 40})
     config.setdefault("tts", {})["provider"] = "edge"
     config["style"] = {
@@ -87,7 +87,7 @@ def main(argv: list[str] | None = None) -> int:
 
     print(f"Scenes copied to {scenes_dir}")
     print(f"Starter narration written to {narration_path} (SAMPLE text, replace it)")
-    print('Project config set to "channel": "lyric", 1080x1920 portrait')
+    print('Project config set to "style_bundle": "lyric", 1080x1920 portrait')
     print(f"Next: edit scenes/data and narration, then: voiceover, lyric_finalize_storyboard, render {args.project}")
     return 0
 

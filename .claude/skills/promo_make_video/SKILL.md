@@ -1,6 +1,6 @@
 ---
 name: promo_make_video
-description: Produce a vertical (1080x1920, mobile-first) SaaS product-launch promo video for the Promo channel (kinetic headlines, glass UI mockups, gradient stats) from the template scenes. Use when asked to make or restyle a Promo channel video.
+description: Produce a vertical (1080x1920, mobile-first) SaaS product-launch promo video for the Promo style bundle (kinetic headlines, glass UI mockups, gradient stats) from the template scenes. Use when asked to make or restyle a Promo style bundle video.
 metadata:
   tags: promo, saas, product-launch, mobile, remotion, video
 ---
@@ -9,17 +9,17 @@ metadata:
 
 ## Requirements
 
-You must use the `video_make_core` skill first and follow its workflow with the channel details below.
+You must use the `video_make_core` skill first and follow its workflow with the style bundle details below.
 Do not continue from this file alone.
 
 Style source of truth: `docs/promo_video_style_guide.md` (read it first). Kit:
 `remotion/src/components/promo/kit.tsx`. Template scenes: `templates/promo_video/scenes/`.
 Scripts: `scripts/promo_new_video.py`, `scripts/promo_finalize_storyboard.py`.
-Only for the Promo channel; other channels have their own skills (`vantage_make_short`, `markets_make_video`).
+Only for the Promo style bundle; other style bundles have their own skills (`vantage_make_short`, `markets_make_video`).
 
-## Channel details for the core workflow
+## Style Bundle details for the core workflow
 
-- `<channel>` = `promo`.
+- `<style_bundle>` = `promo`.
 - **Step 3, brief**: gather the real product name, one-line promise, 3 to 6 features, and any proof
   (numbers with a source). Do not copy another brand's copy, numbers or screens.
 - **Step 4, scenes**: brand name and address (`logo_reveal`, `sign_off`), headlines, mock content, chart

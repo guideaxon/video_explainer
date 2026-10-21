@@ -11,6 +11,7 @@ The TypeScript analyzer overcomes regex limitations by:
 """
 
 import json
+import shutil
 import subprocess
 from dataclasses import dataclass
 from pathlib import Path
@@ -148,9 +149,10 @@ class TypeScriptAnalyzer:
         script_path = self._get_script_path()
         remotion_dir = self._find_remotion_dir()
 
-        # Build command - use npx to run ts-node
+        # Build command - use npx to run ts-node. which() finds npx.cmd on Windows, where the bare name
+        # "npx" cannot be started without a shell.
         cmd = [
-            "npx",
+            shutil.which("npx") or "npx",
             "ts-node",
             "--transpile-only",
             str(script_path),

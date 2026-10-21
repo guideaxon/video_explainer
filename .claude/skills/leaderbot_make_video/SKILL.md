@@ -1,6 +1,6 @@
 ---
 name: leaderbot_make_video
-description: Produce a vertical (1080x1920, mobile-first) pixel-mosaic business explainer or satire video for the Leader Bot channel (3x3 glitching pixel bot grid, hard-shadow stat cards, pixel bar charts, stamps) from the template scenes. Use when asked to make or restyle a Leader Bot channel video.
+description: Produce a vertical (1080x1920, mobile-first) pixel-mosaic business explainer or satire video for the Leader Bot style bundle (3x3 glitching pixel bot grid, hard-shadow stat cards, pixel bar charts, stamps) from the template scenes. Use when asked to make or restyle a Leader Bot style bundle video.
 metadata:
   tags: leaderbot, pixel, business, satire, remotion, video
 ---
@@ -9,17 +9,17 @@ metadata:
 
 ## Requirements
 
-You must use the `video_make_core` skill first and follow its workflow with the channel details below.
+You must use the `video_make_core` skill first and follow its workflow with the style bundle details below.
 Do not continue from this file alone.
 
 Style source of truth: `docs/leaderbot_video_style_guide.md` (read it first). Kit:
 `remotion/src/components/leaderbot/kit.tsx`. Template scenes: `templates/leaderbot_video/scenes/`.
 Scripts: `scripts/leaderbot_new_video.py`, `scripts/leaderbot_finalize_storyboard.py`.
-Only for the Leader Bot channel; other channels have their own skills.
+Only for the Leader Bot style bundle; other style bundles have their own skills.
 
-## Channel details for the core workflow
+## Style Bundle details for the core workflow
 
-- `<channel>` = `leaderbot`.
+- `<style_bundle>` = `leaderbot`.
 - **Step 3, brief**: the one business story or joke (what the bot says, which number or chart backs it) and
   where each figure comes from. Real data needs a source and date; a clearly fictional satire needs no
   data but must not pose as real. Do not name real companies or people as targets without a basis.

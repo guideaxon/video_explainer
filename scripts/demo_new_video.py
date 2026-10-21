@@ -1,4 +1,4 @@
-"""Scaffold a Demo-channel video from product screenshots.
+"""Scaffold a Demo style bundle video from product screenshots.
 
 Usage:
     python scripts/demo_new_video.py <project> --screenshots DIR --name "Product" [--portrait] [--force]
@@ -87,7 +87,7 @@ def main(argv: list[str] | None = None) -> int:
     manifest_path.write_text(json.dumps(manifest, indent=2), encoding="utf-8")
 
     config = json.loads(config_path.read_text(encoding="utf-8"))
-    config["channel"] = "demo"
+    config["style_bundle"] = "demo"
     size = {"width": 1080, "height": 1920} if args.portrait else {"width": 1920, "height": 1080}
     config.setdefault("video", {}).update({"resolution": size, "fps": 30, "target_duration_seconds": 90})
     config.setdefault("tts", {})["provider"] = "edge"
@@ -98,7 +98,7 @@ def main(argv: list[str] | None = None) -> int:
     for p, a in zip(shots, analyses):
         print(f"  {p.name}: {a['width']}x{a['height']}, device {a['device']}, luminance {a['luminance']:.2f}, accent {a['accent']}")
     print(f"Detected brand style: accent {accent}, theme {theme}; manifest written to {manifest_path} (TODO text, replace it)")
-    print(f"Project config set to \"channel\": \"demo\", {size['width']}x{size['height']}")
+    print(f"Project config set to \"style_bundle\": \"demo\", {size['width']}x{size['height']}")
     print(f"Next: fill the manifest, then: demo_build_scenes {args.project}, review_video, voiceover, demo_finalize_storyboard, render")
     return 0
 

@@ -1,6 +1,6 @@
 ---
 name: demo_make_video
-description: Produce a narrated, captioned product demo video from device screenshots (phone, tablet, laptop) for the Demo channel, with no screen recording, from a manifest (camera zooms, highlights, cursor, step tracker, intro and outro). Use when asked to make a product demo from screenshots.
+description: Produce a narrated, captioned product demo video from device screenshots (phone, tablet, laptop) for the Demo style bundle, with no screen recording, from a manifest (camera zooms, highlights, cursor, step tracker, intro and outro). Use when asked to make a product demo from screenshots.
 metadata:
   tags: demo, product-demo, screenshots, remotion, video
 ---
@@ -14,7 +14,7 @@ export) but **steps 2 to 4 are replaced here** (manifest instead of template sce
 
 Style source of truth: `docs/demo_video_style_guide.md` (read it first). Kit:
 `remotion/src/components/demo/kit.tsx`. Scripts: `scripts/demo_new_video.py`, `scripts/demo_build_scenes.py`,
-`scripts/demo_finalize_storyboard.py`. Only for the Demo channel; other channels have their own skills.
+`scripts/demo_finalize_storyboard.py`. Only for the Demo style bundle; other style bundles have their own skills.
 
 Python needs **Pillow** and **numpy** (both in `pyproject.toml`):
 - Pillow decodes the png/jpg/webp screenshots, reads their pixel size (aspect ratio picks the device frame
@@ -34,7 +34,7 @@ from what is visible in the screenshots. Never invent features, numbers or resul
 1. **Project**: `python -m src.cli create <project> --title "<title>"`.
 2. **Scaffold**: `python scripts/demo_new_video.py <project> --screenshots <dir> --name "<Product>"` (add
    `--portrait` for 1080x1920). It copies the screenshots, detects device, theme and accent colour, writes a
-   draft `manifest.json` with TODO text, and sets the project config (`"channel": "demo"`).
+   draft `manifest.json` with TODO text, and sets the project config (`"style_bundle": "demo"`).
 3. **Read every screenshot** (use the Read tool on each image). Then fill `manifest.json`: for each step a
    `title`, an on-screen `caption` (at most 8 words, `*word` for the accent), a `narration` line (5 to 30 spoken
    words, only what that screen shows), and where it helps a `focus` region, a `highlight` and a `cursor`

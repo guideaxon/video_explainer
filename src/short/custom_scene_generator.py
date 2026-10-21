@@ -20,7 +20,7 @@ from typing import Any
 from ..config import Config, LLMConfig, load_config
 from ..models import Script
 from ..understanding.llm_provider import ClaudeCodeLLMProvider
-from .channel_styles import ChannelStyle, style_for_scenes_dir
+from .style_bundles import StyleBundle, style_for_scenes_dir
 from .models import ShortsStoryboard, ShortsBeat
 
 
@@ -221,8 +221,8 @@ class ShortsCustomSceneGenerator:
         # Cache for loaded rules
         self._remotion_rules_cache: dict[str, str] = {}
 
-        # Channel style (e.g. "vantage"), resolved from the project config per generation run
-        self.style: ChannelStyle | None = None
+        # Style bundle style (e.g. "vantage"), resolved from the project config per generation run
+        self.style: StyleBundle | None = None
 
     def _load_remotion_rules(
         self,
@@ -320,10 +320,10 @@ Create visually stunning scenes that:
         """
         scenes_dir.mkdir(parents=True, exist_ok=True)
 
-        # A project's config.json "channel" selects a channel style (see channel_styles.py)
+        # A project's config.json "style_bundle" selects a style bundle style (see style_bundles.py)
         self.style = style_for_scenes_dir(scenes_dir)
         if self.style:
-            print(f"  Using channel style: {self.style.name}")
+            print(f"  Using style bundle style: {self.style.name}")
 
         # Generate styles.ts first
         self._generate_vertical_styles(scenes_dir, storyboard.title)

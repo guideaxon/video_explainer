@@ -1,12 +1,12 @@
-"""Per-channel visual styles for shorts.
+"""Per style bundle visual styles for shorts.
 
-Each video channel (for example "vantage") has its own style guide, shared Remotion kit and
-reference scenes. A project opts in by setting ``"channel": "<channel>"`` in its ``config.json``;
+Each video style bundle (for example "vantage") has its own style guide, shared Remotion kit and
+reference scenes. A project opts in by setting ``"style_bundle": "<style bundle>"`` in its ``config.json``;
 the custom scene generator then writes scenes in that style instead of the generic dark theme.
 
-To add a channel: write ``docs/<name>_video_style_guide.md`` with an LLM brief section between the
+To add a style bundle: write ``docs/<name>_video_style_guide.md`` with an LLM brief section between the
 ``LLM-BRIEF`` markers, put reference scenes in ``templates/<name>_short/scenes/`` and register a
-``ChannelStyle`` in ``CHANNEL_STYLES``.
+``StyleBundle`` in ``STYLE_BUNDLES``.
 """
 
 from __future__ import annotations
@@ -22,8 +22,8 @@ BRIEF_END = "<!-- LLM-BRIEF-END -->"
 
 
 @dataclass(frozen=True)
-class ChannelStyle:
-    """A channel's visual style: guide document plus reference scenes."""
+class StyleBundle:
+    """A style bundle's visual style: guide document plus reference scenes."""
 
     name: str
     guide_path: Path
@@ -40,7 +40,7 @@ class ChannelStyle:
     def system_prompt(self) -> str:
         return (
             f"You are an expert React/Remotion developer creating animated scene components for "
-            f"the '{self.name}' video channel (vertical 1080x1920 shorts).\n\n"
+            f"the '{self.name}' video style bundle (vertical 1080x1920 shorts).\n\n"
             f"{self.brief()}\n"
         )
 
@@ -57,8 +57,8 @@ class ChannelStyle:
         return "\n\n".join(parts) or "No reference scenes available."
 
 
-CHANNEL_STYLES: dict[str, ChannelStyle] = {
-    "vantage": ChannelStyle(
+STYLE_BUNDLES: dict[str, StyleBundle] = {
+    "vantage": StyleBundle(
         name="vantage",
         guide_path=REPO_ROOT / "docs" / "vantage_video_style_guide.md",
         reference_scenes_dir=REPO_ROOT / "templates" / "vantage_short" / "scenes",
@@ -67,23 +67,23 @@ CHANNEL_STYLES: dict[str, ChannelStyle] = {
 }
 
 
-def load_style(name: str | None) -> ChannelStyle | None:
+def load_style(name: str | None) -> StyleBundle | None:
     """Return the registered style for ``name`` or None (generic style)."""
     if not name:
         return None
-    style = CHANNEL_STYLES.get(name)
+    style = STYLE_BUNDLES.get(name)
     if style is None:
-        raise ValueError(f"Unknown channel style '{name}'. Known: {', '.join(CHANNEL_STYLES)}")
+        raise ValueError(f"Unknown style bundle style '{name}'. Known: {', '.join(STYLE_BUNDLES)}")
     return style
 
 
-def style_for_scenes_dir(scenes_dir: Path) -> ChannelStyle | None:
+def style_for_scenes_dir(scenes_dir: Path) -> StyleBundle | None:
     """Find the style of the project owning ``projects/<p>/short/<variant>/scenes``."""
     config_path = scenes_dir.parent.parent.parent / "config.json"
     if not config_path.exists():
         return None
     try:
-        name = json.loads(config_path.read_text(encoding="utf-8")).get("channel")
+        name = json.loads(config_path.read_text(encoding="utf-8")).get("style_bundle")
     except (OSError, ValueError):
         return None
     return load_style(name) if isinstance(name, str) else None

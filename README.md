@@ -22,7 +22,7 @@ A system for generating high-quality explainer videos from technical documents. 
 - **Remotion Animations** - React-based programmatic video generation
 - **AI Scene Generation** - Claude-powered scene component creation
 - **Refinement** - 5-phase quality improvement system (analyze, script, visual-cue, visual, sync)
-- **Channel Videos** - Seven styled channels (Vantage, Markets, Promo, Launch, Lyric, Leaderbot, Demo) with templates, kits and skills; pre-render review via `scripts/review_video.py`. See [docs/HowToUse.md](docs/HowToUse.md)
+- **Style Bundle Videos** - Seven style bundles (Vantage, Markets, Promo, Launch, Lyric, Leaderbot, Demo) with templates, kits and skills; pre-render review via `scripts/review_video.py`. See [docs/HowToUse.md](docs/HowToUse.md)
 
 ### Sound Design
 - **Automated SFX** - Intelligent sound effect planning and generation
@@ -179,18 +179,18 @@ dependencies; fix any red one first (LLM steps shell out to Claude Code).
 **Using it:**
 
 1. Use the menu on the left. **File → Create New Project** (also the landing page) is where you
-   describe the video (or write or upload a Markdown source document), pick a channel (Standard,
+   describe the video (or write or upload a Markdown source document), pick a style bundle (Standard,
    Markets, Promo, Launch, Lyric, Leaderbot or Demo), a length and a voice, then **Create project**.
    **Open Recent** lists your latest projects; **All** opens the Continue a project screen with every
    project and a filter. **Preferences** sets the theme, how many recent projects the menu shows, and
-   the default channel, length and voice for new projects. The menu collapses to icons with the
+   the default style bundle, length and voice for new projects. The menu collapses to icons with the
    button at its bottom. The top bar has a Create / Projects switch and a single theme button that shows the
    theme you would switch to (a moon in light mode, a sun in dark mode). The choice is remembered.
    Preferences also offers "Follow my system", which tracks your OS live.
 2. In the project, work down the step list on the left. Each step has Run, an optional
    Regenerate (overwrite), and Approve and continue. Steps that call an LLM, TTS or the renderer ask
    for confirmation first. Job logs stream live, and a running job can be cancelled.
-3. Channel projects show the same nine steps. Script is skipped, narration is edited by hand
+3. Style bundle projects show the same nine steps. Script is skipped, narration is edited by hand
    (JSON editor in the Narration step), Scenes is scaffolded once and then edited in
    `projects/<project>/scenes/`, and Review runs `scripts/review_video.py` before Voiceover.
 4. The Render step plays the finished video. Settings (title, length, voice, colors, font) are in the

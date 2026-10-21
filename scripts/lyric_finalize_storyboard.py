@@ -1,4 +1,4 @@
-"""Tighten pacing and build the storyboard for a Lyric-channel video.
+"""Tighten pacing and build the storyboard for a Lyric style bundle video.
 
 Usage:
     python scripts/lyric_finalize_storyboard.py <project> [--no-trim]

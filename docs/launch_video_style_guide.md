@@ -1,12 +1,12 @@
-# Launch Channel: Video Style Guide
+# Launch Style Bundle: Video Style Guide
 
-Style for the **Launch** channel: playful consumer-app launch teasers, **portrait 1080x1920 (9:16,
-mobile-first)** for TikTok, Reels and Shorts, 25 to 35 s. Other channels (Vantage, Markets, Promo)
+Style for the **Launch** style bundle: playful consumer-app launch teasers, **portrait 1080x1920 (9:16,
+mobile-first)** for TikTok, Reels and Shorts, 25 to 35 s. Other style bundles (Vantage, Markets, Promo)
 have their own guide, kit and skill; do not mix styles.
 
 Derived from the reference clip `projects/samples/4/m2-res_1080p.mp4` (1920x1080, 24 s, no audio), a
 launch teaser for a fitness app with an evolving mascot. The look, motion language and structure are
-read from it directly (it is 16:9; this channel re-lays it out for phones). **Only the style is
+read from it directly (it is 16:9; this style bundle re-lays it out for phones). **Only the style is
 reused**: no brand name, mascot, copy or app screens from the reference. The template uses a
 placeholder app ("Gymbud"), an original placeholder mascot ("Bud") and abstract UI.
 
@@ -86,7 +86,7 @@ Drop or add feature scenes (keep 3 to 5); keep hook, evolve/hero, finale.
   `storyboard` step), then `render`.
 - Output loudness is about -20 LUFS; normalise for social with
   `ffmpeg -i final.mp4 -c:v copy -af loudnorm=I=-14:TP=-1.5:LRA=11 -c:a aac -b:a 192k final_social.mp4`.
-- The shorts scene generator hook (`src/short/channel_styles.py`) is Vantage-only; Launch scenes are
+- The shorts scene generator hook (`src/short/style_bundles.py`) is Vantage-only; Launch scenes are
   hand-adapted from the template.
 
 <!-- LLM-BRIEF-START -->

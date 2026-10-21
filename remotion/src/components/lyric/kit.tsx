@@ -1,5 +1,5 @@
 /**
- * Lyric channel kit: building blocks for vertical (1080x1920, 9:16, mobile-first) animated lyric /
+ * Lyric style bundle kit: building blocks for vertical (1080x1920, 9:16, mobile-first) animated lyric /
  * music videos in a kawaii retro-pixel Y2K pastel-pop style. Each lyric line is its own comedic
  * vignette: sunburst or checker backgrounds, chunky outlined type, a terminal, retro windows,
  * stickers, props and an original pixel-art character. See docs/lyric_video_style_guide.md.

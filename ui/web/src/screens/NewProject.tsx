@@ -5,7 +5,7 @@ import MarkdownPreview from "../components/MarkdownPreview";
 import { go } from "../nav";
 import { loadPrefs } from "../prefs";
 
-export const CHANNELS: { id: string; name: string; blurb: string; format: string }[] = [
+export const STYLE_BUNDLES: { id: string; name: string; blurb: string; format: string }[] = [
   { id: "", name: "Standard", blurb: "Explainer from a document: script, narration, generated scenes", format: "16:9" },
   { id: "markets", name: "Markets", blurb: "Market-story explainers with charts and sentiment", format: "Portrait" },
   { id: "promo", name: "Promo", blurb: "SaaS product-launch promos, kinetic headlines", format: "Portrait" },
@@ -15,7 +15,7 @@ export const CHANNELS: { id: string; name: string; blurb: string; format: string
   { id: "demo", name: "Demo", blurb: "Narrated product demos from real screenshots", format: "16:9 or portrait" },
 ];
 
-/** Outline of the frame shape a channel produces, like the Landscape / Portrait picker in the reference. */
+/** Outline of the frame shape a style bundle produces, like the Landscape / Portrait picker in the reference. */
 function AspectIcon({ format }: { format: string }) {
   const landscape = <rect x="1" y="5" width="20" height="12" rx="2.5" />;
   const portrait = <rect x="6" y="1" width="12" height="20" rx="2.5" />;
@@ -36,10 +36,10 @@ function titleFrom(text: string): string {
 }
 
 function CreateForm() {
-  const [prefs] = useState(loadPrefs); // Preferences seed the starting channel, length and voice (read once)
+  const [prefs] = useState(loadPrefs); // Preferences seed the starting style bundle, length and voice (read once)
   const [prompt, setPrompt] = useState("");
   const [title, setTitle] = useState("");
-  const [channel, setChannel] = useState(prefs.defaultChannel);
+  const [styleBundle, setStyleBundle] = useState(prefs.defaultStyleBundle);
   const [seconds, setSeconds] = useState(prefs.defaultSeconds);
   const [tts, setTts] = useState(prefs.defaultVoice);
   const [docOpen, setDocOpen] = useState(false);
@@ -68,7 +68,7 @@ function CreateForm() {
     setBusy(true);
     setError("");
     try {
-      const p = await api.create({ title: name, channel, prompt, source_text: doc, target_seconds: seconds, tts_provider: tts });
+      const p = await api.create({ title: name, style_bundle: styleBundle, prompt, source_text: doc, target_seconds: seconds, tts_provider: tts });
       go(`/p/${p.id}`);
     } catch (err) {
       setError(err instanceof ApiError ? err.message : String(err));
@@ -84,12 +84,12 @@ function CreateForm() {
         placeholder="Describe your video, e.g. a teacher explaining Physics to kids"
       />
 
-      <div className="field-label">Channel</div>
-      <div className="channels" role="radiogroup" aria-label="Channel">
-        {CHANNELS.map((c) => (
+      <div className="field-label">Style Bundle</div>
+      <div className="style-bundles" role="radiogroup" aria-label="Style Bundle">
+        {STYLE_BUNDLES.map((c) => (
           <button
-            type="button" key={c.id || "standard"} role="radio" aria-checked={channel === c.id}
-            className={`channel ${channel === c.id ? "selected" : ""}`} onClick={() => setChannel(c.id)}
+            type="button" key={c.id || "standard"} role="radio" aria-checked={styleBundle === c.id}
+            className={`style-bundle ${styleBundle === c.id ? "selected" : ""}`} onClick={() => setStyleBundle(c.id)}
           >
             <AspectIcon format={c.format} />
             <strong>{c.name}</strong>

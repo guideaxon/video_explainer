@@ -1,5 +1,5 @@
 /**
- * Custom Scene Registry for YouTube Shorts (vantage channel style).
+ * Custom Scene Registry for YouTube Shorts (vantage style bundle style).
  * Keys match beat IDs in the storyboard. The player gives each scene a beat-local frame clock.
  */
 

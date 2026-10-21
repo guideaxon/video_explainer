@@ -1,8 +1,8 @@
 """Pipeline step table: the one place that knows each step's command, output and project-type variant.
 
-The wizard always shows the same nine steps. A step is run, manual (edit files by hand), skipped or
-hidden depending on whether the project is a standard project or a channel project (``"channel"`` in
-``config.json``). Adding a channel or an optional step is a change to this table only.
+The wizard always shows the same ten steps. A step is run, manual (edit files by hand), skipped or
+hidden depending on whether the project is a standard project or a style bundle project (``"style_bundle"`` in
+``config.json``). Adding a style bundle or an optional step is a change to this table only.
 """
 
 from __future__ import annotations
@@ -11,8 +11,8 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Callable
 
-# Full-video channels the UI can drive. Vantage shorts use the `short` CLI commands; not in v1.
-FULL_CHANNELS = ("markets", "promo", "launch", "lyric", "leaderbot", "demo")
+# Full-video style bundles the UI can drive. Vantage shorts use the `short` CLI commands; not in v1.
+FULL_STYLE_BUNDLES = ("markets", "promo", "launch", "lyric", "leaderbot", "demo")
 
 RUN, MANUAL, SKIPPED, HIDDEN = "run", "manual", "skipped", "hidden"
 
@@ -20,7 +20,7 @@ RUN, MANUAL, SKIPPED, HIDDEN = "run", "manual", "skipped", "hidden"
 @dataclass(frozen=True)
 class Ctx:
     project: str
-    channel: str  # "" for a standard project
+    style_bundle: str  # "" for a standard project
     project_dir: Path
 
 
@@ -43,10 +43,12 @@ class StepDef:
     title: str
     gated: bool  # needs a human approval click before it counts as approved
     standard: Variant
-    channel: Variant
+    style_bundle: Variant
+    # An optional step never blocks the steps after it and does not count toward progress until it has run.
+    optional: bool = False
 
     def variant(self, ctx: Ctx) -> Variant:
-        return self.channel if ctx.channel else self.standard
+        return self.style_bundle if ctx.style_bundle else self.standard
 
 
 def _cli(command: str, *extra: str) -> Callable[[Ctx], list[str]]:
@@ -54,18 +56,18 @@ def _cli(command: str, *extra: str) -> Callable[[Ctx], list[str]]:
 
 
 def _script(name: str) -> Callable[[Ctx], list[str]]:
-    return lambda c: [f"scripts/{name.format(channel=c.channel)}.py", c.project]
+    return lambda c: [f"scripts/{name.format(style_bundle=c.style_bundle)}.py", c.project]
 
 
-def _channel_scenes(c: Ctx) -> list[str] | None:
-    """Scaffold a channel project once; after that, scenes are edited by hand (or rebuilt for Demo)."""
-    if c.channel == "demo":
+def _style_bundle_scenes(c: Ctx) -> list[str] | None:
+    """Scaffold a style bundle project once; after that, scenes are edited by hand (or rebuilt for Demo)."""
+    if c.style_bundle == "demo":
         if (c.project_dir / "manifest.json").exists():
             return ["scripts/demo_build_scenes.py", c.project]
         return None  # needs screenshots and a manifest first
     if (c.project_dir / "scenes" / "index.ts").exists():
         return None
-    return [f"scripts/{c.channel}_new_video.py", c.project]
+    return [f"scripts/{c.style_bundle}_new_video.py", c.project]
 
 
 STEPS: tuple[StepDef, ...] = (
@@ -73,7 +75,7 @@ STEPS: tuple[StepDef, ...] = (
     StepDef(
         "script", "Script", True,
         Variant(RUN, _cli("script"), outputs=("@script",)),
-        Variant(SKIPPED, note="Channel projects gather content while editing scenes"),
+        Variant(SKIPPED, note="Style bundle projects gather content while editing scenes"),
     ),
     StepDef(
         "narration", "Narration", True,
@@ -83,11 +85,11 @@ STEPS: tuple[StepDef, ...] = (
     StepDef(
         "scenes", "Scenes", True,
         Variant(RUN, _cli("scenes"), outputs=("remotion/scenes", "scenes"), force_flag="--force"),
-        Variant(RUN, _channel_scenes, note="Scaffold once, then edit the scenes", outputs=("scenes",)),
+        Variant(RUN, _style_bundle_scenes, note="Scaffold once, then edit the scenes", outputs=("scenes",)),
     ),
     StepDef(
         "review", "Review", False,
-        Variant(SKIPPED, note="The pre-render review script covers channel projects only"),
+        Variant(SKIPPED, note="The pre-render review script covers style bundle projects only"),
         Variant(RUN, lambda c: ["scripts/review_video.py", c.project, "--brief"], job_output=True),
     ),
     StepDef(
@@ -98,7 +100,15 @@ STEPS: tuple[StepDef, ...] = (
     StepDef(
         "storyboard", "Storyboard", False,
         Variant(RUN, _cli("storyboard"), outputs=("@storyboard",), force_flag="--force"),
-        Variant(RUN, _script("{channel}_finalize_storyboard"), outputs=("@storyboard",)),
+        Variant(RUN, _script("{style_bundle}_finalize_storyboard"), outputs=("@storyboard",)),
+    ),
+    StepDef(
+        "sound", "Sound", False,
+        Variant(RUN, _cli("sound", "build"), note="Optional: sound effects and cues. Render works without it.",
+                outputs=("sfx/manifest.json",)),
+        Variant(RUN, _cli("sound", "build"), note="Optional: sound effects and cues. Render works without it.",
+                outputs=("sfx/manifest.json",)),
+        optional=True,
     ),
     StepDef(
         "render", "Render", True,

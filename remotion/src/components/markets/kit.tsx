@@ -1,5 +1,5 @@
 /**
- * Markets channel kit: building blocks for vertical (1080x1920, 9:16, mobile-first) market-story
+ * Markets style bundle kit: building blocks for vertical (1080x1920, 9:16, mobile-first) market-story
  * explainers. Data-driven chart primitives; scenes pass data, not geometry.
  * See docs/markets_video_style_guide.md.
  *

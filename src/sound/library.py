@@ -641,22 +641,49 @@ class SoundLibrary:
     def __init__(self, sfx_dir: Path):
         """Initialize with path to sfx directory."""
         self.sfx_dir = sfx_dir
+        self.last_report: dict = {}
 
-    def generate_all(self) -> list[str]:
-        """Generate all sounds in the library."""
+    def generate_all(
+        self, engine: str = "builtin", palette: str = "default", write_manifest: bool = True,
+        overrides: Optional[dict[str, str]] = None,
+    ) -> list[str]:
+        """Generate all sounds in the library.
+
+        engine: "builtin" (numpy synthesis), "earshot" (optional Earshot bank, see earshot_backend.py) or
+        "auto" (Earshot when installed, else builtin). A sound Earshot cannot render falls back to builtin.
+        Writes sfx/manifest.json recording which engine made each sound, unless write_manifest is False.
+        """
+        from . import earshot_backend as eb
+
+        if engine not in ("builtin", "earshot", "auto"):
+            raise ValueError(f"engine must be builtin, earshot or auto, not {engine!r}")
+        if engine == "auto":
+            engine = "earshot" if eb.status().available else "builtin"
         self.sfx_dir.mkdir(parents=True, exist_ok=True)
+
+        rendered = (eb.render_palette(self.sfx_dir, palette, list(SOUND_MANIFEST), overrides)
+                    if engine == "earshot" else {})
         generated = []
+        sounds: dict[str, dict] = {}
 
         for name, info in SOUND_MANIFEST.items():
-            generator_name = info["generator"]
-            generator = GENERATORS.get(generator_name)
-
+            entry = rendered.get(name)
+            if entry and "error" not in entry:
+                sounds[name] = entry
+                generated.append(name)
+                continue
+            generator = GENERATORS.get(info["generator"])
             if generator:
                 samples = generator()
-                output_path = self.sfx_dir / f"{name}.wav"
-                save_wav(samples, str(output_path))
+                save_wav(samples, str(self.sfx_dir / f"{name}.wav"))
                 generated.append(name)
+                sounds[name] = {"engine": "builtin", "seconds": round(len(samples) / SAMPLE_RATE, 3), "warnings": []}
+                if entry:  # Earshot was asked for and failed: keep the reason for the UI and the log
+                    sounds[name]["fallback_reason"] = entry["error"]
 
+        self.last_report = {"engine": engine, "palette": palette, "sounds": sounds}
+        if write_manifest:
+            eb.write_manifest(self.sfx_dir, engine, palette, sounds)
         return generated
 
     def list_sounds(self) -> list[str]:
