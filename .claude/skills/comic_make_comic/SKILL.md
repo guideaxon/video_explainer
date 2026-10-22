@@ -18,7 +18,8 @@ Model facts and timings: `docs/TryComfyUIOptions.md`. This is **not** a Remotion
   with no `--listen`, and the model files from `docs/TryComfyUIOptions.md` section 6 (FastH3 Omni int8 ConvRot,
   Qwen3-VL text encoder, video and audio VAEs, `minimax_h3_orb360_step1500` LoRA). Official Hugging Face only.
 - Playwright (`npm i -g @playwright/test`) and Chrome. Python with Pillow and numpy (`pyproject.toml`).
-- Set `PYTHONUTF8=1` for Python. A clip takes about 4 minutes on the 12 GB laptop GPU; keep the machine awake.
+- Set `PYTHONUTF8=1` for Python. A clip takes about 3.5 minutes on the 12 GB laptop GPU **on AC power**; on
+  battery the GPU is power-capped and it takes 10 minutes or more. Plug in, and keep the machine awake.
 
 ## Inputs to collect
 
@@ -36,7 +37,9 @@ panels must stay static. Never invent dialogue.
 3. **ComfyUI up?** `curl -s http://127.0.0.1:8188/system_stats`. If not, start it as in
    `docs/TryComfyUIOptions.md`, without `--listen`.
 4. **Generate**: `node scripts/comic_orbit_comfy.mjs <project>` (add `--only p1,p2` for some panels). It prints a
-   line per clip. If a line says `SLOW`, restart ComfyUI before the next one. Run in the background and watch the
+   line per clip. If a line says `SLOW`, check the laptop is on AC power (the script also warns about battery at
+   the start), then restart ComfyUI if it still is. `CACHED` means the clip came back in under 20 s from an earlier
+   run of the same graph and seed, not a new render. Run in the background and watch the
    log; do not poll in a loop.
 5. **Review each clip**: `ffmpeg -i clips/<id>.mp4 -vf "select='eq(n,0)+eq(n,41)+eq(n,62)+eq(n,82)+eq(n,123)',scale=320:-1,tile=5x1" -frames:v 1 sheet.png`
    and Read it. Apply the quality bar in the guide (section 4). If a clip fails, change its `seed` in `jobs.json`
@@ -61,7 +64,10 @@ panels must stay static. Never invent dialogue.
   GPU apps and restart ComfyUI. One such failure was transient and the retry worked.
 - The overlay must meet the page frame with no seam: `rect` is measured from the frame thickness. If a sliver
   of the old page art shows at a panel edge, fix `rect` in `comic.json` by a pixel or two and rebuild.
-- Re-queueing an unchanged graph returns a cached clip in seconds; the script changes nothing, so change the seed.
+- Re-queueing an unchanged graph returns a cached clip in seconds (the script now prints `CACHED`); change the
+  seed to render again.
+- Clips take 10 minutes or more, or a `SLOW` line: the laptop is probably on battery (GPU at 277 MHz instead of
+  about 1,600 MHz). Plug in. Restarting ComfyUI does not help.
 - The page is not rectangular or has no white gutters: detection finds the wrong panels, or one big panel and a
   `WARNING: found a single panel`; pass `--panels`.
 - Re-running the scaffold needs `--force`. It keeps the bubbles and each panel's seed and LoRA flag, but brings

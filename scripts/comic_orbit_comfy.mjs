@@ -147,7 +147,7 @@ async function runJob(browser, server, job, caption, dir, project, warn) {
     fs.writeFileSync(outPath, Buffer.from(await res.arrayBuffer()));
     const m = vid.metadata || {};
     return { id: job.id, seconds: Math.round(seconds), size: `${m.width}x${m.height}`, frames: m.frame_count,
-             slow: seconds > warn, out: job.out, lora: cfg.lora, pageErrors };
+             slow: seconds > warn, cached: seconds < 20, out: job.out, lora: cfg.lora, pageErrors };
   } finally {
     await page.close();
   }
@@ -185,6 +185,22 @@ try {
   console.error(`ComfyUI is not reachable at ${args.server}. Start it first (localhost only, no --listen).`);
   process.exit(1);
 }
+// On battery the laptop GPU is power-capped (measured: 277 MHz and 31 W instead of about 1,600 MHz and 80 W), and a
+// clip that takes 3.5 minutes on AC takes 10 minutes or much longer. Windows only; silent if the check fails.
+function onBattery() {
+  if (process.platform !== "win32") return false;
+  try {
+    const out = execSync(
+      'powershell -NoProfile -Command "(Get-CimInstance -Namespace root\\wmi -ClassName BatteryStatus -ErrorAction Stop).PowerOnline"',
+      { encoding: "utf8", timeout: 15000 },
+    ).trim();
+    return out === "False";
+  } catch { return false; }
+}
+if (onBattery()) {
+  console.error("WARNING: the laptop is running on battery. The GPU is power-capped and clips can take 3x longer or more. " +
+                "Plug in the charger first (Ctrl+C to stop).");
+}
 let browser;
 try {
   browser = await chromium.launch({ channel: args.channel, headless: true });
@@ -201,7 +217,8 @@ for (const job of jobs) {
   try {
     const r = await runJob(browser, args.server, job, caption, dir, project, args.warn);
     console.log(`${r.id}: ${r.seconds} s  ${r.size}  ${r.frames} frames  -> ${r.out}` +
-                (r.slow ? "  SLOW: restart ComfyUI before the next job" : "") +
+                (r.slow ? "  SLOW: check the laptop is on AC power, then restart ComfyUI before the next job" : "") +
+                (r.cached ? "  CACHED: under 20 s means ComfyUI returned an earlier result for the same graph and seed; change the seed to render again" : "") +
                 (r.pageErrors.length ? `  page errors: ${r.pageErrors.join("; ")}` : ""));
   } catch (e) {
     failed++;

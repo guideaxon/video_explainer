@@ -61,8 +61,12 @@ A panel with no `clips/<id>.mp4` stays a static part of the page.
 | Attention | template defaults (VSA, comfy kitchen attention, shift 12 / 3) | The distilled model is trained with them |
 | Seed | per job in `jobs.json` | Change it to retry a clip; same seed gives a bit-identical clip |
 
-Speed on the 12 GB laptop GPU: about 3.5 to 4 minutes per clip when ComfyUI is healthy. After sleep or long
-mixed sessions it has run 10 to 20 minutes: restart ComfyUI and run again (the script flags clips over 480 s).
+Speed on the 12 GB laptop GPU: about 3.5 minutes per clip (200 to 246 s) **with the laptop on AC power**. On
+battery the GPU is power-capped (measured: 277 MHz and 31 W, against about 1,600 MHz and 80 W on AC) and a clip
+took 10 minutes or much longer; the same inputs gave a bit-identical clip either way, so only the time is lost.
+Plug in before generating. `comic_orbit_comfy.mjs` warns when Windows reports battery, flags clips over 480 s as
+SLOW, and flags results under 20 s as cached (re-queueing an unchanged graph and seed returns the old result, so
+change the seed to render again). Keep the machine awake for a batch: sleep ruins the timings.
 Weights come only from the official Hugging Face repos; all H3 weights fall under the MiniMax H3 Community
 License, so check it before commercial use.
 

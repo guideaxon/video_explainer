@@ -33,8 +33,11 @@ one passed. A skipped option is untested, not rejected: nothing here says w4a8 o
 
 ### 0.2 Every generation run
 
-Time is the wall time of the queue-to-finish, taken from the browser script. "Healthy" means a freshly
-restarted or normally behaving server.
+Time is the wall time of the queue-to-finish, taken from the browser script. "Healthy" means the clip ran at
+the normal speed. The rows marked "degraded session" are the three LoRA clips of 630, 831 and 1,353 s: their
+power state was not logged, and the slowdown is probably the laptop running on battery (section 0.4). The power
+state was only measured later, for the p5 runs of 606 s (battery) and 200 s (AC); a further battery rerun on a
+restarted server was cancelled after more than 9 minutes without a finished time, so it is not in the table.
 
 | Run | Graph | Input | Size | Time | Peak VRAM (GB) | Outcome |
 |---|---|---|---|---|---|---|
@@ -88,7 +91,7 @@ Twelve LoRA runs ran on a healthy server (the rows from the 235 s restart test o
 
 | Problem | Evidence | Status |
 |---|---|---|
-| **Unexplained slow session**: three LoRA clips took 630, 831 and 1,353 s | The identical p3 graph and seed took 235 s after a restart, and three more runs in a row took 246, 207, 207 s | **Cause unknown.** Not simple accumulation across runs. Candidates, none tested alone: the reference image and graph changing between runs (no-LoRA graph on three images, then LoRA graph on two), and the machine sleeping for about an hour in the middle of that session. After the slow session the ComfyUI process held about 38 GB of committed memory with a 4.8 GB working set and 23 GB RAM free (a symptom, not a cause). Rule used: watch each clip's time, restart ComfyUI if one goes past about 8 minutes (the script flags it). |
+| **Slow clips: the laptop was on battery.** Three LoRA clips took 630, 831 and 1,353 s; later one p5 clip took 606 s and a rerun on a freshly restarted server was still going after 9 minutes | **Measured on battery:** `PowerOnline False`, GPU graphics clock **277 MHz of 3,090 MHz**, power draw 31 W, performance state P4, throttle reason "software power cap" active, temperature 57 C (no thermal throttling), CPU idle at 8%. **After plugging in, on the same server (not restarted):** two p5 runs of 200 s each, GPU clock median **1,605 MHz** (1,365 to 1,905) at about 79.5 W, 35 of 40 samples above 1,000 MHz. The clip made on battery is bit-identical to the clip made on AC (PSNR infinite): power changes the speed, not the output. | **Cause found for the p5 runs; probable for the earlier three.** The power state was not logged during the 630, 831 and 1,353 s runs, so those are only consistent with it (their 3 to 7 times slowdown matches 606 s versus 200 s), not proven. The restart test (235 s) and three-in-a-row (246, 207, 207 s) were not checked for power state either, and they were fast. Earlier guesses (state building up across runs, image or graph switching, the 38 GB committed memory) are not needed to explain what was seen. Rule: **run on AC power.** `scripts/comic_orbit_comfy.mjs` now warns when Windows reports battery, flags clips over 480 s, and flags results under 20 s as cache hits. |
 | **Weight-loader failure** | p2 failed once with `RuntimeError: Fault failed: 2` in `comfy_aimdo.model_vbar.vbar_fault`, while the Qwen3-VL text encoder was casting weights | Transient: the next job ran and the retry of p2 alone succeeded (201 s). Likely GPU memory pressure at that moment; not confirmed. |
 | **Cache hit mistaken for a run** | Re-queueing an unchanged graph returned in 5 s with the same output file | Documented. Change the seed for each timing run. |
 | **Template defaults differ from the plan** | The template defaults to 1344x768; its reference `yellow_plane_ref.png` is not in the input folder | Resolution set through the Resolution Selector; the image was fetched from the official Comfy-Org template repo. |
@@ -103,8 +106,10 @@ Twelve LoRA runs ran on a healthy server (the rows from the 235 s restart test o
   `ModelSamplingMiniMaxH3`, the attention backend and `BlockSparseAttention`. Everything else as shipped.
 - Settings: 124 frames, 24 fps, 8 steps, about 0.64 MP at the nearest of 1:1, 2:3, 3:2, 3:4, 4:3, 9:16, 16:9
   or 21:9, the orbit caption from the LoRA card with the audio sections set to `N/A`, a fixed seed per clip.
-- Operation: ComfyUI on localhost only (no `--listen`), no memory flags. One clip at a time. Time every clip,
-  restart ComfyUI if one exceeds about 8 minutes, retry a panel that fails with a weight-loader error.
+- Operation: **laptop on AC power** (on battery the GPU is power-capped and clips take 3x longer or more),
+  ComfyUI on localhost only (no `--listen`), no memory flags. One clip at a time. Time every clip; if one
+  exceeds about 8 minutes check the power first, then restart ComfyUI. Retry a panel that fails with a
+  weight-loader error. Hold the machine awake for long batches (sleep ruins timings).
 - Inputs: a clean reference that contains no black frame or border pixels; one clear rigid subject facing the
   camera where possible; leave crowds, text-heavy and multi-actor panels static.
 - Expected cost: about 3.5 to 4 minutes and about 11 GB of VRAM per clip.
@@ -114,8 +119,9 @@ Twelve LoRA runs ran on a healthy server (the rows from the 235 s restart test o
 Options 3, 4 and 5 and the NVFP4 QAD file; the LoRA at strengths other than 1.0, other LoRA checkpoints
 (`cardspin`, `step50`), the 4-step turbo LoRA, and VSA off or other attention settings; lower resolutions
 (for speed) or 1024x1024 (the card's other training size); multiple reference views for one subject; more than
-one comic page; photoreal sources other than the whitecat example; and a repeat of the slow session to find
-its cause. The FastH3 and ORB360 weights fall under the MiniMax H3 Community License; read it before
+one comic page; photoreal sources other than the whitecat example; the power state during the original slow
+runs (never logged, so battery is probable, not proven); other power plans or the GPU's own limits on AC;
+and the weight-loader failure's cause. The FastH3 and ORB360 weights fall under the MiniMax H3 Community License; read it before
 commercial use of the generated clips.
 
 ## 1. Goal and success test
@@ -458,6 +464,10 @@ Same graph and seed (20260926) as the no-LoRA p3 run (183 s), LoRA at 1.0.
   reliable. Treat it as unspecified unless a second reference view is supplied.
 - Quality verdict so far: LoRA beats no-LoRA on both panels (p3 gets a true 360, p4 closes the loop), so the
   speed problem is worth solving rather than dropping the LoRA.
+- **Update, later the same evening: the cause is most likely battery power, see section 0.4.** The guesses
+  above about what differed in the slow session (image and graph switching, accumulated state) are superseded.
+  While the laptop was on battery the GPU ran at 277 MHz and 31 W and a clip took over 10 minutes; plugged in,
+  the same server did the same clip in 200 s at about 1,600 MHz and 80 W, with a bit-identical result.
 
 ## 6. Download manifest and order
 
