@@ -101,7 +101,9 @@ label.inline select { width: auto; }
 .style-bundle:hover { border-color: var(--muted); }
 .style-bundle span { font-size: 13px; color: var(--muted); }
 .style-bundle em { font-size: 12px; color: var(--muted); font-style: normal; }
-.style-bundle .aspect { color: var(--muted); margin-bottom: 4px; display: flex; gap: 4px; align-items: center; }
+.style-bundle .sb-head { align-self: stretch; display: flex; align-items: center; justify-content: space-between; gap: 8px; font-size: inherit; color: inherit; }
+.style-bundle .aspect { color: var(--muted); display: flex; gap: 4px; align-items: center; }
+.style-bundle .aspect-icon { display: inline-flex; cursor: help; }
 .style-bundle.selected { border-color: var(--accent); background: var(--accent-soft); box-shadow: 0 0 0 1px var(--accent) inset; }
 .style-bundle.selected .aspect, .style-bundle.selected strong { color: var(--accent); }
 

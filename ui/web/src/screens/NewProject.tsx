@@ -23,9 +23,19 @@ function AspectIcon({ format }: { format: string }) {
   const wide = format === "16:9" || both;
   const tall = format === "Portrait" || both;
   return (
+    // Each icon carries a hover tooltip naming the shape; the format is also written as text under the blurb,
+    // so the icons stay hidden from screen readers.
     <span className="aspect" aria-hidden="true">
-      {wide && <svg width="28" height="22" viewBox="0 0 22 22" fill="none" stroke="currentColor" strokeWidth="1.6">{landscape}</svg>}
-      {tall && <svg width="20" height="22" viewBox="0 0 24 22" fill="none" stroke="currentColor" strokeWidth="1.6" preserveAspectRatio="xMidYMid meet">{portrait}</svg>}
+      {wide && (
+        <span className="aspect-icon" title="16:9 landscape video">
+          <svg width="28" height="22" viewBox="0 0 22 22" fill="none" stroke="currentColor" strokeWidth="1.6">{landscape}</svg>
+        </span>
+      )}
+      {tall && (
+        <span className="aspect-icon" title="Portrait video (9:16, 1080×1920), made for phones">
+          <svg width="20" height="22" viewBox="0 0 24 22" fill="none" stroke="currentColor" strokeWidth="1.6" preserveAspectRatio="xMidYMid meet">{portrait}</svg>
+        </span>
+      )}
     </span>
   );
 }
@@ -91,8 +101,10 @@ function CreateForm() {
             type="button" key={c.id || "standard"} role="radio" aria-checked={styleBundle === c.id}
             className={`style-bundle ${styleBundle === c.id ? "selected" : ""}`} onClick={() => setStyleBundle(c.id)}
           >
-            <AspectIcon format={c.format} />
-            <strong>{c.name}</strong>
+            <span className="sb-head">
+              <strong>{c.name}</strong>
+              <AspectIcon format={c.format} />
+            </span>
             <span>{c.blurb}</span>
             <em>{c.format}</em>
           </button>

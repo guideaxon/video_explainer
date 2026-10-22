@@ -1,0 +1,303 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Rotatable Comic</title>
+<style>
+  :root { --bg: #f4f1ea; --fg: #1d1b18; --accent: #b4652a; --card: #fffdf8; --line: #d8d2c4; }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg: #17160f; --fg: #ece8de; --accent: #e09a5c; --card: #22201a; --line: #3a372e; }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--fg); font: 16px/1.5 system-ui, sans-serif; }
+  main { max-width: 760px; margin: 0 auto; padding: 16px; }
+  h1 { font-size: 1.25rem; margin: 8px 0 4px; }
+  .hint { margin: 0 0 12px; font-size: .9rem; opacity: .75; }
+  .controls { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
+  .controls button { font: inherit; padding: 8px 14px; border-radius: 8px; border: 1px solid var(--line);
+    background: var(--card); color: var(--fg); cursor: pointer; min-height: 40px; }
+  .controls button[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .page { position: relative; width: 100%; background: var(--card); border: 1px solid var(--line); }
+  .page > img { display: block; width: 100%; height: auto; user-select: none; -webkit-user-drag: none; }
+  .panel { position: absolute; overflow: hidden; cursor: ew-resize; touch-action: pan-y; }
+  .panel canvas { display: block; width: 100%; height: 100%; }
+  .panel:focus-visible { outline: 3px solid var(--accent); outline-offset: -3px; }
+  .panel .loading { position: absolute; inset: auto 0 0 0; height: 4px; background: var(--accent);
+    transform-origin: left; transition: opacity .3s; }
+  .panel .reset { position: absolute; top: 6px; left: 6px; padding: 4px 8px; font-size: .75rem; border-radius: 6px;
+    border: 0; background: rgba(0,0,0,.55); color: #fff; cursor: pointer; opacity: 0; transition: opacity .15s; }
+  .panel:hover .reset, .panel:focus-within .reset, .panel.turned .reset { opacity: 1; }
+  .bubble { position: absolute; background: #fff; color: #111; border: 2px solid #111; border-radius: 40% / 20%;
+    padding: 6px 4px; display: flex; align-items: center; justify-content: center; pointer-events: none;
+    writing-mode: vertical-rl; font-weight: 700; line-height: 1.25; font-size: clamp(10px, 2.2vw, 16px); }
+  .bubble.off { display: none; }
+  .bw { filter: grayscale(1) contrast(1.05); }
+  .panel.static { cursor: default; }
+  .panel.static .reset { display: none; }
+  #status { margin-top: 10px; font-size: .85rem; opacity: .7; min-height: 1.4em; }
+  #status.warn { opacity: 1; color: #b3261e; }
+  @media (prefers-color-scheme: dark) { #status.warn { color: #f2b8b5; } }
+</style>
+</head>
+<body>
+<main>
+  <h1 id="title"></h1>
+  <p class="hint">Drag a panel left or right to turn its viewpoint (or focus it and use the arrow keys). Each panel turns on its own.</p>
+  <div class="controls">
+    <button id="btn-bubbles" aria-pressed="true">Speech bubbles</button>
+    <button id="btn-bw" aria-pressed="false">Black &amp; white</button>
+    <button id="btn-auto" aria-pressed="false">Auto-rotate</button>
+    <button id="btn-reset">Reset all views</button>
+  </div>
+  <div class="page" id="page"></div>
+  <div id="status" role="status"></div>
+</main>
+<script>
+"use strict";
+const MANIFEST = __MANIFEST__;
+
+const PX_PER_TURN = 1.1;      // a drag across 1.1 panel widths is one full turn
+const FRICTION = 0.93;        // inertia decay per 60 Hz tick (scaled by the real frame time)
+const EASE = 0.18;            // share of the way back covered per 60 Hz tick when resetting
+const AUTO_FPS = 24;
+const MAX_DPR = 2;            // frames are kept at display size, never above 2x
+const BATCH = 6;              // frames decoded at once while loading (limits the peak memory)
+const KEY_STEP = 2;           // frames per arrow key press (10 with Shift)
+
+const $ = (id) => document.getElementById(id);
+const pageEl = $("page");
+const statusEl = $("status");
+$("title").textContent = MANIFEST.title;
+document.title = MANIFEST.title;
+
+const [PW, PH] = MANIFEST.page_size;
+pageEl.style.aspectRatio = PW + " / " + PH;
+const pageImg = new Image();
+pageImg.src = MANIFEST.page;
+pageImg.alt = MANIFEST.title;
+pageImg.draggable = false;
+pageEl.appendChild(pageImg);
+
+const panels = [];
+let autoRotate = false;
+
+function mod(n, m) { return ((n % m) + m) % m; }
+
+function frameUrl(info, i) { return "panels/" + info.id + "/" + String(i).padStart(4, "0") + ".jpg"; }
+
+// Size, in pixels, a frame needs so that it covers the panel (cover fit) at the current layout, never upscaled.
+function wantedSize(p) {
+  const r = p.el.getBoundingClientRect();
+  const dpr = Math.min(window.devicePixelRatio || 1, MAX_DPR);
+  const cw = Math.max(1, r.width * dpr), ch = Math.max(1, r.height * dpr);
+  const fs = p.info.frame_size;
+  if (!fs) return null;                                  // unknown source size: keep full size
+  const s = Math.min(1, Math.max(cw / fs[0], ch / fs[1]));
+  return [Math.max(1, Math.round(fs[0] * s)), Math.max(1, Math.round(fs[1] * s))];
+}
+
+async function decode(url) {
+  const img = new Image();
+  img.decoding = "async";
+  img.src = url;
+  await img.decode();
+  return img;
+}
+
+// Decode every frame at display size into ImageBitmaps, a few at a time, so a page of several panels does not hold
+// every full-size frame in memory. A newer call (after a resize that needs bigger frames) replaces an older one.
+async function loadFrames(p) {
+  const gen = ++p.gen;
+  const size = wantedSize(p);
+  const n = p.info.frames;
+  const next = new Array(n);
+  let finished = 0, failed = 0;
+  p.loadedFor = size;
+  const first = !p.frames;
+  if (first) { p.frames = next; p.loaded = 0; p.failed = 0; }
+  for (let start = 0; start < n; start += BATCH) {
+    const jobs = [];
+    for (let i = start; i < Math.min(n, start + BATCH); i++) {
+      jobs.push((async () => {
+        try {
+          const img = await decode(frameUrl(p.info, i));
+          next[i] = size ? await createImageBitmap(img, { resizeWidth: size[0], resizeHeight: size[1], resizeQuality: "high" })
+                         : await createImageBitmap(img);
+        } catch (e) { failed++; }
+        finished++;
+        if (gen === p.gen && first) { p.loaded = finished; p.failed = failed; }
+      })());
+    }
+    await Promise.all(jobs);
+    if (gen !== p.gen) { next.forEach((b) => b && b.close()); return; }   // superseded while loading
+    if (first) { p.bar.style.transform = "scaleX(" + finished / n + ")"; p.dirty = true; updateStatus(); }
+  }
+  if (gen !== p.gen) { next.forEach((b) => b && b.close()); return; }
+  const old = p.frames;
+  p.frames = next; p.loaded = n; p.failed = failed; p.dirty = true;
+  if (old !== next) old.forEach((b) => b && b.close());
+  p.bar.style.opacity = "0";
+  updateStatus();
+}
+
+function makePanel(info) {
+  const [x0, y0, x1, y1] = info.rect;
+  const el = document.createElement("div");
+  el.className = "panel" + (info.frames ? "" : " static");
+  el.style.left = (x0 / PW * 100) + "%";
+  el.style.top = (y0 / PH * 100) + "%";
+  el.style.width = ((x1 - x0) / PW * 100) + "%";
+  el.style.height = ((y1 - y0) / PH * 100) + "%";
+  el.dataset.panel = info.id;
+  for (const b of MANIFEST.bubbles.filter((b) => b.panel === info.id)) {
+    const bub = document.createElement("div");
+    bub.className = "bubble";
+    bub.style.left = b.x + "%"; bub.style.top = b.y + "%";
+    bub.style.width = b.w + "%"; bub.style.height = b.h + "%";
+    bub.textContent = b.lines.join("");
+    el.appendChild(bub);
+  }
+  pageEl.appendChild(el);
+  if (!info.frames) return null;
+
+  el.tabIndex = 0;
+  el.setAttribute("role", "group");
+  el.setAttribute("aria-label", "Panel " + info.id + ". Drag, or use the left and right arrow keys, to turn the view. Home resets.");
+  const canvas = document.createElement("canvas");
+  canvas.setAttribute("aria-hidden", "true");
+  el.insertBefore(canvas, el.firstChild);
+  const bar = document.createElement("div");
+  bar.className = "loading"; bar.style.transform = "scaleX(0)";
+  el.appendChild(bar);
+  const reset = document.createElement("button");
+  reset.className = "reset"; reset.textContent = "Reset view";
+  el.appendChild(reset);
+
+  const p = {
+    info, el, canvas, bar, ctx: canvas.getContext("2d"), frames: null, gen: 0, loaded: 0, failed: 0, loadedFor: null,
+    turn: info.frames - 1,   // the last frame repeats the first view
+    pos: 0, vel: 0, dragging: false, lastX: 0, lastT: 0, target: null, dirty: true,
+  };
+  const turned = () => el.classList.add("turned");
+  reset.addEventListener("click", () => { p.target = 0; p.vel = 0; });
+  el.addEventListener("pointerdown", (e) => {
+    if (e.target === reset) return;
+    p.dragging = true; p.target = null; p.vel = 0; p.lastX = e.clientX; p.lastT = performance.now();
+    el.setPointerCapture(e.pointerId);
+  });
+  el.addEventListener("pointermove", (e) => {
+    if (!p.dragging) return;
+    const w = el.getBoundingClientRect().width;
+    const d = (e.clientX - p.lastX) / (w * PX_PER_TURN) * p.turn;
+    p.pos += d; p.dirty = true;
+    const now = performance.now();
+    p.vel = d / Math.max(1, now - p.lastT) * 16.7;   // frames per 60 Hz tick
+    p.lastX = e.clientX; p.lastT = now;
+    turned();
+  });
+  const end = () => { p.dragging = false; };
+  el.addEventListener("pointerup", end);
+  el.addEventListener("pointercancel", end);
+  el.addEventListener("keydown", (e) => {
+    if (e.target === reset) return;
+    if (e.key === "ArrowLeft" || e.key === "ArrowRight") {
+      p.target = null; p.vel = 0;
+      p.pos += (e.key === "ArrowRight" ? 1 : -1) * (e.shiftKey ? 10 : KEY_STEP);
+      p.dirty = true; turned(); e.preventDefault();
+    } else if (e.key === "Home" || e.key === "Escape") {
+      p.target = 0; p.vel = 0; e.preventDefault();
+    }
+  });
+  loadFrames(p);
+  return p;
+}
+
+function fit(p) {
+  const r = p.el.getBoundingClientRect();
+  const dpr = Math.min(window.devicePixelRatio || 1, MAX_DPR);
+  const w = Math.max(1, Math.round(r.width * dpr)), h = Math.max(1, Math.round(r.height * dpr));
+  if (p.canvas.width !== w || p.canvas.height !== h) { p.canvas.width = w; p.canvas.height = h; p.dirty = true; }
+}
+
+function draw(p) {
+  fit(p);
+  if (!p.frames) return;
+  const idx = Math.round(mod(p.pos, p.turn));
+  const img = p.frames[idx] || p.frames.find(Boolean);   // fall back to any frame already loaded
+  if (!img) return;
+  const cw = p.canvas.width, ch = p.canvas.height;
+  const s = Math.max(cw / img.width, ch / img.height);   // cover
+  const w = img.width * s, h = img.height * s;
+  p.ctx.drawImage(img, (cw - w) / 2, (ch - h) / 2, w, h);
+  p.drawnIndex = idx;
+}
+
+let lastTick = performance.now();
+function tick(now) {
+  const dt = Math.min(3, Math.max(0, (now - lastTick) / 16.667));   // 1 at 60 Hz, so motion is the same at 120 Hz
+  const autoStep = autoRotate ? (now - lastTick) / 1000 * AUTO_FPS : 0;
+  lastTick = now;
+  for (const p of panels) {
+    if (!p.dragging) {
+      if (p.target !== null) {
+        // Reset by the shortest way round, easing out.
+        const d = mod(p.target - p.pos + p.turn / 2, p.turn) - p.turn / 2;
+        if (Math.abs(d) < 0.05) { p.pos = p.target; p.target = null; p.el.classList.remove("turned"); }
+        else p.pos += d * (1 - Math.pow(1 - EASE, dt));
+        p.dirty = true;
+      } else if (Math.abs(p.vel) > 0.02) {
+        p.pos += p.vel * dt; p.vel *= Math.pow(FRICTION, dt); p.dirty = true;
+      } else if (autoStep) {
+        p.pos += autoStep; p.dirty = true;
+      }
+    }
+    if (p.dirty) { p.dirty = false; draw(p); }
+  }
+  requestAnimationFrame(tick);
+}
+
+function updateStatus() {
+  const total = panels.reduce((n, p) => n + p.info.frames, 0);
+  const failed = panels.reduce((n, p) => n + p.failed, 0);
+  if (failed) {
+    statusEl.className = "warn";
+    statusEl.textContent = failed + " of " + total + " frames failed to load; some views may be missing.";
+  } else {
+    statusEl.className = "";
+    statusEl.textContent = panels.length + " rotatable panel(s), " + total + " frames";
+  }
+}
+
+for (const info of MANIFEST.panels) { const p = makePanel(info); if (p) panels.push(p); }
+requestAnimationFrame(tick);
+
+let resizeTimer = null;
+window.addEventListener("resize", () => {
+  panels.forEach((p) => { p.dirty = true; });
+  clearTimeout(resizeTimer);
+  resizeTimer = setTimeout(() => {          // frames kept at a smaller size than now needed are loaded again
+    for (const p of panels) {
+      const want = wantedSize(p);
+      if (want && p.loadedFor && want[0] > p.loadedFor[0] * 1.2) loadFrames(p);
+    }
+  }, 300);
+});
+
+function toggle(btn, fn) {
+  btn.addEventListener("click", () => {
+    const on = btn.getAttribute("aria-pressed") !== "true";
+    btn.setAttribute("aria-pressed", String(on)); fn(on);
+  });
+}
+toggle($("btn-bubbles"), (on) => document.querySelectorAll(".bubble").forEach((b) => b.classList.toggle("off", !on)));
+toggle($("btn-bw"), (on) => { pageImg.classList.toggle("bw", on); panels.forEach((p) => p.canvas.classList.toggle("bw", on)); });
+toggle($("btn-auto"), (on) => { autoRotate = on; });
+$("btn-reset").addEventListener("click", () => panels.forEach((p) => { p.target = 0; p.vel = 0; }));
+
+updateStatus();
+// For tests: decoded frame memory in bytes (4 bytes per pixel) at the current sizes.
+window.__comic = { panels, mod, bytes: () => panels.reduce((n, p) => n + (p.frames || []).reduce((m, b) => m + (b ? b.width * b.height * 4 : 0), 0), 0) };
+</script>
+</body>
+</html>
