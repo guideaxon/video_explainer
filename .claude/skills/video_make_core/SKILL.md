@@ -39,6 +39,9 @@ $env:PYTHONUTF8 = "1"                 # required for CLI output
    Fix every ERROR. Then do the reviewer pass from `docs/video_review_checklist.md` on the printed brief
    (claims against your gathered sources, fabricated proof, narration vs screen, style, stale text) and fix
    or explicitly accept each issue. Re-run until there are 0 errors.
+   Then the **radio cut**: `python scripts/radio_cut.py <project>` fixes the scene timeline from the narration
+   alone (`plan/radio_cut.json`). Fix any ERROR (planned scene shorter than its speech) before spending time on
+   voice or render.
 6. **Voice**: `python -m src.cli voiceover <project> --provider edge` (or `elevenlabs`).
 7. **Storyboard and pacing**: `python scripts/<style_bundle>_finalize_storyboard.py <project>` (trims TTS
    silence, builds the storyboard, sets the style bundle's buffers and fades). Use it instead of the plain

@@ -30,10 +30,11 @@ prefixed with the style bundle name. A project selects its style bundle with `"s
 | lyric (animated lyric / music videos, kawaii pixel pop, portrait 1080x1920 full videos) | `docs/lyric_video_style_guide.md` | `remotion/src/components/lyric/` | `templates/lyric_video/`, `scripts/lyric_new_video.py`, `scripts/lyric_finalize_storyboard.py` | `.claude/skills/lyric_make_video/` |
 | leaderbot (pixel-mosaic business explainers and satire starring a pixel "leader bot", portrait 1080x1920 full videos) | `docs/leaderbot_video_style_guide.md` | `remotion/src/components/leaderbot/` | `templates/leaderbot_video/`, `scripts/leaderbot_new_video.py`, `scripts/leaderbot_finalize_storyboard.py` | `.claude/skills/leaderbot_make_video/` |
 | demo (narrated product demos from real device screenshots, no screen recording; 1920x1080 or `--portrait`) | `docs/demo_video_style_guide.md` | `remotion/src/components/demo/` | `projects/<p>/manifest.json` (no scene templates), `scripts/demo_new_video.py`, `scripts/demo_build_scenes.py`, `scripts/demo_finalize_storyboard.py` | `.claude/skills/demo_make_video/` |
+| storybook (illustrated storybook films from locally generated painted stills, landscape 1280x720 full videos) | `docs/storybook_video_style_guide.md` | `remotion/src/components/storybook/` | `templates/storybook_video/`, `scripts/storybook_new_video.py`, `scripts/storybook_stills_comfy.py`, `scripts/storybook_finalize_storyboard.py` | `.claude/skills/storybook_make_video/` |
 | comic (rotatable comic pages: each panel is a 360-degree orbit clip generated locally in ComfyUI; static web bundle, not a video) | `docs/comic_style_guide.md` | `templates/comic_viewer/` (static HTML viewer) | `scripts/comic_new_comic.py`, `scripts/comic_orbit_comfy.mjs`, `scripts/comic_build_bundle.py` | `.claude/skills/comic_make_comic/` |
 
-To make a video for a style bundle, use its skill (`/vantage_make_short`, `/markets_make_video`, `/promo_make_video`, `/launch_make_video`, `/lyric_make_video`, `/leaderbot_make_video`, `/demo_make_video`, `/comic_make_comic`).
-The six full-video style bundle skills (Markets, Promo, Launch, Lyric, Leaderbot, Demo) require the shared `video_make_core` skill, which holds the common workflow and a pre-render review (`scripts/review_video.py`, `docs/video_review_checklist.md`); run the review before `voiceover`.
+To make a video for a style bundle, use its skill (`/vantage_make_short`, `/markets_make_video`, `/promo_make_video`, `/launch_make_video`, `/lyric_make_video`, `/leaderbot_make_video`, `/demo_make_video`, `/storybook_make_video`, `/comic_make_comic`).
+The seven full-video style bundle skills (Markets, Promo, Launch, Lyric, Leaderbot, Demo, Storybook) require the shared `video_make_core` skill, which holds the common workflow and a pre-render review (`scripts/review_video.py`, `docs/video_review_checklist.md`); run the review before `voiceover`.
 Comic is not a video: its skill does not use `video_make_core`; it builds a static web bundle (frames plus an HTML viewer) from `projects/<p>/comic/`, and needs a local ComfyUI with the MiniMax H3 models (`docs/TryComfyUIOptions.md`) and Playwright.
 The shorts scene generator hook (`style_bundles.py`) exists for Vantage only; Markets scenes are
 hand-adapted from the template, as are Promo, Launch, Lyric and Leaderbot scenes. Demo needs Pillow (in `pyproject.toml`).
@@ -48,3 +49,15 @@ hand-adapted from the template, as are Promo, Launch, Lyric and Leaderbot scenes
   `scripts/_storyboard_pacing.py`.
 - Rendering a short also needs a stub `projects/<p>/scenes/index.ts` (see the Vantage skill).
 - Always inspect rendered frames (mid-beat and end-of-beat) before calling a video done.
+
+## House rules and guard hook
+
+- Before a full video: `scripts/review_video.py`, then `scripts/radio_cut.py <p>` (timeline from narration, before `voiceover`).
+- Before delivery: `scripts/continuity_qc.py --project <p> [--refs projects/<p>/plan/refs]`, read `qc/brief.md` and the
+  contact sheet, fix what changed between shots, then re-run with `--reviewed` (the hook needs it). Never hide a known problem.
+- Creative calls (look, voice, music, cuts) are offered as options; the user decides.
+- `.claude/hooks/guard.py` (wired in `.claude/settings.json`) denies: paid API calls from one-off scripts outside
+  `src/` or `scripts/`; sending a final video without a passing `qc/qc.json` whose hash matches (name it `*PREVIEW*` to
+  ask a question); and a project scene importing another style bundle's kit.
+- Reference: `docs/launch_film_breakdown.md` (analysis of the Video Factory launch film and the proposed `storybook` bundle).
+

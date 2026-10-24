@@ -13,6 +13,7 @@ export const STYLE_BUNDLES: { id: string; name: string; blurb: string; format: s
   { id: "lyric", name: "Lyric", blurb: "Kawaii pixel-pop lyric and music videos", format: "Portrait" },
   { id: "leaderbot", name: "Leaderbot", blurb: "Pixel-mosaic business explainers and satire", format: "Portrait" },
   { id: "demo", name: "Demo", blurb: "Narrated product demos from real screenshots", format: "16:9 or portrait" },
+  { id: "storybook", name: "Storybook", blurb: "Illustrated storybook films from painted stills", format: "16:9" },
 ];
 
 /** Outline of the frame shape a style bundle produces, like the Landscape / Portrait picker in the reference. */

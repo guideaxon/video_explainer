@@ -36,6 +36,8 @@ STYLE_BUNDLES: dict[str, dict] = {
     "launch": {"words": (5, 12), "required": []},
     "lyric": {"words": None, "required": []},
     "leaderbot": {"words": (6, 12), "required": ["not business advice"], "headline_chars": 10},
+    # Storybook: landscape painted-still films; narration 5 to 14 words per beat; art/<scene_id>.png per scene.
+    "storybook": {"words": (5, 14), "required": [], "resolutions": [(1280, 720), (1920, 1080)]},
     # Demo: narration explains real screenshots, so it runs longer; landscape or portrait; text comes from manifest.json.
     "demo": {"words": (5, 30), "required": [], "resolutions": [(1920, 1080), (1080, 1920)]},
 }
@@ -149,6 +151,12 @@ def review(project_dir: Path) -> tuple[Report, dict]:
             n = len(s.get("narration", "").split())
             if not lo <= n <= hi:
                 rep.warn(f"{s['title']!r}: {n} spoken words (style guide: {lo} to {hi})")
+
+    # Storybook: every scene needs its painted still, or the render fails late.
+    if style_bundle == "storybook":
+        for sc in scenes:
+            if not (project_dir / "art" / f"{sc['scene_id']}.png").exists():
+                rep.error(f"art/{sc['scene_id']}.png is missing (run scripts/storybook_stills_comfy.py)")
 
     # Leftover template placeholders in narration and on-screen text.
     screen: dict[str, list[str]] = {}
