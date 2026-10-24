@@ -168,28 +168,37 @@ Steps 1 to 5 were done for two panels of the reference comic. Details and timing
 ## 7. Open questions
 
 - What did the second artifact (https://claude.ai/artifact/5SzPKr8C8PaYSL3p17W5Bu) use? It could not
-  be read. If it is shared with the account, or its page source is pasted, the technique can be
-  identified.
-- Does the model fit and run at a usable speed in 12 GB VRAM with offloading to 68 GB RAM? Unknown
-  until tested. Expect slow generation.
-- Does the pruned w6a8 diffusion model (or Kijai's w4a8) work with the ORB360 LoRA? The LoRA card
-  documents only the bf16 Ref2VA base.
-- Does the nvfp4 text encoder change output compared with the int8 one the card documents?
+  be read (HTTP 404 again on 2026-10-21 through the Artifact tool). If it is shared with the account, or its page
+  source is pasted, the technique can be identified.
+Answered by the 2026-10-21 evaluation (`docs/TryComfyUIOptions.md`, section 0):
+
+- Does the model fit and run at a usable speed in 12 GB VRAM with offloading to 68 GB RAM? **Yes.** FastH3 Omni
+  int8 plus the ORB360 LoRA takes about 3.5 minutes per clip (200 to 246 s) with the laptop on AC power, peak VRAM
+  10 to 11.3 GB, no flags. On battery the GPU is power-capped and it takes 10 minutes or more.
+- Does the ORB360 LoRA work on a quantised base? **Yes on the FastH3 Omni int8 ConvRot base** (loads, runs, clean
+  orbits on five panels). Not tested on the w6a8 or Kijai w4a8 bases, which were never run.
+- Cost and time per comic: about 3.5 minutes of generation per rotatable panel (five panels took about 18 minutes
+  of generation), plus about 1 minute to build the bundle; no per-clip fee, local only.
+- Which source images, and does the comic need narration? The reference comic page's panels were used
+  (`projects/lighthouse_comic_v2`), and the Comic style bundle is the interactive viewer only: no narration.
+
+Still open or untested:
+
+- Does the nvfp4 text encoder change output compared with the int8 one the card documents? Every run used the
+  nvfp4 encoder and the output was good; it was not compared against the int8 encoder.
 - Does the 4-step turbo LoRA stay compatible with ORB360 (trained at 20 steps) and keep the orbit
-  clean?
+  clean? Not tested.
 - Does the orbit stay consistent enough for 3D reconstruction (v3), especially on flat manga
   linework? Test this early on a few panels.
 - Can elevation (pitch) be obtained at all? The card says camera-height prompts do not hold on real
   photos. Depth-map parallax (v2) may be the only route.
 - How well does the LoRA cope with multi-character or action panels? It is built for a single frozen
-  subject.
-- Cost and time per comic, since each panel needs its own generation.
+  subject. Not tested: all five Lighthouse panels have one main subject (p1's small walker was duplicated once).
+  The style guide tells users to leave such panels static.
 - Licence: MiniMax H3 Community License terms for commercial use of generated output and for
   redistributing weights. Not yet read in full.
 - Which backend for production: local ComfyUI or a hosted API?
-- Which source images: existing comic panels from `projects/`, or new art?
 - Is the Gemini demo repo worth borrowing from? Its code has not been inspected.
-- Does the `comic` channel need a narrated video output, or only the interactive viewer?
 
 ## 8. Sources
 

@@ -87,7 +87,7 @@ Twelve LoRA runs ran on a healthy server (the rows from the 235 s restart test o
 8. **Same inputs give the same clip.** The restart test produced a bit-identical video (PSNR infinite), so
    seeds can be used to retry or reproduce a panel.
 
-### 0.4 Problems found, and what is still unexplained
+### 0.4 Problems found (the slow clips are explained: battery power; the weight-loader failure is not)
 
 | Problem | Evidence | Status |
 |---|---|---|
@@ -130,10 +130,15 @@ Generate a clean 360-degree orbit clip (ORB360 LoRA, Ref2VA) of one subject on t
 to be practical for many comic panels. Pick the option with the best speed that still passes the orbit
 checklist in section 5.
 
-Recommended first try: **FastH3 Omni with the shipped int8_convrot template (option 1)**. It is the
-easiest to run, uses the 8-step distilled model, and needs no extra nodes. The ORB360 LoRA is added
+Recommended first try (the plan as written): **FastH3 Omni with the shipped int8_convrot template (option 1)**.
+It is the easiest to run, uses the 8-step distilled model, and needs no extra nodes. The ORB360 LoRA is added
 (option 2) only when a quick Omni baseline shows it is needed, meaning the baseline runs at a usable
 speed but a prompt-only orbit is not good enough.
+
+**Outcome (2026-10-21):** that is what happened. Option 1 ran at a usable speed, its prompt-only orbit was not
+good enough for panels seen from behind or painted panels facing the camera, so option 2 was added and passed
+the orbit checklist at about 3.5 minutes per clip on AC power. **Option 2 is the chosen configuration.** Options 3
+to 5 were never run, because the stop rule below was met. Details and numbers are in section 0.
 
 ## 2. Facts that shape the plan
 
@@ -198,6 +203,9 @@ same frame count within a comparison.
 
 ### Option 1: FastH3 Omni, template exactly as shipped (first to try)
 
+**Result: run, passed.** 141 s cold and 106 s warm at 864x480, 124 frames, peak VRAM about 11.3 GB, no flags
+needed (section 0.1, and the option 1 results below).
+
 Purpose: prove the machine runs H3-class video at all, and get a speed and quality baseline with no LoRA.
 
 - Template: Workflow, Browse Templates, search "FastH3" (`video_fasth3_ominiref_r2v`).
@@ -226,6 +234,10 @@ Purpose: prove the machine runs H3-class video at all, and get a speed and quali
 
 ### Option 2: FastH3 Omni + ORB360 (only if the option 1 baseline shows it is needed)
 
+**Result: run, passed, chosen.** The LoRA loads and works on the int8 ConvRot Omni base (the compatibility risk
+below did not materialise), all five Lighthouse panels loop closed, and a clip takes 201 to 246 s on AC power
+(over 10 minutes on battery, section 0.4). Section 0.5 is the recommended configuration.
+
 - Start only when option 1 runs at a usable speed and the prompt-only orbit attempt does not give a
   clean 360-degree turn.
 - Add `minimax_h3_orb360_step1500.safetensors` (0.60 GB, MATLOWAI/MiniMax-H3-ORB360-CardSpin, loras
@@ -241,6 +253,9 @@ Purpose: prove the machine runs H3-class video at all, and get a speed and quali
 
 ### Option 3: Kijai w4a8 base + ORB360 (your fast configuration)
 
+**Result: not run.** Option 2 already met the quality and speed gates, the files were never downloaded, and the
+exact 5060 workflow it needs was not supplied. Untested, not rejected. Revisit only if speed or VRAM must improve.
+
 - Files: `minimax_h3_ref2va_pruned_w4a8_mixed.safetensors` (11.77 GB, Kijai/MiniMax-H3-experimental,
   experimental; the card says it needs ComfyUI 0.31.0 or newer, we have 0.40.0), the same text
   encoder and VAEs as option 1, and the ORB360 LoRA.
@@ -254,12 +269,18 @@ Purpose: prove the machine runs H3-class video at all, and get a speed and quali
 
 ### Option 4: Comfy-Org w6a8 base + ORB360 (reference baseline)
 
+**Result: not run.** Skipped as written below ("skip if option 3 already passes"; option 2 passed, so neither was
+needed). Files not downloaded. Untested, not rejected.
+
 - File: `minimax_h3_ref2va_pruned_w6a8.safetensors` (15.98 GB, Comfy-Org/MiniMax-H3). Same settings as
   option 3.
 - Purpose: the quality reference against which the faster options are judged. Skip if option 3 already
   passes and is fast enough.
 
 ### Option 5: MATLOWAI fused-turbo (fallback only)
+
+**Result: not run.** It was a fallback "only if options 2 and 3 both fail"; option 2 passed. Its custom node packs
+were never reviewed or installed.
 
 - One 21 GB file, 4 steps, reported 11.0 GiB peak on a 16 GB card. It does not mention ORB360, and needs
   the ComfyUI-MAINodes and SLA attention custom node packs. Review those packs before installing. Try
