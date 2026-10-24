@@ -7,6 +7,8 @@ These tests verify that the new sound generators:
 4. Don't clip excessively
 """
 
+import inspect
+
 import numpy as np
 import pytest
 from pathlib import Path
@@ -31,11 +33,9 @@ from .library import (
     generate_counter_sweep,
     # Utilities
     normalize,
-    soft_clip,
-    hard_clip,
-    sharp_transient,
-    bandpass_noise,
-    highpass_noise,
+    soft_saturate,
+    smooth_envelope,
+    filtered_noise,
 )
 
 
@@ -69,21 +69,20 @@ class TestSoundManifest:
 class TestGeneratorOutput:
     """Tests for generator output characteristics."""
 
-    @pytest.mark.parametrize("generator,expected_duration", [
-        (generate_keyboard_type, 0.06),
-        (generate_keyboard_rapid, 0.15),
-        (generate_bar_grow, 0.35),
-        (generate_progress_tick, 0.08),
-        (generate_digital_stream, 0.5),
-        (generate_impact_soft, 0.15),
-        (generate_impact_hard, 0.25),
+    @pytest.mark.parametrize("generator", [
+        generate_keyboard_type,
+        generate_keyboard_rapid,
+        generate_bar_grow,
+        generate_progress_tick,
+        generate_digital_stream,
+        generate_impact_soft,
+        generate_impact_hard,
     ])
-    def test_generator_duration(self, generator, expected_duration):
-        """Test that generators produce correct duration samples."""
-        samples = generator()
-        expected_samples = int(SAMPLE_RATE * expected_duration)
-
-        assert len(samples) == expected_samples
+    def test_generator_duration(self, generator):
+        """Generators honour their default and an explicit duration."""
+        default = inspect.signature(generator).parameters["duration"].default
+        assert len(generator()) == int(SAMPLE_RATE * default)
+        assert len(generator(0.2)) == int(SAMPLE_RATE * 0.2)
 
     @pytest.mark.parametrize("generator", [
         generate_keyboard_type,
@@ -356,8 +355,8 @@ class TestImpactHard:
         # Should reach significant amplitude quickly
         assert np.max(np.abs(attack_samples)) > 0.3
 
-    def test_wide_frequency_range(self):
-        """Test that hard impact has wide frequency content."""
+    def test_body_is_low_and_restrained(self):
+        """The hard impact is a firm low thump (the library is deliberately restrained: no bright crack)."""
         samples = generate_impact_hard()
 
         fft = np.abs(np.fft.rfft(samples))
@@ -373,9 +372,8 @@ class TestImpactHard:
 
         total_energy = np.sum(fft)
 
-        # Should have both low and high frequency content
         assert low_energy / total_energy > 0.05, "Not enough low frequency"
-        assert high_energy / total_energy > 0.05, "Not enough high frequency"
+        assert high_energy / total_energy < 0.05, "Too bright for the restrained library"
 
 
 class TestSoundLibrary:
@@ -439,48 +437,35 @@ class TestUtilityFunctions:
 
         assert abs(peak - target_amp) < 0.01
 
-    def test_soft_clip_preserves_quiet(self):
-        """Test that soft clip doesn't affect quiet signals."""
-        samples = np.array([0.1, 0.2, 0.3, -0.1, -0.2])
-        clipped = soft_clip(samples, threshold=0.8)
+    def test_soft_saturate_is_gentle_and_bounded(self):
+        """Quiet signals pass nearly unchanged; loud ones never exceed full scale."""
+        quiet = np.array([0.05, -0.05, 0.1])
+        np.testing.assert_allclose(soft_saturate(quiet, 0.2), quiet, atol=0.02)
+        loud = np.array([3.0, -3.0, 10.0])
+        assert np.max(np.abs(soft_saturate(loud, 0.3))) <= 1.0
 
-        np.testing.assert_array_almost_equal(samples, clipped, decimal=2)
+    def test_soft_saturate_keeps_sign_and_order(self):
+        """Saturation is odd and monotonic, so it adds warmth without folding the wave."""
+        x = np.linspace(-2, 2, 101)
+        y = soft_saturate(x, 0.3)
+        np.testing.assert_allclose(y, -soft_saturate(-x, 0.3))
+        assert np.all(np.diff(y) > 0)
 
-    def test_hard_clip_limits_peaks(self):
-        """Test that hard clip limits peaks."""
-        samples = np.array([0.5, 1.5, -1.5, 0.3])
-        clipped = hard_clip(samples, threshold=0.7)
+    def test_smooth_envelope_starts_silent_and_decays(self):
+        """No click at either end: the attack starts at 0 and the release falls well below the sustain."""
+        env = smooth_envelope(int(SAMPLE_RATE * 0.1), attack_ms=5, release_ms=50)
+        assert env[0] == 0.0
+        assert env[len(env) // 3] == 1.0
+        assert env[-1] < 0.1
 
-        assert np.max(clipped) <= 0.7
-        assert np.min(clipped) >= -0.7
-
-    def test_sharp_transient_decays(self):
-        """Test that sharp transient decays rapidly."""
-        transient = sharp_transient(int(SAMPLE_RATE * 0.05), intensity=1.0)
-
-        # Energy at start should be higher than at end
-        start_energy = np.mean(np.abs(transient[:100]))
-        end_energy = np.mean(np.abs(transient[-100:]))
-
-        assert start_energy > end_energy * 10
-
-    def test_bandpass_noise_frequency_range(self):
-        """Test that bandpass noise is within specified range."""
-        low = 500
-        high = 2000
-        noise = bandpass_noise(int(SAMPLE_RATE * 0.5), low, high)
-
-        fft = np.abs(np.fft.rfft(noise))
-        freqs = np.fft.rfftfreq(len(noise), 1/SAMPLE_RATE)
-
-        # Find peak frequency
-        peak_freq = freqs[np.argmax(fft)]
-
-        # Peak should be within or very close to the passband
-        # Allow 5% tolerance for filter rolloff
-        tolerance = (high - low) * 0.05
-        assert low - tolerance <= peak_freq <= high + tolerance
-
+    def test_filtered_noise_is_lowpassed(self):
+        """Most of the energy sits below the cutoff."""
+        np.random.seed(0)
+        cutoff = 1000
+        noise = filtered_noise(int(SAMPLE_RATE * 0.5), cutoff)
+        power = np.abs(np.fft.rfft(noise)) ** 2
+        freqs = np.fft.rfftfreq(len(noise), 1 / SAMPLE_RATE)
+        assert power[freqs < cutoff * 1.5].sum() > 0.9 * power.sum()
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])

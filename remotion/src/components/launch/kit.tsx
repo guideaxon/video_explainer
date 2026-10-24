@@ -11,6 +11,8 @@ import React, { createContext, useContext } from "react";
 import { AbsoluteFill, Easing, interpolate, spring, useCurrentFrame, useVideoConfig } from "remotion";
 import { loadFont as loadJakarta } from "@remotion/google-fonts/PlusJakartaSans";
 import { loadFont as loadInter } from "@remotion/google-fonts/Inter";
+import { blinkAt, gestureT, visemeAt } from "../rig";
+import type { RigProps, Viseme } from "../rig";
 
 const jakarta = loadJakarta("normal", { weights: ["600", "800"], subsets: ["latin"] });
 const inter = loadInter("normal", { weights: ["400", "600"], subsets: ["latin"] });
@@ -110,14 +112,41 @@ export const Sub: React.FC<{ children: React.ReactNode; y: number; from?: number
 const STAGE_NAMES = ["Seed", "Sprout", "Budding", "Awakening", "Stirring", "Sturdy", "Strong", "Mighty", "Colossus", "Champion"];
 export const stageName = (s: number) => STAGE_NAMES[Math.max(0, Math.min(9, Math.round(s) - 1))];
 
-/** Original placeholder mascot. `stage` 1..10 grows it and adds a flower, arms, abs and a crown. */
-export const Mascot: React.FC<{ cx: number; cy: number; scale?: number; stage?: number; from?: number; shadow?: boolean }> = ({ cx, cy, scale = 1.6, stage = 10, from = 0, shadow = true }) => {
+export type MascotGesture = "rest" | "wave" | "cheer";
+/** Mouth per Rhubarb shape: a stroke for rest and closed lips, else an opening (rx, ry) with teeth or tongue. */
+const MASCOT_MOUTH: Record<Viseme, { d?: string; rx?: number; ry?: number; teeth?: boolean; tongue?: boolean }> = {
+  X: { d: "M-14,34 Q0,48 14,34" },
+  A: { d: "M-13,40 Q0,43 13,40" },
+  B: { rx: 13, ry: 5, teeth: true },
+  C: { rx: 14, ry: 9, teeth: true, tongue: true },
+  D: { rx: 15, ry: 14, teeth: true, tongue: true },
+  E: { rx: 10, ry: 10, tongue: true },
+  F: { rx: 6, ry: 7 },
+  G: { rx: 12, ry: 4, teeth: true },
+  H: { rx: 13, ry: 10, tongue: true },
+};
+
+/**
+ * Original placeholder mascot. `stage` 1..10 grows it and adds a flower, arms, abs and a crown.
+ * Rig: talks from `mouth`/`visemes` (`scenes/lipsync.ts`), blinks on the shared rhythm, and from stage 3 (arms) can
+ * `wave` (right arm) or `cheer` (both arms up) from `gestureAt`.
+ */
+export const Mascot: React.FC<{ cx: number; cy: number; scale?: number; stage?: number; from?: number; shadow?: boolean } & RigProps<MascotGesture>> = ({
+  cx, cy, scale = 1.6, stage = 10, from = 0, shadow = true, mouth, visemes, talking, blink: blinks = true, gesture = "rest", gestureAt = 0, seed = 0,
+}) => {
   const frame = useCurrentFrame();
+  const { fps } = useVideoConfig();
   const pop = usePop(from, 11);
   const st = Math.max(1, Math.min(10, stage));
   const s = (0.5 + 0.05 * st) * scale * (0.6 + 0.4 * pop);
   const bob = Math.sin(frame / 14) * 7;
-  const blink = frame % 90 > 84 ? 0.1 : 1;
+  const blink = blinks ? 1 - 0.9 * blinkAt(frame, fps, seed) : 1;
+  const m = MASCOT_MOUTH[visemeAt({ mouth, visemes, talking }, frame)];
+  const g = gesture === "rest" ? 0 : gestureT(frame, gestureAt);
+  const wag = Math.sin((frame - gestureAt) / 3.5) * 14 * g; // the raised hand waves
+  const sway = 20 + Math.sin(frame / 10) * 6; // idle sway about each arm's centre, as before
+  const liftR = (-130 + wag) * g; // gesture lift about the shoulder
+  const liftL = gesture === "cheer" ? (130 - wag) * g : 0;
   const r = Math.round(st);
   const sparkle = (x: number, y: number, k: number) => {
     const t = 0.5 + 0.5 * Math.sin(frame / 8 + k * 2);
@@ -135,8 +164,8 @@ export const Mascot: React.FC<{ cx: number; cy: number; scale?: number; stage?: 
         </defs>
         {r >= 3 && (
           <>
-            <ellipse cx={-112} cy={30} rx={20 + r} ry={38 + r} fill="url(#bodyG)" stroke={C.line} strokeWidth={6} transform={`rotate(${20 + Math.sin(frame / 10) * 6} -112 30)`} />
-            <ellipse cx={112} cy={30} rx={20 + r} ry={38 + r} fill="url(#bodyG)" stroke={C.line} strokeWidth={6} transform={`rotate(${-20 - Math.sin(frame / 10) * 6} 112 30)`} />
+            <ellipse cx={-112} cy={30} rx={20 + r} ry={38 + r} fill="url(#bodyG)" stroke={C.line} strokeWidth={6} transform={`rotate(${liftL} -100 -4) rotate(${sway} -112 30)`} />
+            <ellipse cx={112} cy={30} rx={20 + r} ry={38 + r} fill="url(#bodyG)" stroke={C.line} strokeWidth={6} transform={`rotate(${liftR} 100 -4) rotate(${-sway} 112 30)`} />
           </>
         )}
         <path d="M0,-120 C70,-120 105,-50 105,20 C105,85 60,120 0,120 C-60,120 -105,85 -105,20 C-105,-50 -70,-120 0,-120 Z" fill="url(#bodyG)" stroke={C.line} strokeWidth={6} />
@@ -161,7 +190,13 @@ export const Mascot: React.FC<{ cx: number; cy: number; scale?: number; stage?: 
         </g>
         <circle cx={-62} cy={34} r={13} fill={C.pink} opacity={0.75} />
         <circle cx={62} cy={34} r={13} fill={C.pink} opacity={0.75} />
-        <path d="M-14,34 Q0,48 14,34" fill="none" stroke={C.line} strokeWidth={5} strokeLinecap="round" />
+        {m.d ? <path d={m.d} fill="none" stroke={C.line} strokeWidth={5} strokeLinecap="round" /> : (
+          <g transform="translate(0 40)">
+            <ellipse rx={m.rx} ry={m.ry} fill={C.line} />
+            {m.tongue && <ellipse cy={(m.ry ?? 0) * 0.5} rx={(m.rx ?? 0) * 0.6} ry={(m.ry ?? 0) * 0.4} fill={C.pink} />}
+            {m.teeth && <rect x={-(m.rx ?? 0) * 0.65} y={-(m.ry ?? 0)} width={(m.rx ?? 0) * 1.3} height={Math.min(4.5, (m.ry ?? 0) * 0.8)} rx={1.5} fill="#fff" />}
+          </g>
+        )}
         {r >= 10 && (
           <g transform="translate(-4 -150)">
             <path d="M-46,10 L-52,-34 L-24,-8 L0,-44 L24,-8 L52,-34 L46,10 Z" fill={C.gold} stroke="#b8860b" strokeWidth={5} strokeLinejoin="round" />

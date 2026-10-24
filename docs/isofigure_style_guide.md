@@ -31,7 +31,9 @@ object has nothing to press, choose a different object. Decide what pressing eac
 | `runtime.tsx` | `mountFigure(spec)`, `Press`, `useFig`: press handling, animation clock, look inside, labels, card, accessibility |
 | `callout.tsx` | `layoutPills` and `Callouts`: pills in two columns, leaders that do not cross, `inside` items |
 
-A project may only use the isofigure kit (guard hook rule 3). Import it through the `@isofigure/...` alias.
+A project may only use the isofigure kit (guard hook rule 3). Import it through the `@isofigure/...` alias. The one
+exception is the shared character rig contract (`remotion/src/components/rig/`, pure timing, no drawing) through the
+`@rig` alias, which a character figure may use for its blink rhythm and syllable mouth (section 6).
 
 ## 4. A project
 
@@ -99,7 +101,30 @@ python scripts/isofigure_build_html.py isofigure_washer   # writes projects/isof
 
 To make a new figure: scaffold, replace the model first, then the drawing, then the controls and callouts.
 
-## 6. Where the ideas come from
+## 6. A character figure: `templates/isofigure_robot`
+
+`python scripts/isofigure_new_figure.py <p> --template robot` starts from a small toy robot instead of the washer. A
+character has no machine cycle to explain, so its **actions are the controls**: Wave (W: the shoulder servo raises the
+arm, the forearm waves three times, the arm lowers; 2.5 s), Blink (B), Talk (T: the mouth LEDs and chest speaker run a
+syllable rhythm for 2.5 s) and Antenna light (A, a toggle; the light glows and pulses). The arm, the face screen, the
+mouth, the chest grille and the antenna ball are `<Press>` parts too. A second press of a running action is refused in
+the readout ("already waving"). Look inside shows what makes each action happen: battery, circuit board, shoulder servo,
+speaker and the wiring up the neck to the antenna.
+
+- **No voiceover.** "Talk" is a picture of talking (lights and, optionally, babble blips), not speech: a figure has no
+  script, and a voice would make it a video. If it must speak, record it as a chapter with a narrated `tour.json`.
+- **Alive when idle.** It blinks on its own (`blinkAt` from the rig contract), so `tick` always advances a clock and the
+  figure redraws every frame; that is the price of a character, and it is cheap at this size.
+- **Arms are rotated boxes.** `Limb` in `figure.tsx` turns a box about the shoulder axis and shades each face from its
+  rotated normal with `faceTone`, so a moving limb stays solid at every angle.
+- **Sound is optional** and synthesised in the page (Web Audio blips, no files). It only starts after a press (a user
+  gesture), idle blinks are silent, and Sound (M) mutes it, including sounds already scheduled.
+- **Reduced motion:** no idle blink, no antenna pulse, the wave holds the raised arm without swinging, the mouth shows a
+  steady bar pattern.
+
+Model tests: `remotion/src/components/isofigure/robot.test.ts`.
+
+## 7. Where the ideas come from
 
 The projection and press patterns follow MrBongoC/ai-iso-skill (flat shapes on isometric planes, one `render`, class toggles
 for pressed parts); the model-first workflow, parts list and "verify like a critic" follow wheresryan22/anatomy; the warm

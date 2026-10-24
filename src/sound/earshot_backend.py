@@ -50,6 +50,7 @@ DEFAULT_PALETTE: dict[str, str] = {
     "digital_stream": "pro_glitch/data",
     "impact_soft": "pro_impact/air",
     "impact_hard": "pro_impact/deep",
+    "footstep": "pro_tap/soft",
 }
 
 # One palette per style bundle (docs/*_video_style_guide.md): styles must not share a sound set.
@@ -100,7 +101,7 @@ STYLE_PALETTES: dict[str, dict[str, str]] = {
 
 # Level relative to the peak, 6 dB per doubling (earshot sfx render --weight). Only for sounds that are
 # meant to sit under the others.
-WEIGHTS: dict[str, float] = {"impact_soft": 0.6}
+WEIGHTS: dict[str, float] = {"impact_soft": 0.6, "footstep": 0.6}
 
 
 def palette_names() -> list[str]:

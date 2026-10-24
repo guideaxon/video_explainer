@@ -39,6 +39,8 @@ MOMENT_TO_EVENT = {
     "highlight": SoundEvent.PING,
     "chart_grow": SoundEvent.COUNTER,
     "pulse": SoundEvent.PULSE,
+    "footstep": SoundEvent.PULSE,
+    "gesture": SoundEvent.ELEMENT_APPEAR,
 }
 
 
@@ -224,6 +226,8 @@ class CueGenerator:
             "highlight": 0.1,
             "chart_grow": 0.3,
             "pulse": 0.15,
+            "footstep": 0.1,
+            "gesture": 0.12,
         }
 
         base_duration = durations.get(moment.type, 0.2)

@@ -2,11 +2,13 @@
  * Lowpoly style bundle: the Presenter, a flat-shaded low-poly character built entirely from three.js primitives, so
  * it is identical in every video and needs no model files. Rig: head (look, nod), blink, brows, mouth (open 0..1),
  * torso (breathing) and two arms (shoulder, elbow, wrist) that rest on the desk or play a gesture.
+ * The rig timing (blink rhythm, mouth openness and Rhubarb mouth shapes) comes from the shared rig contract.
  * Units are metres-ish: desk top y=0, shoulders y=0.55, head centre y=0.95, camera looks at about y=0.5.
  */
 import React, { useMemo } from "react";
 import * as THREE from "three";
 import { Easing, interpolate, useCurrentFrame, useVideoConfig } from "remotion";
+import { VISEME_WIDTH, blinkAt, mouthAt, visemeAt } from "../rig";
 
 export const SKIN = "#e8a77f";
 export const SKIN_SHADE = "#d58f66";
@@ -81,6 +83,8 @@ const Arm: React.FC<{ side: 1 | -1; from: Gesture; to: Gesture; t: number; sway:
 export type PresenterProps = {
   /** Mouth openness per frame at the project fps (0..1), from `scenes/lipsync.ts`. Falls back to a syllable rhythm. */
   mouth?: number[];
+  /** Rhubarb mouth shape per frame (`VISEMES.<scene>`); draws closed lips for M/B/P, rounded O, teeth on lip for F/V. */
+  visemes?: string;
   gesture?: Gesture;
   /** Frame (scene-local) when the gesture starts; it eases in over 14 frames. */
   gestureAt?: number;
@@ -92,16 +96,13 @@ export type PresenterProps = {
   talking?: boolean;
   position?: V3;
   rotationY?: number;
-};
-
-/** Deterministic syllable rhythm used when no lip-sync data exists, so previews still talk. */
-const fallbackMouth = (frame: number): number => {
-  const s = Math.sin(frame * 0.9) * 0.5 + Math.sin(frame * 0.37 + 1.3) * 0.5;
-  return Math.max(0, Math.min(1, 0.5 + s * 0.5 - (Math.sin(frame * 0.11) > 0.8 ? 0.6 : 0)));
+  /** Varies the blink rhythm (two presenters on screen). */
+  seed?: number;
 };
 
 export const Presenter: React.FC<PresenterProps> = ({
   mouth,
+  visemes,
   gesture = "rest",
   gestureAt = 0,
   gestureFrom = "rest",
@@ -110,25 +111,31 @@ export const Presenter: React.FC<PresenterProps> = ({
   talking = true,
   position = [0, 0, 0],
   rotationY = 0,
+  seed = 0,
 }) => {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
   const sec = frame / fps;
 
-  const open = !talking ? 0 : mouth ? (frame < mouth.length ? mouth[frame] : 0) : fallbackMouth(frame); // closed once the speech ends
+  // closed once the speech ends; without data the rig plays a syllable rhythm
+  const open = mouthAt({ mouth, visemes, talking }, frame);
+  const shape = visemeAt({ mouth, visemes, talking }, frame);
+  const loud = mouth ? mouthAt({ mouth, talking }, frame) : open; // nods follow the voice, not the shape
   const g = interpolate(frame, [gestureAt, gestureAt + 14], [0, 1], { ...clamp, easing: ease });
 
-  // Idle: breathing, a slow head sway, a nod on each mouth peak, a blink about every 3.4 s.
+  // Idle: breathing, a slow head sway, a nod on each mouth peak, a blink on the shared rhythm.
   const breath = Math.sin(sec * 1.9) * 0.008;
-  const blinkPhase = (sec % 3.4) / 0.14;
-  const blink = blinkPhase < 1 ? Math.sin(blinkPhase * Math.PI) : 0;
+  const blink = blinkAt(frame, fps, seed);
   const yaw = { camera: 0, left: -0.35, right: 0.35, down: 0 }[look] + Math.sin(sec * 0.7) * 0.04;
-  const pitch = (look === "down" ? 0.28 : 0) + Math.sin(sec * 0.9) * 0.02 + open * 0.035;
+  const pitch = (look === "down" ? 0.28 : 0) + Math.sin(sec * 0.9) * 0.02 + loud * 0.035;
   const browLift = mood === "surprise" ? 0.045 : mood === "serious" ? -0.02 : 0;
   const browTilt = mood === "serious" ? 0.12 : 0;
   const smile = mood === "smile" ? 1 : mood === "surprise" ? 0.2 : 0;
 
-  const mouthOpen = 0.12 + open * 0.88;
+  const mouthOpen = shape === "A" ? 0.04 : 0.12 + open * 0.88; // M/B/P press the lips shut
+  const mouthW = VISEME_WIDTH[shape];
+  const teeth = shape === "B" || shape === "C" || shape === "D" || shape === "G";
+  const pucker = shape === "F" ? 0.02 : shape === "E" ? 0.01 : 0;
   const eyeY = 0.045;
 
   return (
@@ -180,13 +187,25 @@ export const Presenter: React.FC<PresenterProps> = ({
             </mesh>
           </group>
         ))}
-        {/* mouth: lip line plus an opening that grows with the voice */}
-        <group position={[0, -0.11, 0.2]}>
-          <mesh scale={[1 - open * 0.25, mouthOpen, 1]} position={[0, -open * 0.012, 0]}>
+        {/* mouth: lip line plus an opening shaped by the voice (Rhubarb shape when baked, else openness) */}
+        <group position={[0, -0.11, 0.2 + pucker]}>
+          <mesh scale={[(1 - open * 0.25) * mouthW, mouthOpen, 1]} position={[0, -open * 0.012, 0]}>
             <icosahedronGeometry args={[0.05, 0]} />
             <meshStandardMaterial color="#5a1f1a" flatShading roughness={1} />
           </mesh>
-          <mesh position={[0, 0.002, 0.03]} scale={[1, 0.6, 1]} rotation={[0, 0, 0]}>
+          {teeth && (
+            <mesh position={[0, shape === "G" ? -0.004 : 0.03 * mouthOpen - open * 0.012, 0.022]} scale={[mouthW, 1, 1]}>
+              <boxGeometry args={[0.06, shape === "G" ? 0.014 : 0.011, 0.012]} />
+              <meshStandardMaterial color="#f4f1ea" flatShading roughness={0.8} />
+            </mesh>
+          )}
+          {shape === "H" && (
+            <mesh position={[0, -0.006, 0.018]} scale={[1, 0.55, 0.6]}>
+              <icosahedronGeometry args={[0.022, 0]} />
+              <meshStandardMaterial color="#c4544c" flatShading roughness={1} />
+            </mesh>
+          )}
+          <mesh position={[0, 0.002, 0.03]} scale={[mouthW, 0.6, 1]} rotation={[0, 0, 0]}>
             <boxGeometry args={[0.11 - open * 0.015, 0.014, 0.014]} />
             <meshStandardMaterial color={SKIN_SHADE} flatShading roughness={0.9} />
           </mesh>

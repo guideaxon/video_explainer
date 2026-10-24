@@ -138,3 +138,29 @@ page (as Papercut does its music) are allowed but optional.
 - If Rhubarb is missing, the script prints a warning and falls back to the loudness curve, so no video is blocked.
 - Each character draws its own version of the shapes, for example pixel frames for `Pixie` or ink strokes for
   rubber-hose.
+
+## 7. Implementation status (2026-10-24)
+
+Sections 5 and 6 are implemented for the existing styles. Per section 5, item 7, the five new styles are **not**
+built as bundles yet; each one gets its own bundle when a real video needs it.
+
+| Item | Done | Where |
+|---|---|---|
+| Shared rig contract | `RigProps`, Rhubarb shapes, `blinkAt` (seeded, works at 12/24/30 fps), `mouthAt`, `visemeAt`, `gestureT`, `walkAt`, `walkSteps` | `remotion/src/components/rig/` (with tests) |
+| Shared lip sync | `mouth_curve` at the project fps, Rhubarb with `--dialogFile` (MP3 converted to WAV first), loudness fallback with a warning, `--short <variant>` for Vantage beats | `scripts/_lipsync.py`, `tests/test_lipsync.py` |
+| Lip sync baked at finalize | Lowpoly, Launch, Lyric, Leaderbot write `scenes/lipsync.ts` (`LIPSYNC`, `VISEMES`, `CAPTIONS`) | `scripts/*_finalize_storyboard.py`, template stubs |
+| Rhubarb setup | Documented; optional | `CLAUDE.md`, Setup |
+| Sound cues from the rig | A pop at each literal `gestureAt={n}`, a footstep at each `walkSteps` frame of a literal `walk={{ from, to }}`, on their own track in the aggregator; new `footstep` sound; fps read from config | `src/sound/rig_analyzer.py`, `docs/SOUND.md` |
+| Low-poly `Presenter` | Draws the Rhubarb shapes (pressed lips, round O, teeth, F/V, tongue); shared blink | `lowpoly/character.tsx` |
+| Flat 2D `Mascot` | Mouth shapes, shared blink, `wave` and `cheer` gestures | `launch/kit.tsx` |
+| Pixel `Pixie` | Three-frame pixel mouth, shared blink, walk with a two-frame leg cycle | `lyric/kit.tsx` |
+| Pixel `PixelBot` | Mouth rows per shape (pixel and smooth versions), optional blink; `BotGrid` makes the centre bot talk | `leaderbot/kit.tsx` |
+| Line-art character | New `Guide`: one ink line that draws itself on, scarf, gestures, walk, blink, mouth shapes | `vantage/kit.tsx` |
+| Paper cut-out `Fox` | Blink, paper-cut jaw with mouth shapes; optional voice per project (`"voice": true`) embedded in `film.html` with lip sync, music ducking, sync with pause, seek and loop, one mute for both | `papercut/fox.tsx`, `voice.ts`, `player.tsx`, `scripts/papercut_build_html.*` |
+| Isometric robot | Interactive figure template: Wave, Blink, Talk (LED mouth), Antenna light, Look inside (battery, board, servo, speaker, wiring), optional in-page sound, no voiceover | `templates/isofigure_robot/`, `isofigure_new_figure.py --template robot` |
+| Filter cost | Guidance in the shared workflow skill | `.claude/skills/video_make_core/SKILL.md` |
+
+Still open:
+- Watercolor storybook: characters are still baked into the stills (needs a code-drawn layer over the painting).
+- Lowpoly: only one seated presenter; no full body, walk or fox model.
+- The five new styles (section 4) and the one-off style-sheet video that would prove them.

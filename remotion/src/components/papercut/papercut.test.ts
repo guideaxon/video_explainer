@@ -4,6 +4,9 @@ import { edgeWidth } from "./paper";
 import { faceTone, LIGHT } from "./iso";
 import { pokeAge, pokeKick, NO_UI } from "./ui";
 import { buildScore, MAJ, MIN } from "./music";
+import { clipAt, duckAt, voiceNow, DUCK, DUCK_RAMP } from "./voice";
+import type { Voice } from "./voice";
+import { VISEME_OPEN } from "../rig";
 
 const lum = (rgb: string) => (rgb.match(/\d+/g) ?? []).slice(0, 3).map(Number).reduce((a, b) => a + b, 0);
 
@@ -78,5 +81,32 @@ describe("callout layout near the bottom", () => {
     for (const o of layoutCallouts(low)) expect(o.py).toBeLessThanOrEqual(690);
     const col = layoutCallouts(low).sort((a, b) => a.py - b.py);
     for (let i = 1; i < col.length; i++) expect(col[i].py - col[i - 1].py).toBeGreaterThanOrEqual(44);
+  });
+});
+
+describe("voice timing", () => {
+  const clip = (dur: number) => ({ id: "c", text: "hi", src: "", dur, mouth: [0, 0.5, 1, 0.5], visemes: "XBDC" });
+  const v: Voice = { fps: 30, clips: [clip(2), null, clip(9)] };
+  it("plays clip i from the start of scene i, cut at the scene end", () => {
+    expect(clipAt(v, 1, 6)).toEqual({ i: 0, local: 1 });
+    expect(clipAt(v, 2.5, 6)).toBeNull(); // clip 0 is over
+    expect(clipAt(v, 7, 6)).toBeNull(); // silent scene
+    expect(clipAt(v, 17.9, 6)?.i).toBe(2);
+    expect(clipAt(v, 18.1, 6)).toBeNull(); // 9 s clip cut at the 6 s scene end
+    expect(clipAt(undefined, 1, 6)).toBeNull();
+  });
+  it("ducks the music by 9 dB inside a clip and ramps either side", () => {
+    expect(duckAt(v, 1, 6)).toBeCloseTo(DUCK);
+    expect(DUCK).toBeCloseTo(0.355, 2);
+    expect(duckAt(v, 2 + DUCK_RAMP / 2, 6)).toBeCloseTo((1 + DUCK) / 2);
+    expect(duckAt(v, 4, 6)).toBe(1);
+    expect(duckAt(v, 12 - DUCK_RAMP / 2, 6)).toBeCloseTo((1 + DUCK) / 2); // ramps down before the next clip
+    expect(duckAt(undefined, 1, 6)).toBe(1);
+  });
+  it("gives the scene's mouth by scene-local frame, closed outside the clip", () => {
+    expect(voiceNow(v, 0, 2 / 30 + 0.001, 6)).toMatchObject({ viseme: "D", open: VISEME_OPEN.D, talking: true, frame: 2 });
+    expect(voiceNow(v, 0, 3, 6)).toMatchObject({ open: 0, viseme: "X", talking: false });
+    expect(voiceNow(v, 1, 0, 6)).toBeNull();
+    expect(voiceNow({ fps: 30, clips: [{ ...clip(2), visemes: undefined }] }, 0, 2 / 30 + 0.001, 6)?.open).toBe(1);
   });
 });

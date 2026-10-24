@@ -11,6 +11,7 @@ This module coordinates the full SFX generation pipeline:
 8. Update storyboard.json
 """
 
+import json
 import re
 from dataclasses import dataclass
 from pathlib import Path
@@ -19,6 +20,7 @@ from typing import Optional
 from .models import SoundMoment, SFXCue, SceneAnalysisResult
 from .scene_analyzer import SceneAnalyzer, find_scene_files
 from .kit_analyzer import analyze_kit_scene
+from .rig_analyzer import analyze_rig_scene
 from .ts_analyzer import TypeScriptAnalyzer
 from .semantic_mapper import SemanticSoundMapper
 from .cue_generator import CueGenerator, SceneSFXGenerator
@@ -56,7 +58,7 @@ class SFXOrchestrator:
         self,
         project_dir: Path,
         theme: SoundTheme = SoundTheme.TECH_AI,
-        fps: int = 30,
+        fps: Optional[int] = None,
         use_library: bool = True,
         use_ast_analyzer: bool = True,
     ):
@@ -65,13 +67,13 @@ class SFXOrchestrator:
         Args:
             project_dir: Path to the project directory
             theme: Sound theme for generation
-            fps: Frames per second (default 30)
+            fps: Frames per second (default: config.json video.fps, else 30)
             use_library: Use library sounds vs custom generation
             use_ast_analyzer: Use TypeScript AST analyzer (falls back to regex)
         """
         self.project_dir = Path(project_dir)
         self.theme = theme
-        self.fps = fps
+        self.fps = fps if fps is not None else self._project_fps()
         self.use_library = use_library
         self.use_ast_analyzer = use_ast_analyzer
 
@@ -80,14 +82,23 @@ class SFXOrchestrator:
         self.sfx_dir = self.project_dir / "sfx"
 
         # Components - both analyzers available
-        self.regex_analyzer = SceneAnalyzer(fps=fps)
-        self.ts_analyzer = TypeScriptAnalyzer(fps=fps) if use_ast_analyzer else None
+        self.regex_analyzer = SceneAnalyzer(fps=self.fps)
+        self.ts_analyzer = TypeScriptAnalyzer(fps=self.fps) if use_ast_analyzer else None
         self.semantic_mapper = SemanticSoundMapper()
         self.cue_generator = CueGenerator(
             use_library=use_library,
             theme=theme,
             sfx_dir=self.sfx_dir,
         )
+
+    def _project_fps(self) -> int:
+        """config.json video.fps (full videos may run at 24 or 12 fps), else 30."""
+        try:
+            config = json.loads((self.project_dir / "config.json").read_text(encoding="utf-8"))
+            fps = int((config.get("video") or {}).get("fps") or 30)
+        except (OSError, ValueError, TypeError, AttributeError):
+            return 30
+        return fps if fps > 0 else 30
 
     def _find_remotion_dir(self) -> Path:
         """Find the remotion directory relative to project."""
@@ -308,6 +319,15 @@ class SFXOrchestrator:
             if kit_moments:
                 result.moments.extend(kit_moments)
                 analysis_notes.append(f"Analyzed with kit component timing ({len(kit_moments)} components)")
+
+        # Rigged characters: gesture pops and walk footsteps, always added on top of the other analyzers.
+        rig_moments = analyze_rig_scene(scene_file, self.fps)
+        if rig_moments:
+            result.moments.extend(rig_moments)
+            steps = sum(1 for m in rig_moments if m.type == "footstep")
+            analysis_notes.append(
+                f"Rig cues: {len(rig_moments) - steps} gestures, {steps} footsteps at {self.fps} fps"
+            )
 
         # Update result with correct metadata
         result.scene_id = scene_id

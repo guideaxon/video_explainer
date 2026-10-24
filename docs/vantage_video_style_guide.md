@@ -52,6 +52,12 @@ no cards with drop shadows, no stock icons.
   25-frame cross-fade, ideally on the word that introduces the product.
 - Frames are beat-local: `useCurrentFrame()` starts at 0 for each beat (the player wraps each
   scene in a `Sequence`).
+- **The Guide** (`Guide` in the kit) is the style's line-art character: one ink line that draws itself on from
+  `from`, an accent-colour scarf, gestures `wave`, `point`, `think`, `open` (`gestureAt`), a walk
+  (`walk={{ from, to }}`, `walkTo={x}`) and the shared rig blink. To make it talk, bake the short's voiceover per beat:
+  `python scripts/_lipsync.py <project> --short <variant>` writes `short/<v>/scenes/lipsync.ts`; pass
+  `mouth={LIPSYNC.beat_3} visemes={VISEMES.beat_3}`. Use it sparingly (one beat, a coach speaking to camera), never as
+  decoration on every beat.
 
 ## 4. Story structure (about 40 s, 6 beats)
 

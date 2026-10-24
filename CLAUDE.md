@@ -7,12 +7,22 @@ See `README.md` for the full CLI and `docs/` for details.
 
 - Python 3.14 (`C:\Python314`) in `.venv`; Node 22; ffmpeg must be on PATH
   (installed per user via winget: `Gyan.FFmpeg`).
+- Rhubarb Lip Sync (mouth shapes for talking characters): not a pip package. Download the Windows release from
+  github.com/DanielSWolf/rhubarb-lip-sync/releases, unzip it and put the folder with `rhubarb.exe` on PATH (or set
+  `RHUBARB_BIN`). Optional: without it lip sync falls back to loudness only, with a warning.
 - Set `PYTHONUTF8=1` for every Python command (the CLI prints non-cp1252 characters).
 - Run the CLI as `.venv\Scripts\python.exe -m src.cli ...`; Remotion deps: `cd remotion && npm install`.
 - LLM steps shell out to Claude Code; the model id is `claude-sonnet-5-5`
   (`claude-sonnet-4-20250514` is retired).
 - `projects/` is gitignored. Anything reusable belongs in `templates/`, `docs/`,
   `remotion/src/components/` or `.claude/skills/`.
+
+## Recommend RHUBARB_BIN over modifying PATH:
+Scoped, not global — it only affects the tool/project that reads it, instead of making rhubarb.exe resolvable from every process on your machine (PATH changes are sticky and easy to forget about later).
+No naming collisions — PATH resolution depends on directory order; if anything else ever ships a rhubarb binary, PATH lookup becomes ambiguous. An explicit env var always points to exactly one file.
+Matches a source build — since you're building rather than using an installed release, the exe will live somewhere like build/rhubarb/Release/rhubarb.exe (not a tidy install dir). Pointing RHUBARB_BIN directly at that path avoids having to copy/move files into a PATH-friendly location.
+Easier to manage per-project — you can set it in an .env file, a CI pipeline variable, or a launch script, without touching global/user machine state (which on Windows also requires a shell/IDE restart to pick up).
+Trivial to swap versions — rebuilding or testing a different build just means repointing one variable, not editing PATH.
 
 ## Style Bundles
 
@@ -55,6 +65,18 @@ hand-adapted from the template, as are Promo, Launch, Lyric and Leaderbot scenes
   `scripts/_storyboard_pacing.py`.
 - Rendering a short also needs a stub `projects/<p>/scenes/index.ts` (see the Vantage skill).
 - Always inspect rendered frames (mid-beat and end-of-beat) before calling a video done.
+
+## Characters: rig, lip sync, sound
+
+- Every character (`Presenter`, `Mascot`, `Pixie`, `PixelBot`, papercut `Fox`, Vantage `Guide`, the Isofigure robot) takes
+  its talk, blink, gesture and walk timing from the shared rig contract `remotion/src/components/rig/` (types and timing
+  only; each bundle still draws its own, so importing `rig` is not mixing bundles).
+- Lip sync is baked once by `scripts/_lipsync.py` into `scenes/lipsync.ts` (`LIPSYNC` openness, `VISEMES` Rhubarb
+  shapes, `CAPTIONS`) at the project fps; finalize scripts call it, shorts use `--short <variant>`. Papercut embeds it
+  in `film.html` when `"voice": true`.
+- `python -m src.cli sound <p> generate` adds character cues from literal `gestureAt={n}` and `walk={{ from, to }}`
+  props (`src/sound/rig_analyzer.py`).
+- Status of the style-sheet gaps: `docs/AnimationStyleGaps.md`.
 
 ## House rules and guard hook
 

@@ -16,7 +16,7 @@ if (!existsSync(resolve(dir, "main.tsx"))) {
 }
 const r = await build({
   entryPoints: [resolve(dir, "main.tsx")], bundle: true, minify: true, write: false, format: "iife", jsx: "automatic",
-  alias: { "@isofigure": resolve(root, "remotion/src/components/isofigure") },
+  alias: { "@isofigure": resolve(root, "remotion/src/components/isofigure"), "@rig": resolve(root, "remotion/src/components/rig") }, // @rig: the shared character rig contract (pure TS)
   nodePaths: [resolve(root, "remotion/node_modules")],
   define: { "process.env.NODE_ENV": '"production"' }, logLevel: "warning",
 });

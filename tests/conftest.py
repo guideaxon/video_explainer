@@ -15,6 +15,12 @@ def pytest_addoption(parser):
         default=False,
         help="Run LLM integration tests (expensive, makes real API calls)",
     )
+    parser.addoption(
+        "--run-slow",
+        action="store_true",
+        default=False,
+        help="Run slow tests (network access, model downloads)",
+    )
 
 
 def pytest_configure(config):
@@ -25,7 +31,12 @@ def pytest_configure(config):
 
 
 def pytest_collection_modifyitems(config, items):
-    """Skip LLM tests unless --run-llm-tests is provided."""
+    """Skip LLM tests unless --run-llm-tests, and slow (network) tests unless --run-slow, is provided."""
+    if not config.getoption("--run-slow", default=False):
+        skip_slow = pytest.mark.skip(reason="Slow/network test skipped. Use --run-slow to run.")
+        for item in items:
+            if "slow" in item.keywords:
+                item.add_marker(skip_slow)
     if not config.getoption("--run-llm-tests", default=False):
         skip_llm = pytest.mark.skip(
             reason="LLM integration tests skipped. Use --run-llm-tests to run."

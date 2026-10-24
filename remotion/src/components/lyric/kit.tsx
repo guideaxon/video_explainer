@@ -15,6 +15,8 @@ import { loadFont as loadMono } from "@remotion/google-fonts/JetBrainsMono";
 import { loadFont as loadPlayfair } from "@remotion/google-fonts/PlayfairDisplay";
 import { loadFont as loadFredoka } from "@remotion/google-fonts/Fredoka";
 import { loadFont as loadPixel } from "@remotion/google-fonts/PressStart2P";
+import { blinkAt, mouthAt, walkAt } from "../rig";
+import type { RigProps } from "../rig";
 
 const titan = loadTitan("normal", { weights: ["400"], subsets: ["latin"] });
 const bungee = loadBungee("normal", { weights: ["400"], subsets: ["latin"] });
@@ -208,25 +210,44 @@ const SPRITE = [
 ];
 const PAL: Record<string, string> = { H: "#ff8a3d", S: "#ffd7b5", W: "#6fe0b8", D: "#2b2140", P: "#3b4cca", G: "#2b2140", B: "#ff9bb5" };
 
-/** Original pixel-art character (orange hair, mint hoodie). hat: chef | hard | none. */
-export const Pixie: React.FC<{ x: number; y: number; scale?: number; hat?: "chef" | "hard" | "none"; wave?: boolean; from?: number; flip?: boolean }> = ({ x, y, scale = 1, hat = "none", wave, from = 0, flip }) => {
+// Mouth frames (rows 6 and 7, columns 5 and 6) by openness: closed (none), open, wide (with a pink tongue).
+const MOUTH_ROWS: Record<"open" | "wide", Record<number, string>> = { open: { 6: "D" }, wide: { 6: "D", 7: "B" } };
+// Leg frames (rows 14 and 15): apart at each footfall, together between steps.
+const LEGS = { apart: [".PPP....PPP.", ".DDD....DDD."], together: ["...PPPPPP...", "...DDDDDD..."] };
+
+/**
+ * Original pixel-art character (orange hair, mint hoodie). hat: chef | hard | none.
+ * Rig: talks by openness (`mouth` from `scenes/lipsync.ts`; a pixel mouth has three frames), blinks on the shared
+ * rhythm, and walks from `x` to `walkTo` during `walk` with a two-frame leg cycle.
+ */
+export const Pixie: React.FC<{ x: number; y: number; scale?: number; hat?: "chef" | "hard" | "none"; wave?: boolean; from?: number; flip?: boolean; walkTo?: number } & Pick<RigProps, "mouth" | "visemes" | "talking" | "blink" | "walk" | "seed">> = ({
+  x, y, scale = 1, hat = "none", wave, from = 0, flip, walkTo, mouth, visemes, talking, blink: blinks = true, walk, seed = 0,
+}) => {
   const frame = useCurrentFrame();
+  const { fps } = useVideoConfig();
   const p = usePop(from, 10);
   const u = 12 * scale;
-  const blink = frame % 100 > 94;
-  const bob = Math.sin(frame / 9) * 4 * scale;
+  const blink = blinks && blinkAt(frame, fps, seed) > 0.5;
+  const open = mouthAt({ mouth, visemes, talking }, frame);
+  const mouthRows = open < 0.12 ? {} : MOUTH_ROWS[open < 0.5 ? "open" : "wide"];
+  const w = walkAt(walk, frame, fps);
+  const legs = w.active && Math.abs(Math.cos(w.phase)) > 0.5 ? LEGS.apart : w.active ? LEGS.together : null;
+  const px = walk && walkTo !== undefined ? x + (walkTo - x) * w.progress : x;
+  const bob = w.active ? -Math.abs(Math.sin(w.phase)) * 6 * scale : Math.sin(frame / 9) * 4 * scale;
   const rects: React.ReactNode[] = [];
-  SPRITE.forEach((row, r) =>
+  const sprite = legs ? [...SPRITE.slice(0, 14), ...legs] : SPRITE;
+  sprite.forEach((row, r) =>
     row.split("").forEach((ch, c) => {
       if (ch === ".") return;
       let col = PAL[ch];
       if (blink && ch === "D" && r === 4) col = PAL.S;
+      if (mouthRows[r] && (c === 5 || c === 6)) col = PAL[mouthRows[r]];
       rects.push(<rect key={`${r}-${c}`} x={c * u} y={r * u} width={u + 0.6} height={u + 0.6} fill={col} />);
     })
   );
   const armUp = wave && frame % 24 < 12;
   return (
-    <svg width={12 * u + 40} height={20 * u} viewBox={`-20 ${-4 * u} ${12 * u + 40} ${20 * u}`} shapeRendering="crispEdges" style={{ position: "absolute", left: x, top: y + bob, opacity: Math.min(1, p * 2), transform: `scale(${(0.6 + 0.4 * p) * (flip ? -1 : 1)}, ${0.6 + 0.4 * p})`, transformOrigin: "50% 100%", overflow: "visible" }}>
+    <svg width={12 * u + 40} height={20 * u} viewBox={`-20 ${-4 * u} ${12 * u + 40} ${20 * u}`} shapeRendering="crispEdges" style={{ position: "absolute", left: px, top: y + bob, opacity: Math.min(1, p * 2), transform: `scale(${(0.6 + 0.4 * p) * (flip ? -1 : 1)}, ${0.6 + 0.4 * p})`, transformOrigin: "50% 100%", overflow: "visible" }}>
       {rects}
       {armUp && <rect x={11 * u} y={6 * u} width={u} height={3 * u} fill={PAL.W} />}
       {armUp && <rect x={11 * u} y={5 * u} width={u} height={u} fill={PAL.S} />}

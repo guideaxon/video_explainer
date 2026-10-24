@@ -7,12 +7,13 @@ hidden depending on whether the project is a standard project or a style bundle 
 
 from __future__ import annotations
 
+import json
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Callable
 
 # Full-video style bundles the UI can drive. Vantage shorts use the `short` CLI commands; not in v1.
-FULL_STYLE_BUNDLES = ("markets", "promo", "launch", "lyric", "leaderbot", "demo", "storybook", "lowpoly", "papercut", "isofigure")
+FULL_STYLE_BUNDLES = ("markets", "promo", "launch", "lyric", "leaderbot", "demo", "storybook", "lowpoly", "papercut", "isofigure", "rubberhose", "glossy", "clay", "popart", "neon")
 
 RUN, MANUAL, SKIPPED, HIDDEN = "run", "manual", "skipped", "hidden"
 
@@ -49,6 +50,8 @@ class StepDef:
 
     def variant(self, ctx: Ctx) -> Variant:
         override = HTML_VARIANTS.get(ctx.style_bundle)
+        if ctx.style_bundle == "papercut" and self.id in PAPERCUT_VOICE_VARIANTS and _papercut_voice(ctx):
+            return PAPERCUT_VOICE_VARIANTS[self.id]
         if override and self.id in override:
             return override[self.id]
         return self.style_bundle if ctx.style_bundle else self.standard
@@ -143,6 +146,22 @@ PAPERCUT_VARIANTS: dict[str, Variant] = {
                       outputs=("film.html",)),
     "verify": Variant(SKIPPED, note="Open film.html in a browser to check it"),
 }
+
+# A papercut film with `"voice": true` in config.json gets the normal narration and voiceover steps; the build embeds
+# the clips and their lip sync in film.html.
+PAPERCUT_VOICE_VARIANTS: dict[str, Variant] = {
+    "narration": Variant(MANUAL, note="Edit narration/narrations.json (one entry per scene; empty = silent)", outputs=("@narration",)),
+    "voiceover": Variant(RUN, _cli("voiceover"), outputs=("@voiceover_manifest",)),
+}
+
+
+def _papercut_voice(ctx: Ctx) -> bool:
+    cfg = ctx.project_dir / "config.json"
+    try:
+        return bool(json.loads(cfg.read_text(encoding="utf-8")).get("voice"))
+    except (OSError, ValueError):
+        return False
+
 
 # Isofigure is an interactive HTML figure with a pure model: scaffold the washing machine template once, edit it, build.
 _IF_SKIP = "An isofigure is built from a model and a drawing, not from a script or recorded media"

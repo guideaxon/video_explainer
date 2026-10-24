@@ -23,7 +23,7 @@ import { AmbientGlow, Vignette } from "../components/CinematicEffects";
 /**
  * Props for SingleScenePlayer
  */
-export interface SingleScenePlayerProps {
+export type SingleScenePlayerProps = {
   /** Scene type path (e.g., "thinking-models/beyond_linear_thinking") */
   sceneType: string;
   /** Duration in seconds */
@@ -34,7 +34,7 @@ export interface SingleScenePlayerProps {
   voiceoverBasePath?: string;
   /** Background color override */
   backgroundColor?: string;
-}
+};
 
 /**
  * Parse URL search string to get scene props (pure function for testing)

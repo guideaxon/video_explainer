@@ -26,6 +26,8 @@ class MomentType(Enum):
     HIGHLIGHT = "highlight"               # Visual emphasis
     CHART_GROW = "chart_grow"             # Growing bar/chart
     PULSE = "pulse"                       # Rhythmic emphasis
+    FOOTSTEP = "footstep"                 # A rigged character's foot lands (rig_analyzer)
+    GESTURE = "gesture"                   # A rigged character starts a gesture (rig_analyzer)
 
 
 @dataclass
@@ -49,7 +51,7 @@ class SoundMoment:
     confidence: float
     context: str
     intensity: float = 0.7
-    source: str = "code"  # "code", "narration", "llm"
+    source: str = "code"  # "code", "narration", "llm", "kit", "rig"
     duration_frames: Optional[int] = None
 
     def __post_init__(self):
@@ -185,7 +187,14 @@ VOLUME_BY_TYPE = {
     "highlight": 0.07,
     "chart_grow": 0.08,
     "pulse": 0.07,
+    # Character cues from the rig: footsteps repeat every few frames, so they sit well under narration.
+    "footstep": 0.04,
+    "gesture": 0.06,
 }
+
+# Moment types emitted by rig_analyzer from character props. Their sound is fixed by the type (the
+# semantic mapper does not remap them), and footsteps keep their rhythm through aggregation.
+RIG_MOMENT_TYPES = ("footstep", "gesture")
 
 # Mapping from moment type to sound library name
 # Note: For more context-aware mapping, use semantic_mapper.py
@@ -204,6 +213,8 @@ MOMENT_TO_SOUND = {
     "highlight": "ui_pop",
     "chart_grow": "bar_grow",
     "pulse": "ui_pop",
+    "footstep": "footstep",
+    "gesture": "ui_pop",
     # Extended mappings for semantic analysis
     "typing": "keyboard_type",
     "typing_rapid": "keyboard_rapid",

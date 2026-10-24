@@ -385,7 +385,7 @@ export const MyComponent: React.FC<{ title: string }> = ({ title }) => {
 ```bash
 # Python tests (1192 tests)
 pytest tests/ -v
-pytest tests/ -v -m "not slow"  # Skip network tests
+pytest tests/ -v --run-slow     # Also run slow tests (network access)
 
 # JavaScript tests (203 tests)
 cd remotion && npm test

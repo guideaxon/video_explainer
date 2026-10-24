@@ -18,6 +18,15 @@ Read `docs/papercut_video_style_guide.md` first (look, kit, music, and the worke
 5. Build: `python scripts/papercut_build_html.py <p>` writes `projects/<p>/film.html`.
    Give `mountPlayer` a `sceneNames` list (announced to screen readers).
 6. Check: screenshot frames (`film.html#f=<frame>`, mid-beat and end-of-beat for each scene), fix what looks wrong, and
-   confirm the music (starts after a click, the Sound button toggles, it fades out at the end).
+   confirm the music (starts after a click, the Sound button toggles, it fades out at the end). With a voice, also
+   screenshot a talking frame (the mouth moves even when paused at `#f=`) and listen that each line starts on its cut.
 
-This bundle has no narration, voiceover or MP4 render: the HTML file is the deliverable. It does not use `video_make_core`.
+Optional voice (offer it; the user decides): `papercut_new_video.py <p> --voice` (or `"voice": true` in config.json),
+write one short line per scene in `narration/narrations.json` (empty = silent scene, each line shorter than the 6 s
+scene), run `python -m src.cli voiceover <p> --continue-on-error`, then build: the clips (about 1 MB per minute) and
+their lip sync are embedded in film.html, the fox talks in its scenes, the music ducks under the voice and Sound / M
+mutes both. Fix every "longer than its scene" warning. See the style guide, section 7 (also the fox's `blink`, `seed`,
+`talk` props and `useVoice()` for other characters).
+
+Without the voice option this bundle has no narration, voiceover or MP4 render: the HTML file is the deliverable. It
+does not use `video_make_core`.

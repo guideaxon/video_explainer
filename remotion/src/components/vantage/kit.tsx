@@ -2,6 +2,8 @@ import React, { createContext, useContext } from "react";
 import { AbsoluteFill, Easing, interpolate, spring, useCurrentFrame, useVideoConfig } from "remotion";
 import { loadFont as loadCinzel } from "@remotion/google-fonts/Cinzel";
 import { loadFont as loadMono } from "@remotion/google-fonts/IBMPlexMono";
+import { blinkAt, gestureT, visemeAt, walkAt } from "../rig";
+import type { RigProps, Viseme } from "../rig";
 
 const cinzel = loadCinzel("normal", { weights: ["700", "900"], subsets: ["latin"] });
 const plex = loadMono("normal", { weights: ["400", "500"], subsets: ["latin"] });
@@ -244,6 +246,108 @@ export const LockGlyph: React.FC<{ cx: number; cy: number; scale?: number; from?
       <Draw d="M-34,-8 V-34 A34,34 0 0 1 34,-34 V-8" from={from} dur={18} w={6} color={T.accent} />
       <Draw d="M-52,-8 H52 V62 H-52 Z" from={from + 8} dur={22} w={6} color={T.accent} />
       <Draw d="M0,18 V38" from={from + 24} dur={10} w={7} color={T.accent} />
+    </g>
+  );
+};
+
+/* ---------- the Guide: Vantage's line-art character ---------- */
+
+export type GuideGesture = "rest" | "wave" | "point" | "think" | "open";
+export type GuideLook = "camera" | "left" | "right" | "up";
+type Pt = [number, number];
+
+/** Right-arm elbow and hand per gesture (local units: feet at 0,0, head centre at 0,-440; +x is screen right). */
+const ARM: Record<GuideGesture, { e: Pt; h: Pt }> = {
+  rest: { e: [66, -262], h: [72, -178] },
+  wave: { e: [118, -380], h: [132, -486] },
+  point: { e: [128, -330], h: [226, -350] },
+  think: { e: [74, -272], h: [24, -392] },
+  open: { e: [114, -292], h: [182, -322] },
+};
+const lerpPt = (a: Pt, b: Pt, t: number): Pt => [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t];
+
+/** Mouth per Rhubarb shape: an ink stroke for closed/rest, else a filled opening (rx, ry). */
+const MOUTH: Record<Viseme, { d?: string; rx?: number; ry?: number; teeth?: boolean; tongue?: boolean }> = {
+  X: { d: "M-15,-2 Q0,7 15,-2" },
+  A: { d: "M-13,0 H13" },
+  B: { rx: 13, ry: 4.5, teeth: true },
+  C: { rx: 13, ry: 8, teeth: true },
+  D: { rx: 14, ry: 13, teeth: true },
+  E: { rx: 10, ry: 9 },
+  F: { rx: 5.5, ry: 6.5 },
+  G: { rx: 12, ry: 3.5, teeth: true },
+  H: { rx: 12, ry: 9, tongue: true },
+};
+
+/**
+ * Original line-art character for the Vantage style: one ink line (draws itself on from `from`), the theme accent
+ * as a scarf. Talks from `scenes/lipsync.ts` (`mouth`, `visemes`), blinks on the shared rig rhythm, gestures with
+ * the right arm and walks from `x` to `walkTo` during `walk`. (x, y) is the ground point between the feet; at
+ * scale 1 the figure is about 520 px tall. Use inside `<Art>`.
+ */
+export const Guide: React.FC<RigProps<GuideGesture, GuideLook> & {
+  x: number; y: number; scale?: number; from?: number; walkTo?: number; flip?: boolean; gestureFrom?: GuideGesture;
+}> = ({ x, y, scale = 1, from = 0, walkTo, flip = false, mouth, visemes, talking, blink = true, gesture = "rest", gestureAt = 0, gestureFrom = "rest", walk, look = "camera", seed = 0 }) => {
+  const T = useTheme();
+  const frame = useCurrentFrame();
+  const { fps } = useVideoConfig();
+  const draw = prog(frame, from, from + 36);
+  const w = walkAt(walk, frame, fps);
+  const cx = walk && walkTo !== undefined ? x + (walkTo - x) * w.progress : x;
+  const stride = w.active ? Math.cos(w.phase) : 0;
+  const bob = w.active ? -Math.abs(Math.sin(w.phase)) * 8 : Math.sin(frame / 24) * 2;
+  const g = gestureT(frame, gestureAt);
+  const arm = { e: lerpPt(ARM[gestureFrom].e, ARM[gesture].e, g), h: lerpPt(ARM[gestureFrom].h, ARM[gesture].h, g) };
+  const waveRot = gesture === "wave" ? Math.sin((frame - gestureAt) / 4) * 16 * g : 0;
+  const leftOpen = gesture === "open" ? g : gestureFrom === "open" ? 1 - g : 0;
+  const swing = w.active ? stride * 22 : 0; // arms swing against the legs
+  const closed = blink ? blinkAt(frame, fps, seed) : 0;
+  const rig = { mouth, visemes, talking };
+  const m = MOUTH[visemeAt(rig, frame)];
+  const gaze = { camera: [0, 0], left: [-6, 0], right: [6, 0], up: [0, -5] }[look];
+  const headTilt = gesture === "think" ? -6 * g : Math.sin(frame / 40) * 1.5;
+  const ink = { stroke: T.ink, strokeWidth: 5, strokeLinecap: "round" as const, strokeLinejoin: "round" as const, fill: "none" };
+  const on = { pathLength: 1, strokeDasharray: 1, strokeDashoffset: 1 - draw }; // draw-on for the body lines
+
+  const legL = `M0,-170 L${-14 - swing * 0.6},-88 L${-30 - swing},0 l-22,0`;
+  const legR = `M0,-170 L${14 + swing * 0.6},-88 L${30 + swing},0 l24,0`;
+  const armR = `M44,-350 Q${arm.e[0] + 6},${arm.e[1] - 10} ${arm.e[0]},${arm.e[1]} L${arm.h[0]},${arm.h[1] + (gesture === "rest" ? swing : 0)}`;
+  const armL = `M-44,-350 Q${-66 - 50 * leftOpen},${-262 - 30 * leftOpen} ${-66 - 48 * leftOpen},${-262 - 30 * leftOpen} L${-72 - 110 * leftOpen},${-178 - 144 * leftOpen - swing}`;
+  return (
+    <g transform={`translate(${cx} ${y + bob * scale}) scale(${flip ? -scale : scale} ${scale})`} opacity={draw > 0 ? 1 : 0}>
+      <ellipse cx={0} cy={4} rx={70} ry={8} fill={T.ink} opacity={0.12 * draw} />
+      <path d={legL} {...ink} {...on} />
+      <path d={legR} {...ink} {...on} />
+      {/* torso: shoulders, spine and a coat hem, one line */}
+      <path d="M-44,-350 Q0,-372 44,-350 L36,-176 Q0,-162 -36,-176 Z" {...ink} {...on} />
+      <path d={armL} {...ink} {...on} />
+      <g>
+        <path d={armR} {...ink} {...on} />
+        <g transform={`translate(${arm.h[0]} ${arm.h[1] + (gesture === "rest" ? swing : 0)}) rotate(${waveRot})`} opacity={draw}>
+          <path d="M0,0 q-4,-14 4,-22 M0,0 q4,-12 12,-16 M0,0 q8,-6 16,-4" {...ink} strokeWidth={4} />
+        </g>
+      </g>
+      {/* scarf in the accent colour */}
+      <path d="M-34,-360 Q0,-340 34,-360 M18,-352 l10,58" stroke={T.accent} strokeWidth={9} strokeLinecap="round" fill="none" pathLength={1} strokeDasharray={1} strokeDashoffset={1 - prog(frame, from + 20, from + 40)} />
+      {/* head */}
+      <g transform={`translate(0 -440) rotate(${headTilt})`}>
+        <circle r={58} {...ink} {...on} />
+        <path d="M-56,-12 Q-48,-70 6,-62 Q48,-58 56,-14 M6,-62 Q-6,-38 -28,-34" {...ink} {...on} />
+        <g opacity={draw} transform={`translate(${gaze[0]} ${gaze[1]})`}>
+          {[-20, 20].map((ex) => (
+            <ellipse key={ex} cx={ex} cy={-2} rx={5} ry={Math.max(0.8, 7 * (1 - closed))} fill={T.ink} />
+          ))}
+          <g transform="translate(0 30)">
+            {m.d ? <path d={m.d} {...ink} strokeWidth={4} /> : (
+              <>
+                <ellipse rx={m.rx} ry={m.ry} fill={T.ink} />
+                {m.teeth && <rect x={-(m.rx ?? 0) * 0.7} y={-(m.ry ?? 0)} width={(m.rx ?? 0) * 1.4} height={Math.min(4, (m.ry ?? 0) * 0.8)} rx={1.5} fill={T.bg} />}
+                {m.tongue && <ellipse cy={(m.ry ?? 0) * 0.45} rx={(m.rx ?? 0) * 0.55} ry={(m.ry ?? 0) * 0.35} fill={T.accent} />}
+              </>
+            )}
+          </g>
+        </g>
+      </g>
     </g>
   );
 };

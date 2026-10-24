@@ -82,6 +82,7 @@ export class Music {
   private idx = 0;
   private session: GainNode | null = null;
   private fx: GainNode;
+  private duck: GainNode; // scored music only (not clicks): lowered under the voice
   private an: AnalyserNode;
   private buf: Uint8Array<ArrayBuffer>;
   private lv = 0;
@@ -101,6 +102,8 @@ export class Music {
     this.an.fftSize = 512;
     this.master.connect(this.an);
     this.buf = new Uint8Array(this.an.fftSize);
+    this.duck = ctx.createGain();
+    this.duck.connect(this.master);
     const len = Math.floor(ctx.sampleRate * 3);
     const ir = ctx.createBuffer(2, len, ctx.sampleRate);
     const rr = rng(9);
@@ -112,7 +115,7 @@ export class Music {
     this.rev.buffer = ir;
     const wet = ctx.createGain();
     wet.gain.value = 0.55;
-    this.rev.connect(wet).connect(this.master);
+    this.rev.connect(wet).connect(this.duck);
     this.fx = ctx.createGain(); // click sounds: independent of the film's play/pause session
     this.fx.connect(this.master);
     this.fx.connect(this.rev);
@@ -145,6 +148,11 @@ export class Music {
     }
   }
 
+  /** Music gain under the voice (1 = none; see `duckAt` in voice.ts). */
+  setDuck(g: number) {
+    this.duck.gain.setTargetAtTime(g, this.ctx.currentTime, 0.05);
+  }
+
   setMuted(m: boolean) {
     this.master.gain.setTargetAtTime(m ? 0 : 1.5, this.ctx.currentTime, 0.05);
   }
@@ -153,7 +161,7 @@ export class Music {
   start(film: number) {
     this.stop();
     const s = (this.session = this.ctx.createGain());
-    s.connect(this.master);
+    s.connect(this.duck);
     s.connect(this.rev);
     const now = this.ctx.currentTime;
     this.anchor = { film, ctx: now };

@@ -29,6 +29,17 @@ def test_scaffold_writes_project_files_and_config(tmp_path):
     assert new.main(["washer", "--projects-dir", str(tmp_path)]) == 1  # refuses to overwrite
 
 
+def test_scaffold_robot_template(tmp_path):
+    new = _load("isofigure_new_figure")
+    assert new.main(["bot", "--template", "robot", "--projects-dir", str(tmp_path)]) == 0
+    for name in ("model.ts", "figure.tsx", "main.tsx", "tour.json"):
+        assert (tmp_path / "bot" / name).read_text(encoding="utf-8") == (ROOT / "templates" / "isofigure_robot" / name).read_text(encoding="utf-8"), name
+    assert json.loads((tmp_path / "bot" / "config.json").read_text())["style_bundle"] == "isofigure"
+    robot = {p.name: p.read_text(encoding="utf-8") for p in (ROOT / "templates" / "isofigure_robot").glob("*")}
+    assert "import " not in robot["model.ts"]  # the truth stays pure
+    assert all("components/" not in t for t in robot.values())  # kit and rig only through the @isofigure / @rig aliases
+
+
 def test_template_imports_only_the_isofigure_kit_and_the_model_is_pure():
     files = {p.name: p.read_text(encoding="utf-8") for p in (ROOT / "templates" / "isofigure_figure").glob("*")}
     assert all("components/" not in t for t in files.values())

@@ -54,6 +54,11 @@ Loud, flat and blocky. Hard edges only: no gradients, blurs or soft shadows.
   scene scrambles constantly. Glitch is deterministic (hash of cell and frame), never `Math.random`.
 - Numbers count up in about 30 frames; bars grow one block at a time; stamps slam from 2x to 1x with a rotation.
 - Ticker scrolls at 6 px per frame.
+- **Character rig** (`PixelBot`, centre of `BotGrid`): talks from `scenes/lipsync.ts`, which `scripts/leaderbot_finalize_storyboard.py` bakes from the voiceover
+  (shared `scripts/_lipsync.py`; mouth shapes need Rhubarb, see CLAUDE.md). Import `{ LIPSYNC, VISEMES } from "./lipsync"` and pass
+  `mouth={LIPSYNC.<scene>} visemes={VISEMES.<scene>}`. Blinks follow the shared rig rhythm (`seed` varies it). The two sprite mouth rows swap per shape; the smooth
+  vector bot opens an ink oval. A single `PixelBot` blinks only with `blink`, so a grid of nine stays still.
+  `gestureAt={n}` and `walk={{ from, to }}` written as plain numbers also get a sound cue from `python -m src.cli sound <project> generate`.
 - Transitions are **4-frame plain fades** (`scripts/leaderbot_finalize_storyboard.py`); scenes are 3 to 5 s.
   The pipeline's default 1.5 s cinematic blur is wrong for this style.
 

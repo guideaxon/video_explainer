@@ -14,7 +14,7 @@ moment_type -> sound mapping with a more nuanced approach that considers:
 from dataclasses import dataclass
 from typing import Optional
 
-from .models import SoundMoment, MOMENT_TO_SOUND
+from .models import SoundMoment, MOMENT_TO_SOUND, RIG_MOMENT_TYPES
 
 
 @dataclass
@@ -143,6 +143,15 @@ class SemanticSoundMapper:
         Returns:
             SoundSelection with sound name and explanation
         """
+        # Rig cues (footsteps, gesture pops) are fixed by type: a character's name or a late frame must not
+        # turn a footstep into a keyboard tap or a gesture into a reveal hit.
+        if moment.type in RIG_MOMENT_TYPES:
+            return SoundSelection(
+                sound=MOMENT_TO_SOUND[moment.type],
+                confidence=moment.confidence,
+                reason=f"Rig cue ({moment.type})",
+            )
+
         # Extract context hints from moment
         context_lower = moment.context.lower() if moment.context else ""
         moment_type = moment.type.lower()

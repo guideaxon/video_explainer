@@ -7,13 +7,17 @@ Run after ``python -m src.cli voiceover <project>``. Trims TTS silence, rebuilds
 sets the lyric pacing: 0.15 s between scenes and 6-frame plain fades (near hard cuts, like a music video).
 Use ``--no-trim`` when ``voiceover/<scene_id>.mp3`` are slices of a real song: silence trimming
 would cut the music. See ``_storyboard_pacing.py``.
+Then bakes ``scenes/lipsync.ts`` with the shared ``_lipsync.py`` so the Pixie can talk
+(``mouth={LIPSYNC.<scene>} visemes={VISEMES.<scene>}``).
 """
 
 from __future__ import annotations
 
 import argparse
 import sys
+from pathlib import Path
 
+from _lipsync import bake_and_write
 from _storyboard_pacing import REPO_ROOT, finalize
 
 BUFFER_SECONDS = 0.15
@@ -26,7 +30,11 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--projects-dir", default=str(REPO_ROOT / "projects"))
     parser.add_argument("--no-trim", action="store_true", help="Use the audio files as-is (song clips)")
     args = parser.parse_args(argv)
-    return finalize(args.project, args.projects_dir, BUFFER_SECONDS, TRANSITION, trim=not args.no_trim)
+    code = finalize(args.project, args.projects_dir, BUFFER_SECONDS, TRANSITION, trim=not args.no_trim)
+    if code:
+        return code
+    bake_and_write(Path(args.projects_dir) / args.project)
+    return 0
 
 
 if __name__ == "__main__":

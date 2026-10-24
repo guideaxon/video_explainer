@@ -31,7 +31,11 @@ Cuts are 10-frame dissolves (set by the finalize script). Vary framing between n
   Start a gesture on a key word with `gestureAt` (frame), at most one per beat. Hands rest on the desk otherwise.
 - `look="camera"` by default; `left`/`right` when he refers to something off to the side (a panel, a diagram); `down` to read or work.
 - Mouth, blink, breathing, head sway and a small nod on each syllable peak are automatic. Never fake lip sync by hand: the mouth data is
-  measured from the trimmed voiceover by `scripts/lowpoly_finalize_storyboard.py` and written to `scenes/lipsync.ts`.
+  measured from the trimmed voiceover by `scripts/lowpoly_finalize_storyboard.py` (shared `scripts/_lipsync.py`) and written to
+  `scenes/lipsync.ts`. Pass both `mouth={LIPSYNC.<scene>}` and `visemes={VISEMES.<scene>}`: with Rhubarb Lip Sync installed the
+  mouth draws shapes (pressed lips for M/B/P, a narrow round O, teeth on the lip for F/V, a tongue for L); without it `VISEMES` is empty
+  and the mouth only opens and closes. Blink timing comes from the shared rig (`remotion/src/components/rig/`); give a second presenter
+  another `seed`.
 - To share the frame with a panel or inset, move him with `presenterX` (about -0.8 to the left, 0.8 to the right) and put the content on the other side.
 
 ## 4. Copy rules

@@ -2,7 +2,8 @@
 
 Papercut films are drawn entirely in code (SVG in React) as layered paper cut-outs, scored with music
 synthesised in the browser, and delivered as **one self-contained HTML file**. There are no images, fonts or audio
-files. Open `projects/<p>/film.html` in any browser; no server, no internet.
+files. Open `projects/<p>/film.html` in any browser; no server, no internet. A project may add an optional narrated
+voice (section 7); without it a film is music only.
 
 Format: landscape 1280x720, 30 fps, scenes of 6 s (default), crossfaded. Style bundle id: `papercut`.
 
@@ -31,7 +32,8 @@ Format: landscape 1280x720, 30 fps, scenes of 6 s (default), crossfaded. Style b
 | `iso.tsx` | `iso()` projection, `IsoBox` (three faces shaded from one light), `IsoStairs`, `IsoGate` (the star-gate diorama) |
 | `callout.tsx` | `Callouts`: labelled paper pills with leader lines |
 | `ui.ts` | interaction state (`useUi`, `pokeAge`, `pokeKick`) shared by the player and kit parts |
-| `fox.tsx` | `Fox` (walk speed, head angle, tail, ear twitch) |
+| `fox.tsx` | `Fox` (walk speed, head angle, tail, ear twitch, blink, talking mouth) |
+| `voice.ts` | optional voice: `useVoice()` (the scene's mouth now), `VoicePlayer`, `duckAt`, `clipAt` (section 7) |
 | `film.tsx` | `Film` type and `FilmSvg` (scenes, crossfades, slow push-in) |
 | `music.ts` | `buildScore` (progression to events) and `Music` (Web Audio synth) |
 | `player.tsx` | `mountPlayer(film)`: play/pause, scrubber, sound on/off, clock |
@@ -108,3 +110,35 @@ python scripts/papercut_build_html.py papercut_fox    # writes projects/papercut
    it is audible, never clips and fades out (peak about 0.6, about -25 dB RMS, louder in the storm).
 
 To make a new film: scaffold a project, replace the scenes and the progressions, rebuild.
+
+## 7. Optional voice, and the fox's blink and mouth
+
+**Fox.** The fox blinks on its own (shared rig rhythm, `blinkAt` in `remotion/src/components/rig/`); `blink={false}`
+stops it and `seed` shifts the rhythm when two characters share a shot. Its mouth is a small paper-cut lower jaw under
+the nose that swings open by the mouth openness and narrows for rounded shapes (Rhubarb `E`, `F`); open shapes show a
+tongue. It talks from the scene's voice by itself (below), or from `talk={{ mouth, visemes, at, fps }}` (openness
+and/or one shape letter per frame, starting at scene second `at`, default 30 fps); `talk={false}` keeps it quiet in a
+voiced scene. With no voice and no `talk` the mouth is not drawn, so music-only films look as before.
+
+**Voice** is per project and off unless `projects/<p>/config.json` has `"voice": true`. A film without it is exactly
+music only.
+
+1. `python scripts/papercut_new_video.py <p> --voice` (or set the flag by hand) sets `"voice": true`, the narration
+   paths and a free `edge` TTS provider, and writes a starter `narration/narrations.json`: one entry per scene, in
+   scene order (`scene_id`, `title`, `duration_seconds`, `narration`). Entry i belongs to scene i, or to scene `n`
+   (1-based) when it has `"scene": n`. Empty narration = a silent scene. Keep each line shorter than its scene
+   (`sceneSeconds`, default 6 s: about 12 to 15 words).
+2. `python -m src.cli voiceover <p> --continue-on-error` writes `voiceover/<scene_id>.mp3` (the normal voiceover step;
+   silent scenes may leave empty files, which are skipped).
+3. `python scripts/papercut_build_html.py <p>` embeds every clip in `film.html` as a base64 MP3 data URI, plus its lip
+   sync (loudness openness per frame, and Rhubarb mouth shapes when `rhubarb` is on PATH) at the project fps, in a
+   `<script type="application/json" id="pc-voice">`. It warns when a clip is longer than its scene (the clip is cut at
+   the scene end). The file grows by about 1 MB per minute of speech.
+
+Player: clip i starts at the start of scene i on the film clock (Web Audio, scheduled ahead so it starts on the cut),
+pauses with Pause, follows seeks and loops, and the Sound button / M mutes voice and music together. While a clip
+plays the music ducks by 9 dB with a 0.3 s ramp (clicks on the star, fox and flowers are not ducked). The polite live
+region reads the scene's narration while its clip plays. The hint says "Click anywhere for the sound".
+
+Other characters: in a scene, `useVoice()` (from `@papercut/voice`) gives `{ open, viseme, talking, text, rig, frame }`
+for the current scene, or null; draw any mouth from `open`/`viseme`, or pass `rig` and `frame` to `mouthAt` / `visemeAt`.

@@ -1,0 +1,10 @@
+{
+  "lead_in": 0.6,
+  "steps": [
+    {"say": "This is a small robot: two eyes on a face screen, a mouth of lights, an antenna and an arm that waves.", "hold": 3},
+    {"say": "Press wave, and the shoulder lifts the arm for three waves.", "actions": [{"at": 0.3, "click": "wave"}], "hold": 3},
+    {"say": "Talk lights the mouth in a syllable rhythm, and the antenna light switches on and off.", "actions": [{"at": 0.2, "key": "t"}, {"at": 1.4, "key": "a"}], "hold": 3},
+    {"say": "Now look inside. A battery powers a circuit board, which drives the shoulder servo, the speaker and the antenna light through these wires.", "actions": [{"at": 0.2, "key": "x"}], "hold": 5},
+    {"say": "Close it up again, and it waves goodbye.", "actions": [{"at": 0.2, "key": "x"}, {"at": 1.2, "key": "w"}], "hold": 3}
+  ]
+}

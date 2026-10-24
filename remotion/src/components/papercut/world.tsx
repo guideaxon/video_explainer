@@ -309,7 +309,7 @@ export const Flower: React.FC<{ x: number; y: number; s: number; petal: string; 
   const ui = useUi();
   const id = `${Math.round(x)}-${Math.round(y)}`;
   const age = pokeAge(ui, "flower", id);
-  const sway = Math.sin(t * 1.1 + seed) * 3 + Math.sin(age * 14) * 12 * pokeKick(age, 1.3);
+  const sway = Math.sin(t * 1.1 + seed) * 3 + (age < 1.3 ? Math.sin(age * 14) * 12 * pokeKick(age, 1.3) : 0); // age is Infinity before any click
   const n = kind === "daisy" ? 9 : 12;
   const note = Math.abs(Math.round(x * 7 + y * 3)) % 5; // each flower plays its own pentatonic note
   return (

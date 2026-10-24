@@ -13,6 +13,14 @@ from typing import Optional
 
 from .models import SoundMoment
 
+# Moment types that form a rhythm (a walk cycle's footsteps). They skip merging, the minimum gap and the
+# density cap: thinning them would break the rhythm (at cadence 4 and 30 fps footfalls are 7.5 frames
+# apart, under the default 10-frame gap), and they would crowd out one-off cues near them. They are only
+# deduplicated against each other (two characters stepping on the same frame give one sound), and they do
+# not count toward the density of the other cues.
+RHYTHM_TYPES = frozenset({"footstep"})
+RHYTHM_MIN_GAP_FRAMES = 2
+
 
 @dataclass
 class AggregationConfig:
@@ -76,6 +84,17 @@ def aggregate_moments(
     if not all_moments:
         return []
 
+    # Rhythmic moments (footsteps) keep their own track; see RHYTHM_TYPES.
+    rhythm = [m for m in all_moments if m.type in RHYTHM_TYPES]
+    if rhythm:
+        others = [m for m in all_moments if m.type not in RHYTHM_TYPES]
+        rest = aggregate_moments(
+            others, [], [], max_per_second=max_per_second, min_gap_frames=min_gap_frames,
+            merge_window_frames=merge_window_frames, edge_buffer_frames=edge_buffer_frames,
+            fps=fps, scene_duration_frames=scene_duration_frames,
+        )
+        return sorted(rest + _dedupe_rhythm(rhythm, scene_duration_frames), key=lambda m: m.frame)
+
     # Sort by frame
     all_moments.sort(key=lambda m: m.frame)
 
@@ -90,6 +109,22 @@ def aggregate_moments(
     filtered = _enforce_density(merged, max_per_second, min_gap_frames, fps)
 
     return filtered
+
+
+def _dedupe_rhythm(
+    moments: list[SoundMoment],
+    scene_duration_frames: Optional[int] = None,
+) -> list[SoundMoment]:
+    """Keep every rhythmic moment except near-duplicates (within RHYTHM_MIN_GAP_FRAMES of a kept one)
+    and, when the scene length is known, those that fall past the end of the scene."""
+    kept: list[SoundMoment] = []
+    for moment in sorted(moments, key=lambda m: m.frame):
+        if scene_duration_frames is not None and moment.frame >= scene_duration_frames:
+            continue
+        if kept and moment.frame - kept[-1].frame < RHYTHM_MIN_GAP_FRAMES:
+            continue
+        kept.append(moment)
+    return kept
 
 
 def _merge_nearby_moments(

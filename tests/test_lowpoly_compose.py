@@ -14,7 +14,7 @@ ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / "scripts"))
 
 import compose_build  # noqa: E402
-import lowpoly_finalize_storyboard as finalize  # noqa: E402
+import _lipsync as finalize  # noqa: E402
 import lowpoly_new_video as new_video  # noqa: E402
 from review_video import STYLE_BUNDLES  # noqa: E402
 

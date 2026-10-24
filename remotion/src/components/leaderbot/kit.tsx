@@ -11,6 +11,8 @@ import React, { createContext, useContext } from "react";
 import { AbsoluteFill, Easing, interpolate, spring, useCurrentFrame, useVideoConfig } from "remotion";
 import { loadFont as loadSilk } from "@remotion/google-fonts/Silkscreen";
 import { loadFont as loadInter } from "@remotion/google-fonts/Inter";
+import { VISEME_WIDTH, blinkAt, mouthAt, visemeAt } from "../rig";
+import type { RigProps, Viseme } from "../rig";
 
 const silk = loadSilk("normal", { weights: ["400", "700"], subsets: ["latin"] });
 const inter = loadInter("normal", { weights: ["400", "600"], subsets: ["latin"] });
@@ -117,17 +119,38 @@ const SPRITE = [
   "BBBBBTTBBBBB",
 ];
 
+// Mouth frames (sprite rows 6 and 7) per Rhubarb shape; X is the resting face above.
+const MOUTH_ROWS: Record<Viseme, [string, string]> = {
+  X: [SPRITE[6], SPRITE[7]],
+  A: ["..SSEEEESS..", "..SSSSSSSS.."],
+  B: ["..SEEEEEES..", "..SSSSSSSS.."],
+  C: ["..SEEEEEES..", "..SSEEEESS.."],
+  D: ["..SEEEEEES..", "..SEEEEEES.."],
+  E: ["..SSEEEESS..", "..SSEEEESS.."],
+  F: ["..SSSEESSS..", "..SSSEESSS.."],
+  G: ["..SEEEEEES..", "..SSSSSSSS.."],
+  H: ["..SEEEEEES..", "..SSEEEESS.."],
+};
+
 /**
  * One bot tile. `glitch` 0..1 scrambles that share of cells every 3 frames; `smooth` draws the clean vector
  * version (no grid lines). (x, y) is the top-left corner.
+ * Rig: `mouth`/`visemes` (from `scenes/lipsync.ts`) swap the two mouth rows per frame; the eyes blink on the shared
+ * rhythm when `blink` is set (off by default so a grid of nine bots stays still).
  */
-export const PixelBot: React.FC<{ x: number; y: number; size?: number; look?: number; glitch?: number; smooth?: boolean; from?: number; seed?: number }> = ({
-  x, y, size = 320, look = 0, glitch = 0, smooth = false, from = 0, seed = 0,
+export const PixelBot: React.FC<{ x: number; y: number; size?: number; look?: number; glitch?: number; smooth?: boolean; from?: number; seed?: number } & Pick<RigProps, "mouth" | "visemes" | "talking" | "blink">> = ({
+  x, y, size = 320, look = 0, glitch = 0, smooth = false, from = 0, seed = 0, mouth, visemes, talking, blink = false,
 }) => {
   const frame = useCurrentFrame();
+  const { fps } = useVideoConfig();
   const pop = usePop(from, 14);
   const L = LOOKS[((look % LOOKS.length) + LOOKS.length) % LOOKS.length];
   const step = Math.floor(frame / 3);
+  const rig = { mouth, visemes, talking };
+  const shape = visemeAt(rig, frame);
+  const open = mouthAt(rig, frame);
+  const shut = blink ? blinkAt(frame, fps, seed) : 0;
+  const sprite = SPRITE.map((row, r) => (r === 6 || r === 7 ? MOUTH_ROWS[shape][r - 6] : r === 3 && shut > 0.5 ? row.replace(/E/g, "S") : row));
   const colour = (ch: string) => ({ H: L.hair, S: L.skin, E: C.ink, B: L.suit, W: L.shirt, T: L.tie }[ch] ?? L.bg);
   return (
     <svg viewBox="0 0 12 12" width={size} height={size} style={{ position: "absolute", left: x, top: y, transform: `scale(${0.4 + 0.6 * pop})`, opacity: Math.min(1, pop * 2), shapeRendering: "crispEdges" }}>
@@ -138,13 +161,17 @@ export const PixelBot: React.FC<{ x: number; y: number; size?: number; look?: nu
           <path d="M5.2 9.2 L6.8 9.2 L7.2 12 L4.8 12 Z" fill={C.green} />
           <rect x={2.4} y={1.6} width={7.2} height={7} rx={2.2} fill={C.skin} />
           <path d="M2.2 3.6 Q2.4 1 6 1 Q9.6 1 9.8 3.6 Q8.4 2.4 6 2.4 Q3.6 2.4 2.2 3.6 Z" fill={C.grey} />
-          <circle cx={4.5} cy={4.6} r={0.5} fill={C.ink} />
-          <circle cx={7.5} cy={4.6} r={0.5} fill={C.ink} />
+          <ellipse cx={4.5} cy={4.6} rx={0.5} ry={0.5 * (1 - 0.85 * shut)} fill={C.ink} />
+          <ellipse cx={7.5} cy={4.6} rx={0.5} ry={0.5 * (1 - 0.85 * shut)} fill={C.ink} />
           <circle cx={6} cy={5.9} r={0.65} fill="#e0a98c" />
-          <path d="M4.4 7 Q6 8.4 7.6 7 Q6 7.7 4.4 7 Z" fill={C.ink} stroke={C.ink} strokeWidth={0.2} />
+          {shape === "X" ? (
+            <path d="M4.4 7 Q6 8.4 7.6 7 Q6 7.7 4.4 7 Z" fill={C.ink} stroke={C.ink} strokeWidth={0.2} />
+          ) : (
+            <ellipse cx={6} cy={7.3} rx={1.5 * VISEME_WIDTH[shape]} ry={shape === "A" ? 0.12 : 0.2 + 0.75 * open} fill={C.ink} />
+          )}
         </g>
       ) : (
-        SPRITE.map((row, r) =>
+        sprite.map((row, r) =>
           row.split("").map((ch, c) => {
             const scramble = glitch > 0 && hash(r + seed, c, step) < glitch;
             const fill = scramble ? POOL[Math.floor(hash(c, r + seed, step + 7) * POOL.length)] : colour(ch);
@@ -156,8 +183,11 @@ export const PixelBot: React.FC<{ x: number; y: number; size?: number; look?: nu
   );
 };
 
-/** 3x3 mosaic of bots (the style bundle's signature). The centre tile is the clean vector bot unless `clean` is false. */
-export const BotGrid: React.FC<{ y: number; cell?: number; glitch?: (frame: number) => number; clean?: boolean; from?: number }> = ({ y, cell = 320, glitch, clean = true, from = 0 }) => {
+/**
+ * 3x3 mosaic of bots (the style bundle's signature). The centre tile is the clean vector bot unless `clean` is false.
+ * `mouth`/`visemes` make the centre bot talk (and blink).
+ */
+export const BotGrid: React.FC<{ y: number; cell?: number; glitch?: (frame: number) => number; clean?: boolean; from?: number } & Pick<RigProps, "mouth" | "visemes" | "talking">> = ({ y, cell = 320, glitch, clean = true, from = 0, mouth, visemes, talking }) => {
   const frame = useCurrentFrame();
   const g = glitch ? glitch(frame) : 0;
   const left = (W - cell * 3) / 2;
@@ -167,7 +197,7 @@ export const BotGrid: React.FC<{ y: number; cell?: number; glitch?: (frame: numb
         const r = Math.floor(i / 3);
         const c = i % 3;
         const centre = i === 4;
-        return <PixelBot key={i} x={left + c * cell} y={y + r * cell} size={cell} look={i} glitch={centre && clean ? 0 : g} smooth={centre && clean} from={from + i * 2} seed={i} />;
+        return <PixelBot key={i} x={left + c * cell} y={y + r * cell} size={cell} look={i} glitch={centre && clean ? 0 : g} smooth={centre && clean} from={from + i * 2} seed={i} {...(centre ? { mouth, visemes, talking, blink: true } : {})} />;
       })}
     </>
   );

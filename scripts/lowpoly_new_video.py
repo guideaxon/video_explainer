@@ -18,7 +18,7 @@ import shutil
 import sys
 from pathlib import Path
 
-from lowpoly_finalize_storyboard import write_lipsync_ts
+from _lipsync import write_lipsync_ts
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 TEMPLATE_DIR = REPO_ROOT / "templates" / "lowpoly_video" / "scenes"

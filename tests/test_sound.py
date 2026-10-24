@@ -9,11 +9,11 @@ import pytest
 class TestSoundLibrary:
     """Tests for the SoundLibrary class."""
 
-    def test_sound_manifest_has_17_sounds(self):
-        """Test that SOUND_MANIFEST has exactly 17 sounds (10 original + 7 new)."""
+    def test_sound_manifest_has_18_sounds(self):
+        """Test that SOUND_MANIFEST has exactly 18 sounds (10 original + 7 new + footstep)."""
         from src.sound.library import SOUND_MANIFEST
 
-        assert len(SOUND_MANIFEST) == 17
+        assert len(SOUND_MANIFEST) == 18
 
     def test_sound_manifest_has_required_sounds(self):
         """Test that all required sounds are in the manifest."""
@@ -45,7 +45,7 @@ class TestSoundLibrary:
             library = SoundLibrary(Path(tmpdir))
             sounds = library.list_sounds()
 
-            assert len(sounds) == 17
+            assert len(sounds) == 18
             assert "ui_pop" in sounds
             assert "reveal_hit" in sounds
             # Check new sounds are included
@@ -62,7 +62,7 @@ class TestSoundLibrary:
 
             generated = library.generate_all()
 
-            assert len(generated) == 17
+            assert len(generated) == 18
 
             # Check files were created
             for name in generated:
@@ -96,7 +96,7 @@ class TestSoundLibrary:
 
             # Initially all sounds are missing
             missing = library.get_missing_sounds()
-            assert len(missing) == 17
+            assert len(missing) == 18
 
             # Generate sounds
             library.generate_all()

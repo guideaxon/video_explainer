@@ -17,7 +17,7 @@ import wave
 import numpy as np
 import pytest
 
-from generator import (
+from .generator import (
     # Constants
     SAMPLE_RATE,
     # Enums

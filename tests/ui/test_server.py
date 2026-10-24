@@ -331,6 +331,18 @@ def test_papercut_project_reports_film_and_serves_it_sandboxed(client):
     assert r.status_code == 200 and "sandbox" in r.headers["content-security-policy"]
 
 
+def test_papercut_with_voice_offers_narration_and_voiceover(client):
+    c, projects = client
+    p = _create(c, style_bundle="papercut")
+    cfg_path = projects / p["id"] / "config.json"
+    cfg = json.loads(cfg_path.read_text(encoding="utf-8"))
+    cfg["voice"] = True
+    cfg_path.write_text(json.dumps(cfg), encoding="utf-8")
+    steps = _by_id(c.get(f"/api/projects/{p['id']}").json()["steps"])
+    assert steps["narration"]["status"] != "skipped" and steps["voiceover"]["status"] != "skipped"
+    assert steps["storyboard"]["status"] == "skipped"
+
+
 def test_lowpoly_is_a_full_video_style_bundle():
     from ui.server.steps import FULL_STYLE_BUNDLES
 

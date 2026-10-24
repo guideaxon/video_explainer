@@ -1,7 +1,9 @@
 // Bundle projects/<project>/main.tsx (+ the papercut kit, React and the score) into ONE self-contained HTML file:
-// projects/<project>/film.html. No assets, no network. Usage: node scripts/papercut_build_html.mjs <project>
+// projects/<project>/film.html. No assets, no network. Usage: node scripts/papercut_build_html.mjs <project> [--voice <json>]
+// --voice: the voice payload ({ fps, clips }) written by papercut_build_html.py when config.json has "voice": true; it is
+// inlined as <script type="application/json" id="pc-voice">, which the player reads (see the kit's voice.ts).
 import { build } from "../remotion/node_modules/esbuild/lib/main.js";
-import { existsSync, writeFileSync } from "node:fs";
+import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { resolve, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -21,6 +23,12 @@ const r = await build({
   define: { "process.env.NODE_ENV": '"production"' }, logLevel: "warning",
 });
 const js = r.outputFiles[0].text.replace(/<\/script/g, "<\/script");
+const vi = process.argv.indexOf("--voice");
+const voice = vi > 0 ? readFileSync(process.argv[vi + 1], "utf8").replace(/<\//g, "<\\/") : ""; // "<\/" is the same JSON string
+if (!voice && existsSync(resolve(dir, "config.json")) && JSON.parse(readFileSync(resolve(dir, "config.json"), "utf8")).voice) {
+  console.warn('config.json has "voice": true but no voice was given: build with python scripts/papercut_build_html.py to embed it');
+}
+const vtag = voice ? `<script type="application/json" id="pc-voice">${voice}</script>` : "";
 const out = resolve(dir, "film.html");
-writeFileSync(out, `<!doctype html><html><head><meta charset="utf-8"><title>Paper-cut film</title><meta name="viewport" content="width=device-width,initial-scale=1"><style>html,body{margin:0;background:#05060f}</style></head><body><div id="root"></div><script>${js}</script></body></html>`);
-console.log(`wrote ${out} (${(js.length / 1024).toFixed(0)} KB, music included)`);
+writeFileSync(out, `<!doctype html><html><head><meta charset="utf-8"><title>Paper-cut film</title><meta name="viewport" content="width=device-width,initial-scale=1"><style>html,body{margin:0;background:#05060f}</style></head><body><div id="root"></div>${vtag}<script>${js}</script></body></html>`);
+console.log(`wrote ${out} (${((js.length + voice.length) / 1024).toFixed(0)} KB, music${voice ? " and voice" : ""} included)`);

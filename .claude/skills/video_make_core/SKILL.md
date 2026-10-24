@@ -46,6 +46,12 @@ $env:PYTHONUTF8 = "1"                 # required for CLI output
 7. **Storyboard and pacing**: `python scripts/<style_bundle>_finalize_storyboard.py <project>` (trims TTS
    silence, builds the storyboard, sets the style bundle's buffers and fades). Use it instead of the plain
    `storyboard` command.
+   The bundles with a talking character (Launch, Lyric, Leaderbot, Lowpoly) also bake `scenes/lipsync.ts` here
+   (shared `scripts/_lipsync.py`; Rhubarb Lip Sync adds mouth shapes, else loudness only, with a warning).
+   **Sound effects (optional)**: `python -m src.cli sound <project> library --generate` once, then
+   `python -m src.cli sound <project> generate` writes cues into the storyboard: kit entrances, plus character cues
+   from the rig (a pop at each literal `gestureAt={n}`, a footstep per step of a literal `walk={{ from, to }}`).
+   Re-run it after changing scene timing.
 8. **Render**: `python -m src.cli render <project>` (output `output/final.mp4`). A transient "Target
    closed" message at the end is harmless if the log says "Video rendered".
 9. **Verify** (inspect frames before calling it done):
@@ -66,6 +72,14 @@ $env:PYTHONUTF8 = "1"                 # required for CLI output
 - Scene not found at storyboard or render: the registry key is not the title slug (step 4).
 - Default player transitions are 1.5 s cinematic blur; the finalize script overrides them.
 - Template scenes carry SAMPLE text and tags; `review_video.py` flags them, do not ship with them.
+
+## Characters and render cost
+
+- Characters share the rig contract in `remotion/src/components/rig/` (types and timing only); each kit draws its
+  own. Never import another bundle's character to get a feature: add it to this bundle's kit.
+- Large SVG blur and turbulence filters (glow, grain, watercolour bleed) are slow at 1080x1920. Keep blurs on small
+  layers, bake static textures to images once, and note the render time per frame (`npx remotion render ... --log=verbose`)
+  in the style guide when a scene adds one.
 
 ## Adding a style bundle check
 

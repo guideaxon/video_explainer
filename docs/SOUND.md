@@ -31,7 +31,7 @@ python -m src.cli music <project> generate
 
 ### Sound Library
 
-The system includes 17 professionally-designed sounds:
+The system includes 18 professionally-designed sounds:
 
 #### Core Sounds
 
@@ -59,6 +59,7 @@ The system includes 17 professionally-designed sounds:
 | `digital_stream` | Flowing data sound | Token streaming |
 | `impact_soft` | Soft thump | Subtle reveals |
 | `impact_hard` | Punchy hit | Dramatic reveals |
+| `footstep` | Soft low thump with a little scuff | A rigged character's footfall (see below) |
 
 ```bash
 # List available sounds
@@ -199,6 +200,34 @@ and maps it to a moment type (text, chart, counter, reveal, element). It marks w
 not how it eases, and ignores components it does not recognise. Scenes are found through
 `scenes/index.ts`, so a scene file may be named freely (`bull_run` is `title.tsx`). The Demo bundle
 (one `DemoScene` component driven by `manifest.json`) is not covered.
+
+### Character cues from the rig
+
+Characters built on the shared rig contract (`remotion/src/components/rig/index.ts`) get sound cues from
+their props. `src/sound/rig_analyzer.py` reads them from every scene file on top of the other analyzers
+(not only when those find nothing):
+
+| Prop in the scene | Cue |
+|---|---|
+| `gestureAt={45}` | one `gesture` moment at frame 45, played as `ui_pop` (volume about 0.05) |
+| `walk={{ from: 10, to: 100, cadence: 2 }}` | one `footstep` moment per footfall, played as `footstep` (volume about 0.033) |
+
+Footfalls are the frames `walkSteps(walk, fps)` returns: `round(from + i * fps / cadence)` for
+`i = 1, 2, ...` while that is before `to`; `cadence` is footsteps per second (default 2). At 30 fps
+`{ from: 10, to: 100 }` steps on 25, 40, 55, 70, 85. The fps is the project's `video.fps` from `config.json`
+(default 30), so 24 and 12 fps films get footsteps on their own frames.
+
+- **Literals only.** Values must be plain numbers; `walk` keys in any order, with any whitespace or line
+  breaks and an optional trailing comma, and only `from`, `to` and `cadence`. A prop written as an expression
+  (`gestureAt={beat + 4}`, `walk={WALK}`, `walk={{ from: start, to: 90 }}`, a spread) is skipped, not
+  guessed. Commented-out props are ignored. Frames are scene-local.
+- **Footsteps keep their rhythm.** In the aggregator they bypass merging, the minimum gap and the density
+  cap (a fast walk at cadence 4 is 7.5 frames apart at 30 fps), do not count toward the density of other
+  cues, and are only deduplicated against each other (two feet within 2 frames give one sound).
+  Gesture pops go through the normal rules with confidence 0.8, so a stronger cue at the same moment wins.
+- **Sounds are fixed by type.** The semantic mapper does not remap footsteps or gesture pops by context or
+  scene position. With Earshot, `footstep` renders `pro_tap/soft` at weight 0.6; a palette or
+  `sound.overrides` can swap it like any other sound.
 
 ### Checks
 

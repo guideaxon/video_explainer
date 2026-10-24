@@ -3,6 +3,8 @@ import { Defs, PaperOverlay, W, H, clamp } from "./paper";
 import type { Ev } from "./music";
 import { NO_UI, UiContext } from "./ui";
 import type { UiState } from "./ui";
+import { VoiceContext, voiceNow } from "./voice";
+import type { Voice } from "./voice";
 
 export type SceneProps = { t: number; p: number; cam: number };
 export type SceneFn = React.FC<SceneProps>;
@@ -17,6 +19,8 @@ export type Film = {
   sceneSeconds?: number; // default 6
   fps?: number; // default 30
   fadeFrames?: number; // cross-fade into each scene, default 20
+  /** optional narration (clip i = scene i) with lip sync; mountPlayer reads the one embedded by the build */
+  voice?: Voice;
 };
 
 export const filmInfo = (f: Film) => {
@@ -41,7 +45,9 @@ export const FilmSvg: React.FC<{ film: Film; frame: number; ui?: UiState; label?
           return (
             <g key={i} opacity={opacity}>
               <g transform={`translate(${W / 2} ${H * 0.62}) scale(${zoom}) translate(${-W / 2} ${-H * 0.62})`}>
-                <Scene t={lf / fps} p={p} cam={(p - 0.5) * 2} />
+                <VoiceContext.Provider value={voiceNow(film.voice, i, lf / fps, sceneFrames / fps)}>
+                  <Scene t={lf / fps} p={p} cam={(p - 0.5) * 2} />
+                </VoiceContext.Provider>
               </g>
             </g>
           );

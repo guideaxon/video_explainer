@@ -7,6 +7,8 @@ import React from "react";
 import { AbsoluteFill, Easing, Img, interpolate, staticFile, useCurrentFrame, useVideoConfig } from "remotion";
 import { loadFont as loadFraunces } from "@remotion/google-fonts/Fraunces";
 import { loadFont as loadInter } from "@remotion/google-fonts/Inter";
+import { cameraAt } from "./paint";
+import type { Camera, Move } from "./paint";
 
 const fraunces = loadFraunces("normal", { weights: ["600"], subsets: ["latin"] });
 const inter = loadInter("normal", { weights: ["600"], subsets: ["latin"] });
@@ -22,15 +24,11 @@ export const PAL = { paper: "#fbf1de", ink: "#3a2a20", terracotta: "#c8553d", te
 const ease = Easing.bezier(0.3, 0.1, 0.2, 1);
 const clamp = { extrapolateLeft: "clamp", extrapolateRight: "clamp" } as const;
 
-export type Move = "push-in" | "pull-out" | "pan-left" | "pan-right";
+export type { Move } from "./paint";
 
-/** Where a move starts and ends: scale and horizontal drift in px. */
-const MOVES: Record<Move, { s: [number, number]; x: [number, number] }> = {
-  "push-in": { s: [1.0, 1.08], x: [0, -20] },
-  "pull-out": { s: [1.08, 1.0], x: [-20, 0] },
-  "pan-left": { s: [1.06, 1.06], x: [30, -30] },
-  "pan-right": { s: [1.06, 1.06], x: [-30, 30] },
-};
+/** The camera of the enclosing `PaintedShot` (still file and current scale/drift), for layers glued to the still. */
+const ShotContext = React.createContext<{ art: string; cam: Camera } | null>(null);
+const camTransform = (cam: Camera, k: number) => `translateX(${cam.x * k}px) scale(${cam.scale})`;
 
 /** A painted still with one slow camera move across `frames` (default: the whole scene). */
 export const PaintedShot: React.FC<{ art: string; move?: Move; frames?: number; children?: React.ReactNode }> = ({
@@ -43,17 +41,59 @@ export const PaintedShot: React.FC<{ art: string; move?: Move; frames?: number; 
   const { durationInFrames } = useVideoConfig();
   const k = useScale();
   const total = frames ?? durationInFrames;
-  const m = MOVES[move];
   const t = interpolate(frame, [0, total], [0, 1], { ...clamp, easing: ease });
-  const scale = m.s[0] + (m.s[1] - m.s[0]) * t;
-  const x = m.x[0] + (m.x[1] - m.x[0]) * t;
+  const cam = cameraAt(move, t);
   const fade = interpolate(frame, [0, 8], [0, 1], clamp);
   return (
     <AbsoluteFill style={{ background: PAL.paper, opacity: fade, overflow: "hidden" }}>
-      <Img src={staticFile(art)} style={{ width: "100%", height: "100%", objectFit: "cover", transform: `translateX(${x * k}px) scale(${scale})` }} />
-      {children}
+      <Img src={staticFile(art)} style={{ width: "100%", height: "100%", objectFit: "cover", transform: camTransform(cam, k) }} />
+      <ShotContext.Provider value={{ art, cam }}>{children}</ShotContext.Provider>
       <Grain />
     </AbsoluteFill>
+  );
+};
+
+/**
+ * A layer glued to the still inside `PaintedShot`: its children are SVG in still coordinates (1280x720, the still's
+ * frame at scale 1) and follow the camera move, so a character drawn at a ground point stays on that ground.
+ */
+export const OnStill: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const shot = React.useContext(ShotContext);
+  const k = useScale();
+  const cam = shot?.cam ?? { scale: 1, x: 0 };
+  return (
+    <AbsoluteFill style={{ transform: camTransform(cam, k), pointerEvents: "none" }}>
+      <svg viewBox={`0 0 ${W} ${H}`} width="100%" height="100%" style={{ overflow: "visible" }}>
+        {children}
+      </svg>
+    </AbsoluteFill>
+  );
+};
+
+/**
+ * Foreground occlusion: a second copy of the still, masked to a polygon in still coordinates (a pot, a counter, a
+ * door frame) and drawn over what came before it, so a character can stand behind it. Soft edge `feather` px.
+ * Put it after the `OnStill` that holds the character. The mask is a static image, rasterised once.
+ */
+export const Foreground: React.FC<{ points: [number, number][]; feather?: number }> = ({ points, feather = 2 }) => {
+  const shot = React.useContext(ShotContext);
+  const k = useScale();
+  const mask = React.useMemo(() => {
+    const poly = points.map((p) => p.join(",")).join(" ");
+    const svg =
+      `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 ${W} ${H}' preserveAspectRatio='none'>` +
+      `<filter id='f'><feGaussianBlur stdDeviation='${feather}'/></filter><polygon points='${poly}' fill='white' filter='url(#f)'/></svg>`;
+    return `url("data:image/svg+xml;utf8,${encodeURIComponent(svg)}")`;
+  }, [points, feather]);
+  if (!shot) return null;
+  return (
+    <Img
+      src={staticFile(shot.art)}
+      style={{
+        position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", transform: camTransform(shot.cam, k),
+        WebkitMaskImage: mask, maskImage: mask, WebkitMaskSize: "100% 100%", maskSize: "100% 100%",
+      }}
+    />
   );
 };
 

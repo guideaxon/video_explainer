@@ -49,7 +49,11 @@ vi.mock("./ShortsPlayer", () => ({
 }));
 
 // Import after mocks
-import { AnimatedCaptions, SimpleAnimatedCaptions } from "./AnimatedCaptions";
+import { AnimatedCaptions as AnimatedCaptionsFC, SimpleAnimatedCaptions as SimpleAnimatedCaptionsFC } from "./AnimatedCaptions";
+
+// The tests call the components as plain functions and inspect the element tree they return.
+const AnimatedCaptions = AnimatedCaptionsFC as (props: React.ComponentProps<typeof AnimatedCaptionsFC>) => React.ReactElement;
+const SimpleAnimatedCaptions = SimpleAnimatedCaptionsFC as (props: React.ComponentProps<typeof SimpleAnimatedCaptionsFC>) => React.ReactElement;
 
 // ============================================================================
 // Test Helpers

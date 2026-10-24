@@ -63,7 +63,7 @@ describe("cinematicFade", () => {
       enableLightLeak: true,
     });
 
-    const Component = presentation.component;
+    const Component = presentation.component as React.FC<any>; // a function component, called directly
     const mockChild = <div>Test Content</div>;
 
     expect(() =>
@@ -78,7 +78,7 @@ describe("cinematicFade", () => {
 
   it("should handle exiting direction", () => {
     const presentation = cinematicFade();
-    const Component = presentation.component;
+    const Component = presentation.component as React.FC<any>; // a function component, called directly
 
     expect(() =>
       Component({
@@ -92,7 +92,7 @@ describe("cinematicFade", () => {
 
   it("should handle progress at boundaries", () => {
     const presentation = cinematicFade();
-    const Component = presentation.component;
+    const Component = presentation.component as React.FC<any>; // a function component, called directly
 
     // Progress at 0
     expect(() =>
@@ -142,7 +142,7 @@ describe("cinematicSlide", () => {
 
     directions.forEach((direction) => {
       const presentation = cinematicSlide({ slideDirection: direction });
-      const Component = presentation.component;
+      const Component = presentation.component as React.FC<any>; // a function component, called directly
 
       expect(() =>
         Component({
@@ -160,7 +160,7 @@ describe("cinematicSlide", () => {
 
     directions.forEach((direction) => {
       const presentation = cinematicSlide({ slideDirection: direction });
-      const Component = presentation.component;
+      const Component = presentation.component as React.FC<any>; // a function component, called directly
 
       expect(() =>
         Component({

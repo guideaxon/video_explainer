@@ -25,7 +25,7 @@ PAID = re.compile(r"api\.elevenlabs\.io|elevenlabs\.io/v1|api\.kie\.ai|api\.apim
 INLINE = re.compile(r"(python3?|py)\s+-c\b|node\s+(-e|--eval)\b|(python3?|py|node)\s+-?\s*<<|\bcurl\b|\bwget\b|Invoke-(WebRequest|RestMethod)", re.I)
 CODE = re.compile(r"\.(py|mjs|cjs|js|ts|ps1|sh)$", re.I)
 MEDIA = re.compile(r"\.(mp4|mov|m4v|webm|mkv|mp3|wav|m4a|aac|flac)$", re.I)
-KIT_IMPORT = re.compile(r"components/(vantage|markets|promo|launch|lyric|leaderbot|demo|storybook|papercut|isofigure|lowpoly)\b")
+KIT_IMPORT = re.compile(r"components/(vantage|markets|promo|launch|lyric|leaderbot|demo|storybook|papercut|isofigure|lowpoly|rubberhose|glossy|clay|popart|neon)\b")
 
 
 def deny(reason: str) -> dict:

@@ -1,7 +1,8 @@
 /**
  * Lowpoly style bundle kit: landscape (1280x720 design space) explainer films with a flat-shaded low-poly 3D
  * presenter in a calm room, slow camera pushes and a caption pill. Built on @remotion/three; no model or image files.
- * Lip sync and captions come from `scenes/lipsync.ts`, written by scripts/lowpoly_finalize_storyboard.py.
+ * Lip sync (openness and Rhubarb mouth shapes) and captions come from `scenes/lipsync.ts`, written by scripts/_lipsync.py
+ * (called by scripts/lowpoly_finalize_storyboard.py).
  * See docs/lowpoly_video_style_guide.md.
  */
 import React from "react";
@@ -132,11 +133,13 @@ export const EndCard: React.FC<{ title: string; button: string }> = ({ title, bu
   );
 };
 
-export type LowPolyShotProps = Omit<PresenterProps, "mouth"> & {
+export type LowPolyShotProps = Omit<PresenterProps, "mouth" | "visemes"> & {
   shot?: Shot;
   move?: Move;
   /** `LIPSYNC.<scene>` from `scenes/lipsync.ts` (mouth openness per frame); omit for a syllable rhythm. */
   mouth?: number[];
+  /** `VISEMES.<scene>` from `scenes/lipsync.ts` (Rhubarb mouth shapes; present when Rhubarb was installed). */
+  visemes?: string;
   /** `CAPTIONS.<scene>` from `scenes/lipsync.ts`. */
   caption?: string;
   /** Length of speech in frames (default: the lip-sync length, else 90 percent of the scene). */
@@ -150,14 +153,14 @@ export type LowPolyShotProps = Omit<PresenterProps, "mouth"> & {
 };
 
 /** One shot of the presenter in the room, with captions. The standard building block of a lowpoly scene. */
-export const LowPolyShot: React.FC<LowPolyShotProps> = ({ shot, move, mouth, caption, speechFrames, roomProps, presenterX = 0, children, overlay, ...presenter }) => {
+export const LowPolyShot: React.FC<LowPolyShotProps> = ({ shot, move, mouth, visemes, caption, speechFrames, roomProps, presenterX = 0, children, overlay, ...presenter }) => {
   const frame = useCurrentFrame();
   const fade = interpolate(frame, [0, 8], [0, 1], clamp);
   return (
     <AbsoluteFill style={{ opacity: fade }}>
       <Stage shot={shot} move={move}>
         <Room props={roomProps} />
-        <Presenter {...presenter} mouth={mouth} position={[presenterX, 0, 0]} />
+        <Presenter {...presenter} mouth={mouth} visemes={visemes} position={[presenterX, 0, 0]} />
         {children}
       </Stage>
       {overlay}

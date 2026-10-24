@@ -511,7 +511,7 @@ def generate_impact_soft(duration: float = 0.12) -> np.ndarray:
 
     env = smooth_envelope(n, attack_ms=5, release_ms=80)
 
-    return tone * env
+    return tone * env / 1.3  # keep the raw peak within [-1, 1] (save_wav normalises anyway)
 
 
 def generate_impact_hard(duration: float = 0.18) -> np.ndarray:
@@ -535,6 +535,30 @@ def generate_impact_hard(duration: float = 0.18) -> np.ndarray:
 
     samples = (tone + drop) * env
     return soft_saturate(samples, 0.25)
+
+
+def generate_footstep(duration: float = 0.09) -> np.ndarray:
+    """Soft footstep - a low, short thump with a little scuff of noise.
+
+    For rig walk cycles (one cue per footfall), so it must stay unobtrusive when repeated.
+    Deterministic: the noise comes from a fixed seed, so every build renders the same file.
+    """
+    n = int(SAMPLE_RATE * duration)
+    t = np.linspace(0, duration, n)
+
+    # Low thump with a quick downward pitch settle: 140 -> 70 Hz
+    thump = pitch_envelope(n, 140, 70) * np.exp(-t * 45)
+
+    # Short low-passed scuff (heel on floor), seeded for determinism
+    noise = np.random.default_rng(1729).standard_normal(n) * 0.5
+    spectrum = np.fft.rfft(noise)
+    freqs = np.fft.rfftfreq(n, 1 / SAMPLE_RATE)
+    scuff = np.fft.irfft(spectrum / (1 + (freqs / 1800) ** 4), n) * np.exp(-t * 70) * 0.35
+
+    env = smooth_envelope(n, attack_ms=2, release_ms=40)
+
+    samples = (thump + scuff) * env
+    return normalize(soft_saturate(samples, 0.15), -6.0)
 
 
 # =============================================================================
@@ -611,6 +635,10 @@ SOUND_MANIFEST = {
         "description": "Firmer impact for emphasis",
         "generator": "generate_impact_hard",
     },
+    "footstep": {
+        "description": "Soft low thump for a rigged character's footfall",
+        "generator": "generate_footstep",
+    },
 }
 
 
@@ -632,6 +660,7 @@ GENERATORS = {
     "generate_digital_stream": generate_digital_stream,
     "generate_impact_soft": generate_impact_soft,
     "generate_impact_hard": generate_impact_hard,
+    "generate_footstep": generate_footstep,
 }
 
 

@@ -5,6 +5,7 @@ import type { Film } from "./film";
 import { Music } from "./music";
 import { NO_UI } from "./ui";
 import type { Poke, UiState } from "./ui";
+import { VoicePlayer, clipAt, duckAt, readEmbeddedVoice } from "./voice";
 
 const CSS = `
 :root{color-scheme:dark;--bg:#05060f;--bar:#0e1020;--fg:#e8e9f0;--mute:#9a9db0;--edge:#2a2e48;--btn:#1a1d33;--on:#ffd966}
@@ -36,6 +37,8 @@ const Player: React.FC<{ film: Film }> = ({ film }) => {
   const [ui, setUi] = useState<UiState>({ ...NO_UI, reduce });
   const m = useRef({ frame: init || 0, last: 0, shown: -1, xray: 0, pokes: [] as Poke[] });
   const music = useRef<Music | null>(null);
+  const voice = useRef<VoicePlayer | null>(null);
+  const sceneSec = sceneFrames / fps;
   const flags = useRef({ playing, muted, xray });
   flags.current = { playing, muted, xray };
 
@@ -47,6 +50,10 @@ const Player: React.FC<{ film: Film }> = ({ film }) => {
     ctx.resume();
     music.current = new Music(ctx, film.events, total / fps);
     music.current.setMuted(flags.current.muted);
+    if (film.voice) {
+      voice.current = new VoicePlayer(ctx, film.voice, sceneSec);
+      voice.current.setMuted(flags.current.muted);
+    }
     setAudioOn(true);
     return music.current;
   };
@@ -60,13 +67,19 @@ const Player: React.FC<{ film: Film }> = ({ film }) => {
     window.addEventListener("pointerdown", ensureAudio);
     return () => window.removeEventListener("pointerdown", ensureAudio);
   }, []);
-  useEffect(() => { music.current?.setMuted(muted); }, [muted]);
+  useEffect(() => { music.current?.setMuted(muted); voice.current?.setMuted(muted); }, [muted]);
 
   useEffect(() => {
     const id = setInterval(() => {
       const mu = music.current;
       if (!mu) return;
-      if (flags.current.playing) mu.tick(m.current.frame / fps); else mu.stop();
+      const t = m.current.frame / fps;
+      if (flags.current.playing) mu.tick(t); else mu.stop();
+      const vo = voice.current;
+      if (!vo) return;
+      // the voice follows the same clock (re-syncing after seeks and loops); the music ducks under it
+      if (flags.current.playing) vo.tick(t); else vo.stop();
+      mu.setDuck(flags.current.playing ? duckAt(film.voice, t, sceneSec) : 1);
     }, 100);
     return () => clearInterval(id);
   }, []);
@@ -132,6 +145,7 @@ const Player: React.FC<{ film: Film }> = ({ film }) => {
   const fmt = (s: number) => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, "0")}`;
   const scene = Math.min(film.scenes.length - 1, Math.floor(frame / sceneFrames));
   const sceneName = film.sceneNames?.[scene] ?? `Scene ${scene + 1}`;
+  const said = audioOn && playing && clipAt(film.voice, frame / fps, sceneSec) ? film.voice?.clips[scene]?.text : "";
   const help = `${film.title}. Space plays or pauses, arrow keys seek, X looks inside, M mutes, and clicking or pressing S, F or N plays the star, the fox or a flower.`;
   return (
     <div className="pc">
@@ -150,9 +164,9 @@ const Player: React.FC<{ film: Film }> = ({ film }) => {
           onChange={(e) => { m.current.frame = +e.target.value; setFrame(+e.target.value); }} />
         <span className="pc-time" aria-hidden="true">{fmt(frame / fps)} / {fmt(total / fps)}</span>
       </div>
-      <div className="sr" aria-live="polite">{playing ? sceneName : `Paused. ${sceneName}`}</div>
+      <div className="sr" aria-live="polite">{playing ? (said ? `${sceneName}. ${said}` : sceneName) : `Paused. ${sceneName}`}</div>
       {!audioOn && (
-        <div className="pc-hint">{reduce ? "Press Play. " : ""}Click anywhere for the music · click the star, the fox or the flowers · X looks inside</div>
+        <div className="pc-hint">{reduce ? "Press Play. " : ""}Click anywhere for the {film.voice ? "sound" : "music"} · click the star, the fox or the flowers · X looks inside</div>
       )}
     </div>
   );
@@ -161,5 +175,7 @@ const Player: React.FC<{ film: Film }> = ({ film }) => {
 /** Entry point used by every papercut project's main.tsx. */
 export const mountPlayer = (film: Film) => {
   document.title = film.title;
-  createRoot(document.getElementById("root")!).render(<Player film={film} />);
+  const voice = film.voice ?? readEmbeddedVoice();
+  if (voice && voice.clips.length > film.scenes.length) console.warn(`voice has ${voice.clips.length} clips for ${film.scenes.length} scenes`);
+  createRoot(document.getElementById("root")!).render(<Player film={voice ? { ...film, voice } : film} />);
 };
