@@ -81,6 +81,10 @@ export class Music {
   private noise: AudioBuffer;
   private idx = 0;
   private session: GainNode | null = null;
+  private fx: GainNode;
+  private an: AnalyserNode;
+  private buf: Uint8Array<ArrayBuffer>;
+  private lv = 0;
   private anchor = { film: 0, ctx: 0 };
   readonly total: number;
 
@@ -93,6 +97,10 @@ export class Music {
     comp.threshold.value = -16;
     comp.ratio.value = 3;
     this.master.connect(comp).connect(ctx.destination);
+    this.an = ctx.createAnalyser();
+    this.an.fftSize = 512;
+    this.master.connect(this.an);
+    this.buf = new Uint8Array(this.an.fftSize);
     const len = Math.floor(ctx.sampleRate * 3);
     const ir = ctx.createBuffer(2, len, ctx.sampleRate);
     const rr = rng(9);
@@ -105,11 +113,36 @@ export class Music {
     const wet = ctx.createGain();
     wet.gain.value = 0.55;
     this.rev.connect(wet).connect(this.master);
+    this.fx = ctx.createGain(); // click sounds: independent of the film's play/pause session
+    this.fx.connect(this.master);
+    this.fx.connect(this.rev);
     const nl = ctx.sampleRate * 2;
     this.noise = ctx.createBuffer(1, nl, ctx.sampleRate);
     const nd = this.noise.getChannelData(0);
     const nr = rng(5);
     for (let i = 0; i < nl; i++) nd[i] = nr() * 2 - 1;
+  }
+
+  /** Live loudness 0..1 (smoothed), for visuals that pulse with the music. */
+  level() {
+    this.an.getByteTimeDomainData(this.buf);
+    let s = 0;
+    for (const b of this.buf) s += ((b - 128) / 128) ** 2;
+    const rms = Math.sqrt(s / this.buf.length);
+    this.lv = Math.max(Math.min(1, rms * 5), this.lv * 0.9);
+    return this.lv;
+  }
+
+  /** A short musical reaction to clicking the star, the fox or a flower (note 0..4 = pentatonic degree). */
+  poke(kind: "star" | "fox" | "flower", note = 0) {
+    const t = this.ctx.currentTime;
+    const PENT = [72, 74, 76, 79, 81];
+    if (kind === "star") [84, 88, 91, 96].forEach((m, i) => this.play({ t, k: "bell", m, d: 3.5, v: 0.6 }, t + i * 0.09, this.fx));
+    else if (kind === "fox") [67, 72, 76].forEach((m, i) => this.play({ t, k: "pluck", m, d: 0.8, v: 1 }, t + i * 0.1, this.fx));
+    else {
+      this.play({ t, k: "bell", m: PENT[note % 5], d: 3, v: 0.7 }, t, this.fx);
+      this.play({ t, k: "pluck", m: PENT[note % 5] - 12, d: 0.9, v: 0.6 }, t, this.fx);
+    }
   }
 
   setMuted(m: boolean) {
@@ -173,9 +206,9 @@ export class Music {
     g.gain.exponentialRampToValueAtTime(0.0001, when + dur);
   }
 
-  private play(e: Ev, when: number) {
+  private play(e: Ev, when: number, dest?: GainNode) {
     const c = this.ctx;
-    const out = this.session!;
+    const out = dest ?? this.session!;
     const v = e.v ?? 1;
     const d = e.d ?? 1;
     if (e.k === "pad") {

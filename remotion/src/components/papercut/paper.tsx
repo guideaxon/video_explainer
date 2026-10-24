@@ -3,6 +3,7 @@
  * Paper look = flat-colour facets + a thin pale cut edge + soft drop shadows per layer + a grain overlay.
  */
 import React from "react";
+import { pokeAge, pokeKick, useUi } from "./ui";
 
 export const W = 1280;
 export const H = 720;
@@ -21,6 +22,7 @@ export const rng = (seed: number) => {
 export const clamp = (v: number, a = 0, b = 1) => Math.min(b, Math.max(a, v));
 
 const hex = (c: string) => {
+  if (c.startsWith("rgb")) return (c.match(/\d+/g) ?? [0, 0, 0]).slice(0, 3).map(Number); // mix() output can be re-mixed
   const n = parseInt(c.slice(1), 16);
   return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
 };
@@ -38,9 +40,19 @@ export const path = (p: P[]) => "M" + p.map((q) => `${q[0].toFixed(1)} ${q[1].to
 
 const EDGE = "rgba(255,255,255,0.22)";
 
+/** Cut-edge width grows with the part's size: petals and ears stay fine, rocks and cliffs look solid. */
+export const edgeWidth = (p: P[]) => {
+  let a = 0;
+  for (let i = 0; i < p.length; i++) {
+    const q = p[(i + 1) % p.length];
+    a += p[i][0] * q[1] - q[0] * p[i][1];
+  }
+  return Math.min(2.1, 0.45 + Math.sqrt(Math.abs(a) / 2) * 0.011);
+};
+
 /** One paper facet. */
 export const Cut: React.FC<{ p: P[]; fill: string; edge?: boolean; opacity?: number }> = ({ p, fill, edge = true, opacity }) => (
-  <path d={path(p)} fill={fill} stroke={edge ? EDGE : "none"} strokeWidth={0.9} strokeLinejoin="round" opacity={opacity} />
+  <path d={path(p)} fill={fill} stroke={edge ? EDGE : "none"} strokeWidth={edge ? edgeWidth(p) : 0} strokeLinejoin="round" opacity={opacity} />
 );
 
 /** A depth layer: parallax with the camera + a drop shadow of its whole silhouette. */
@@ -106,7 +118,11 @@ export const PaperOverlay: React.FC = () => (
 
 /** Guiding four-point star. */
 export const GuideStar: React.FC<{ x: number; y: number; r?: number; t: number; glow?: number }> = ({ x, y, r = 22, t, glow = 1 }) => {
-  const pulse = 1 + Math.sin(t * 2.4) * 0.09;
+  const ui = useUi();
+  const age = pokeAge(ui, "star", "star");
+  const kick = pokeKick(age, 1.6);
+  // swells with the music and flares when clicked
+  const pulse = 1 + Math.sin(t * 2.4) * 0.09 + ui.level * 0.35 + kick * 0.7;
   const R = r * pulse;
   const k = R * 0.2;
   const star: P[] = [
@@ -114,8 +130,15 @@ export const GuideStar: React.FC<{ x: number; y: number; r?: number; t: number; 
   ];
   const small: P[] = star.map(([a, b]) => [a * 0.6, b * 0.6] as P);
   return (
-    <g transform={`translate(${x} ${y})`}>
-      <circle r={R * 5.5 * glow} fill="url(#glow-w)" style={{ mixBlendMode: "screen" }} />
+    <g transform={`translate(${x} ${y})`} data-poke="star" data-id="star" style={{ cursor: "pointer" }}>
+      <circle r={R * 5.5 * glow * (1 + kick * 0.6)} fill="url(#glow-w)" style={{ mixBlendMode: "screen" }} />
+      {kick > 0 && Array.from({ length: 8 }, (_, i) => {
+        const a = (i / 8) * Math.PI * 2 + 0.4;
+        const d = (1 - kick) * R * 9 + R;
+        const s = R * 0.35 * kick;
+        return <path key={i} d={path([[0, -s * 2], [s * 0.5, 0], [0, s * 2], [-s * 0.5, 0]])} transform={`translate(${Math.cos(a) * d} ${Math.sin(a) * d})`} fill="#fff3b8" opacity={kick} />;
+      })}
+      <circle r={R * 2.6} fill="transparent" pointerEvents="all" />
       <g transform={`rotate(${Math.sin(t * 0.8) * 4})`}>
         <path d={path(star)} fill="#ffe9a0" stroke="#fff8d8" strokeWidth={1.2} />
         <path d={path(small)} fill="#fffbe8" transform="rotate(45)" />
@@ -128,6 +151,7 @@ export const Fireflies: React.FC<{ n: number; seed: number; t: number; x0?: numb
   n, seed, t, x0 = 0, x1 = W, y0 = 60, y1 = 560,
 }) => {
   const r = rng(seed);
+  const { level } = useUi();
   return (
     <g style={{ mixBlendMode: "screen" }}>
       {Array.from({ length: n }, (_, i) => {
@@ -137,7 +161,7 @@ export const Fireflies: React.FC<{ n: number; seed: number; t: number; x0?: numb
         const sp = 0.4 + r() * 0.6;
         const x = bx + Math.sin(t * sp + ph) * 22;
         const y = by + Math.cos(t * sp * 0.8 + ph) * 16 - t * 3 * sp;
-        const tw = 0.45 + 0.55 * Math.sin(t * (1.5 + sp) + ph) ** 2;
+        const tw = Math.min(1, 0.45 + 0.55 * Math.sin(t * (1.5 + sp) + ph) ** 2 + level * 0.5);
         const sz = 1.6 + r() * 2.2;
         return (
           <g key={i} opacity={tw}>

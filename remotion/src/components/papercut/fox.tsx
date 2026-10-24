@@ -1,5 +1,6 @@
 import React from "react";
 import { Cut, P, darken, lighten } from "./paper";
+import { pokeAge, pokeKick, useUi } from "./ui";
 
 const OR = "#e4571c";
 const OR_D = "#bd3f12";
@@ -25,15 +26,19 @@ const Leg: React.FC<{ x: number; ang: number; far?: boolean }> = ({ x, ang, far 
 export const Fox: React.FC<{
   x: number; y: number; s?: number; flip?: boolean; t: number; walk?: number; look?: number; tailUp?: number;
 }> = ({ x, y, s = 1.2, flip = false, t, walk = 0, look = -8, tailUp = 0 }) => {
+  const ui = useUi();
+  const age = pokeAge(ui, "fox", "fox");
+  const kick = pokeKick(age, 1.5);
   const ph = t * walk * 6.5;
   const sw = walk ? 1 : 0;
-  const bob = walk ? Math.abs(Math.sin(ph)) * -3 : Math.sin(t * 1.6) * -0.8;
-  const tail = Math.sin(t * 1.9) * 5 + (walk ? Math.sin(ph) * 4 : 0) + tailUp;
-  const headTilt = look + Math.sin(t * 0.9) * 2 + (walk ? Math.sin(ph * 2) * 1.5 : 0);
-  const ear = Math.max(0, Math.sin(t * 0.7 + 1)) ** 12 * 14;
+  const bob = (walk ? Math.abs(Math.sin(ph)) * -3 : Math.sin(t * 1.6) * -0.8) - (age < 0.7 ? Math.abs(Math.sin(age * 9)) * 12 * (1 - age / 0.7) : 0);
+  const tail = Math.sin(t * 1.9) * 5 + (walk ? Math.sin(ph) * 4 : 0) + tailUp + Math.sin(age * 20) * 16 * kick;
+  const headTilt = look + Math.sin(t * 0.9) * 2 + (walk ? Math.sin(ph * 2) * 1.5 : 0) - 12 * kick;
+  const ear = Math.max(0, Math.sin(t * 0.7 + 1)) ** 12 * 14 + Math.abs(Math.sin(age * 22)) * 16 * kick;
   return (
-    <g transform={`translate(${x} ${y}) scale(${flip ? -s : s} ${s})`} filter="url(#sh-s)">
+    <g transform={`translate(${x} ${y}) scale(${flip ? -s : s} ${s})`} filter="url(#sh-s)" data-poke="fox" data-id="fox" style={{ cursor: "pointer" }}>
       <ellipse cx={-5} cy={2} rx={95} ry={6} fill="#000" opacity={0.28} />
+      <rect x={-150} y={-135} width={245} height={140} fill="transparent" pointerEvents="all" />
       <g transform={`translate(0 ${bob})`}>
         {/* far legs */}
         <Leg x={-34} ang={-Math.sin(ph) * 24 * sw} far />

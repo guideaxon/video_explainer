@@ -5,6 +5,9 @@ import {
   Flower, Fern, Mushroom, Leaf, Berries, Icicles, Crystal, Aurora, StonePortal, Bridge, Waves,
 } from "@papercut/world";
 import { Fox } from "@papercut/fox";
+import { IsoGate } from "@papercut/iso";
+import { Callouts } from "@papercut/callout";
+import { useUi } from "@papercut/ui";
 
 import type { SceneProps } from "@papercut/film";
 export type { SceneProps };
@@ -100,6 +103,12 @@ export const S3: React.FC<SceneProps> = ({ t, p, cam }) => (
       <Flower x={880} y={730} s={1.0} petal="#b84ee8" core="#e8741c" kind="cone" t={t} seed={4} />
     </L>
     <GuideStar x={830} y={140} r={16} t={t} />
+    <Callouts t={t} items={[
+      { label: "Guiding star", x: 830, y: 140 },
+      { label: "Redwood trunk", x: 1060, y: 330 },
+      { label: "Red fox", x: 390, y: 470 },
+      { label: "Fly agaric", x: 1030, y: 620 },
+    ]} />
     <Fireflies n={38} seed={4} t={t} y0={80} y1={620} />
   </>
 );
@@ -160,6 +169,7 @@ export const S5: React.FC<SceneProps> = ({ t, p, cam }) => (
 /* 6 ─ crystal cave */
 export const S6: React.FC<SceneProps> = ({ t, p, cam }) => {
   const r = rng(77);
+  const { xray } = useUi();
   return (
     <>
       <Sky id="6" top="#080f2a" bot="#18265a" />
@@ -183,7 +193,15 @@ export const S6: React.FC<SceneProps> = ({ t, p, cam }) => {
         <Waterfall x={820} y0={400} y1={512} w={34} t={t} deep="#d9a93a" foam="#fff3c0" />
       </L>
       <L d={0.6} cam={cam}><Rock x={430} y={600} w={170} h={90} seed={3} lit="#5c5a66" shade="#34323e" /><Rock x={1000} y={620} w={190} h={110} seed={4} lit="#5c5a66" shade="#34323e" /></L>
-      <L d={0.8} cam={cam}><Ledge x0={80} x1={520} y={600} seed={9} lit="#6a6874" shade="#3c3a48" cap="#8fb7e8" /></L>
+      <L d={0.8} cam={cam}>
+        <g opacity={xray}>
+          <circle cx={300} cy={690} r={190} fill="url(#glow-w)" style={{ mixBlendMode: "screen" }} />
+          {[[130, 56, 80, -14], [200, 70, 100, 6], [270, 84, 120, -4], [350, 66, 96, 10], [430, 52, 78, -8]].map(([x, w, h, tl], i) => (
+            <Crystal key={i} x={x} y={722} w={w} h={h} tilt={tl} lit="#ffe9a8" shade="#e8a93a" />
+          ))}
+        </g>
+        <g opacity={1 - 0.8 * xray}><Ledge x0={80} x1={520} y={600} seed={9} lit="#6a6874" shade="#3c3a48" cap="#8fb7e8" /></g>
+      </L>
       <Fox x={330} y={596} s={1.3} t={t} look={-18} />
       <L d={1.2} cam={cam}>
         {[[40, 700, 90, 180, -8], [150, 740, 70, 120, 10], [1130, 720, 110, 220, 6], [1230, 700, 80, 140, -6], [560, 740, 60, 90, 0]].map(([x, y, w, h, tl], i) => (
@@ -191,6 +209,12 @@ export const S6: React.FC<SceneProps> = ({ t, p, cam }) => {
         ))}
       </L>
       <GuideStar x={860} y={250} r={16} t={t} glow={0.6} />
+      <Callouts t={t} items={[
+        { label: "Golden light", x: 860, y: 330 },
+        { label: "Ice crystals", x: 1150, y: 570 },
+        { label: "Guide fox", x: 330, y: 520 },
+        { label: "Hidden geode", x: 300, y: 670, xray: true },
+      ]} />
     </>
   );
 };
@@ -261,7 +285,7 @@ export const S9: React.FC<SceneProps> = ({ t, p, cam }) => (
       <Waterfall x={150} y0={290} y1={460} w={40} t={t} />
       <Waterfall x={1090} y0={310} y1={470} w={38} t={t} />
     </L>
-    <L d={0.3} cam={cam}><StonePortal x={640} y={480} t={t} /></L>
+    <L d={0.3} cam={cam}><IsoGate ox={540} oy={440} t={t} /></L>
     <L d={0.4} cam={cam}><Water y={490} bottom={H + 20} deep="#14389c" mid="#2f68e0" foam="#bcd6ff" t={t} rows={7} amp={3} /></L>
     <L d={0.4} cam={cam}><Glitter x={640} y0={500} y1={680} t={t} /></L>
     <L d={0.6} cam={cam}>
@@ -276,7 +300,14 @@ export const S9: React.FC<SceneProps> = ({ t, p, cam }) => (
       <Meadow t={t} x0={-20} x1={230} y={680} seed={31} n={7} />
       <Fern x={1180} y={730} s={1.4} ang={-12} t={t} lit="#6bb23a" shade="#356f2a" />
     </L>
-    <GuideStar x={640} y={330} r={16} t={t} glow={0.5} />
+    <GuideStar x={640} y={385} r={16} t={t} glow={0.5} />
+    <Callouts t={t} items={[
+      { label: "Stone pillar", x: 500, y: 325 },
+      { label: "Star ring", x: 640, y: 385 },
+      { label: "Reflecting pool", x: 700, y: 620 },
+      { label: "Rune core", x: 739, y: 405, xray: true },
+      { label: "Star lens", x: 655, y: 372, xray: true },
+    ]} />
   </>
 );
 

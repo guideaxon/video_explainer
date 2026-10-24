@@ -1,5 +1,6 @@
 import React from "react";
 import { Cut, P, W, H, rng, mix, lighten, darken, path } from "./paper";
+import { pokeAge, pokeKick, useUi } from "./ui";
 
 /* ---------- sky ---------- */
 export const Sky: React.FC<{ top: string; bot: string; id: string }> = ({ top, bot, id }) => (
@@ -305,10 +306,15 @@ export const Waterfall: React.FC<{ x: number; y0: number; y1: number; w: number;
 
 /* ---------- plants ---------- */
 export const Flower: React.FC<{ x: number; y: number; s: number; petal: string; core: string; kind?: "daisy" | "cone"; t: number; seed?: number }> = ({ x, y, s, petal, core, kind = "daisy", t, seed = 1 }) => {
-  const sway = Math.sin(t * 1.1 + seed) * 3;
+  const ui = useUi();
+  const id = `${Math.round(x)}-${Math.round(y)}`;
+  const age = pokeAge(ui, "flower", id);
+  const sway = Math.sin(t * 1.1 + seed) * 3 + Math.sin(age * 14) * 12 * pokeKick(age, 1.3);
   const n = kind === "daisy" ? 9 : 12;
+  const note = Math.abs(Math.round(x * 7 + y * 3)) % 5; // each flower plays its own pentatonic note
   return (
-    <g transform={`translate(${x} ${y}) rotate(${sway})`}>
+    <g transform={`translate(${x} ${y}) rotate(${sway})`} data-poke="flower" data-id={id} data-note={note} style={{ cursor: "pointer" }}>
+      <circle cx={0} cy={-48 * s} r={26 * s} fill="transparent" pointerEvents="all" />
       <Cut p={[[-2 * s, 0], [2 * s, 0], [1.5 * s, -46 * s], [-1.5 * s, -46 * s]]} fill="#2f6b2a" edge={false} />
       <g transform={`translate(0 ${-48 * s})`}>
         {Array.from({ length: n }, (_, i) => {
