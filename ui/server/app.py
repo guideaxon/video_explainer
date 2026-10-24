@@ -377,6 +377,9 @@ def create_app(
             raise HTTPException(400, "Path escapes the project folder")
         if not target.is_file():
             raise HTTPException(404, "No such file")
+        if target.suffix.lower() == ".html":
+            # Generated films run script: sandbox them so they cannot reach the UI's origin or its API.
+            return FileResponse(target, headers={"Content-Security-Policy": "sandbox allow-scripts"})
         return FileResponse(target)
 
     # Production: serve the built frontend (ui/web/dist) from the same port. In dev, Vite serves it.

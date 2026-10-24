@@ -80,6 +80,7 @@ export default function StepPanel({ project, step, refresh }: Props) {
   const canApprove = step.gated && step.status === "needs review";
   const runLabel = hasOutput ? "Re-run" : "Run";
   const showVideo = step.id === "render" && project.has_video && hasOutput;
+  const showFilm = step.id === "render" && project.has_film && hasOutput;
 
   return (
     <section className="panel" aria-labelledby="step-title">
@@ -132,6 +133,18 @@ export default function StepPanel({ project, step, refresh }: Props) {
         <div className="video">
           <video controls preload="metadata" src={`${api.fileUrl(project.id, project.final_video)}?v=${step.output_time}`} />
           <a className="btn small" href={api.fileUrl(project.id, project.final_video)} download>Download</a>
+        </div>
+      )}
+
+      {showFilm && (
+        <div className="video">
+          <iframe
+            title="Papercut film" sandbox="allow-scripts" className="film-frame"
+            src={`${api.fileUrl(project.id, "film.html")}?v=${step.output_time}`}
+          />
+          <a className="btn small" href={api.fileUrl(project.id, "film.html")} target="_blank" rel="noreferrer">
+            Open film in a new tab (click it once to start the music)
+          </a>
         </div>
       )}
 

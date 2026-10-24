@@ -13,8 +13,10 @@ const inter = loadInter("normal", { weights: ["600"], subsets: ["latin"] });
 export const HEAD = fraunces.fontFamily;
 export const UI = inter.fontFamily;
 
+/** Design space. The kit scales to the composition's real size (the renderer may use 1920x1080), see `useScale`. */
 export const W = 1280;
 export const H = 720;
+const useScale = () => useVideoConfig().width / W;
 export const PAL = { paper: "#fbf1de", ink: "#3a2a20", terracotta: "#c8553d", teal: "#2f7d80", sky: "#bcd8e8" };
 
 const ease = Easing.bezier(0.3, 0.1, 0.2, 1);
@@ -39,6 +41,7 @@ export const PaintedShot: React.FC<{ art: string; move?: Move; frames?: number; 
 }) => {
   const frame = useCurrentFrame();
   const { durationInFrames } = useVideoConfig();
+  const k = useScale();
   const total = frames ?? durationInFrames;
   const m = MOVES[move];
   const t = interpolate(frame, [0, total], [0, 1], { ...clamp, easing: ease });
@@ -47,7 +50,7 @@ export const PaintedShot: React.FC<{ art: string; move?: Move; frames?: number; 
   const fade = interpolate(frame, [0, 8], [0, 1], clamp);
   return (
     <AbsoluteFill style={{ background: PAL.paper, opacity: fade, overflow: "hidden" }}>
-      <Img src={staticFile(art)} style={{ width: W, height: H, objectFit: "cover", transform: `translateX(${x}px) scale(${scale})` }} />
+      <Img src={staticFile(art)} style={{ width: "100%", height: "100%", objectFit: "cover", transform: `translateX(${x * k}px) scale(${scale})` }} />
       {children}
       <Grain />
     </AbsoluteFill>
@@ -76,23 +79,25 @@ export const Cutout: React.FC<{
   rotate?: [number, number];
 }> = ({ src, from, to, start = 0, end = 40, width = 300, rotate = [0, 0] }) => {
   const frame = useCurrentFrame();
+  const k = useScale();
   const t = interpolate(frame, [start, end], [0, 1], { ...clamp, easing: ease });
   const x = from[0] + (to[0] - from[0]) * t;
   const y = from[1] + (to[1] - from[1]) * t;
   const r = rotate[0] + (rotate[1] - rotate[0]) * t;
-  return <Img src={staticFile(src)} style={{ position: "absolute", left: x, top: y, width, transform: `rotate(${r}deg)` }} />;
+  return <Img src={staticFile(src)} style={{ position: "absolute", left: x * k, top: y * k, width: width * k, transform: `rotate(${r}deg)` }} />;
 };
 
 /** End card: title plus a pill button over the final still. */
 export const EndCard: React.FC<{ art: string; title: string; button: string }> = ({ art, title, button }) => {
   const frame = useCurrentFrame();
+  const k = useScale();
   const a = interpolate(frame, [10, 26], [0, 1], { ...clamp, easing: ease });
   const b = interpolate(frame, [24, 40], [0, 1], { ...clamp, easing: ease });
   return (
     <PaintedShot art={art} move="pull-out">
-      <div style={{ position: "absolute", top: 70, width: W, textAlign: "center", opacity: a, fontFamily: HEAD, fontSize: 76, fontWeight: 600, color: PAL.ink }}>{title}</div>
-      <div style={{ position: "absolute", bottom: 70, width: W, display: "flex", justifyContent: "center", opacity: b }}>
-        <div style={{ background: PAL.terracotta, color: "#fff", fontFamily: UI, fontWeight: 600, fontSize: 30, padding: "16px 36px", borderRadius: 14 }}>{button}</div>
+      <div style={{ position: "absolute", top: 70 * k, left: 0, right: 0, textAlign: "center", opacity: a, fontFamily: HEAD, fontSize: 76 * k, fontWeight: 600, color: PAL.ink }}>{title}</div>
+      <div style={{ position: "absolute", bottom: 70 * k, left: 0, right: 0, display: "flex", justifyContent: "center", opacity: b }}>
+        <div style={{ background: PAL.terracotta, color: "#fff", fontFamily: UI, fontWeight: 600, fontSize: 30 * k, padding: `${16 * k}px ${36 * k}px`, borderRadius: 14 * k }}>{button}</div>
       </div>
     </PaintedShot>
   );

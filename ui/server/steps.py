@@ -12,7 +12,7 @@ from pathlib import Path
 from typing import Callable
 
 # Full-video style bundles the UI can drive. Vantage shorts use the `short` CLI commands; not in v1.
-FULL_STYLE_BUNDLES = ("markets", "promo", "launch", "lyric", "leaderbot", "demo", "storybook")
+FULL_STYLE_BUNDLES = ("markets", "promo", "launch", "lyric", "leaderbot", "demo", "storybook", "papercut")
 
 RUN, MANUAL, SKIPPED, HIDDEN = "run", "manual", "skipped", "hidden"
 
@@ -48,6 +48,8 @@ class StepDef:
     optional: bool = False
 
     def variant(self, ctx: Ctx) -> Variant:
+        if ctx.style_bundle == "papercut" and self.id in PAPERCUT_VARIANTS:
+            return PAPERCUT_VARIANTS[self.id]
         return self.style_bundle if ctx.style_bundle else self.standard
 
 
@@ -121,6 +123,25 @@ STEPS: tuple[StepDef, ...] = (
         Variant(RUN, lambda c: ["-m", "ui.server.verify", c.project], job_output=True),
     ),
 )
+
+# Papercut is an HTML film with a generated score: no script, narration, voiceover or MP4 render. Its project is
+# scaffolded once from the template, edited by hand, then built into one self-contained film.html (music included).
+_PC_NO_NARRATION = "Papercut films have music, not narration"
+PAPERCUT_VARIANTS: dict[str, Variant] = {
+    "script": Variant(SKIPPED, note="Papercut projects start from the template scenes"),
+    "narration": Variant(SKIPPED, note=_PC_NO_NARRATION),
+    "scenes": Variant(
+        RUN, lambda c: None if (c.project_dir / "main.tsx").exists() else ["scripts/papercut_new_video.py", c.project],
+        note="Scaffold once (the fox film), then edit scenes.tsx and score.ts", outputs=("scenes.tsx",),
+    ),
+    "review": Variant(SKIPPED, note="No pre-render review for papercut films"),
+    "voiceover": Variant(SKIPPED, note=_PC_NO_NARRATION),
+    "storyboard": Variant(SKIPPED, note="Scenes are timed by the score, not a storyboard"),
+    "sound": Variant(SKIPPED, note="The score is generated in code (score.ts)"),
+    "render": Variant(RUN, _script("papercut_build_html"), note="Builds one HTML file with the music included",
+                      outputs=("film.html",)),
+    "verify": Variant(SKIPPED, note="Open film.html in a browser to check it"),
+}
 
 STEP_IDS = tuple(s.id for s in STEPS)
 

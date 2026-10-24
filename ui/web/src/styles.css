@@ -157,6 +157,7 @@ progress { width: 100%; height: 6px; border-radius: 999px; overflow: hidden; acc
 .actions { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin: 14px 0; }
 .doc { margin-top: 8px; }
 .video { margin: 14px 0; display: flex; flex-direction: column; gap: 10px; align-items: flex-start; }
+.film-frame { width: 100%; max-width: 860px; aspect-ratio: 16 / 9; border: 1px solid var(--line); border-radius: 14px; background: #05060f; }
 .video video { max-height: 520px; max-width: 100%; border-radius: 14px; background: #000; border: 1px solid var(--line); }
 
 /* Job log: a terminal in both themes. */

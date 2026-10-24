@@ -54,8 +54,10 @@ output/storyboards/*.yaml
 !output/**/.gitkeep
 output/
 
-# Projects directory (project-specific content, not committed)
-projects/
+# Projects directory (project-specific content, not committed); the papercut worked example is kept
+projects/*
+!projects/papercut_fox/
+projects/papercut_fox/*.html
 
 # Remotion public symlinks (project-specific)
 remotion/public/voiceover

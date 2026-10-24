@@ -221,5 +221,6 @@ def project_summary(project_dir: Path, jobs: list[Job]) -> dict:
         "progress": f"{len(finished)}/{len(active)}",
         "has_video": resolve_path(project_dir, config, "@final_video").is_file(),
         "final_video": resolve_path(project_dir, config, "@final_video").relative_to(project_dir).as_posix(),
+        "has_film": (project_dir / "film.html").is_file(),  # papercut: one self-contained HTML film
         "last_activity": max((j.started for j in jobs), default=None),
     }

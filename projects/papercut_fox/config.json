@@ -1,0 +1,13 @@
+{
+  "id": "papercut_fox",
+  "title": "papercut_fox",
+  "style_bundle": "papercut",
+  "video": {
+    "resolution": {
+      "width": 1280,
+      "height": 720
+    },
+    "fps": 30,
+    "target_duration_seconds": 60
+  }
+}

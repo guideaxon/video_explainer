@@ -316,3 +316,16 @@ def test_steps_expose_copyable_cli_commands(client):
     assert steps["script"]["commands"] == [{"label": "Copy command", "text": "python -m src.cli script vid"}]
     assert [x["text"] for x in steps["render"]["commands"]] == ["cd remotion && npm run dev", "python -m src.cli render vid"]
     assert _by_id(_create(c, id="vid2", style_bundle="promo")["steps"])["script"]["commands"] == []
+
+
+# ----- papercut ------------------------------------------------------------------------------------
+def test_papercut_project_reports_film_and_serves_it_sandboxed(client):
+    c, projects = client
+    p = _create(c, style_bundle="papercut")
+    assert p["style_bundle"] == "papercut" and p["supported"] and p["has_film"] is False
+    steps = _by_id(p["steps"])
+    assert steps["narration"]["status"] == "skipped" and steps["render"]["status"] != "skipped"
+    _touch(projects / p["id"] / "film.html", "<html></html>")
+    assert c.get(f"/api/projects/{p['id']}").json()["has_film"] is True
+    r = c.get(f"/api/projects/{p['id']}/files/film.html")
+    assert r.status_code == 200 and "sandbox" in r.headers["content-security-policy"]

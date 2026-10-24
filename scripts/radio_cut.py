@@ -66,7 +66,8 @@ def build(project_dir: Path, wps: float, buffer: float | None) -> tuple[dict, li
             (warnings if measured is not None else errors).append(f"{sid}: planned {planned:.1f}s is shorter than the speech ({speech:.1f}s)")
         if words_range and not words_range[0] <= words <= words_range[1]:
             warnings.append(f"{sid}: {words} words, {bundle} style expects {words_range[0]}-{words_range[1]}")
-        dur = max(speech, planned or 0) + buffer
+        # Measured speech is the real length; before the voiceover exists the plan is a floor for the estimate.
+        dur = (speech if measured is not None else max(speech, planned or 0)) + buffer
         scenes.append({
             "scene_id": sid, "start": round(t, 2), "end": round(t + dur, 2), "duration": round(dur, 2),
             "words": words, "speech_seconds": round(speech, 2), "source": "voiceover" if measured else "estimate",

@@ -44,7 +44,7 @@ image-to-video clip, never more than three clips per film.
 
 - `PaintedShot`: scale 1.0 to 1.08 over the beat, eased, with a slow 20 to 40 px drift. Never zoom faster.
 - Overlay `Grain` at about 8 percent. Fade in 8 frames, out 8 frames (the dissolve comes from the storyboard transition).
-- Safe zone: keep text within x 80 to 1200, y 60 to 660.
+- The kit designs in 1280x720 and scales to the render size (the renderer uses 1920x1080). Safe zone in design units: x 80 to 1200, y 60 to 660.
 
 ## 6. Registry keys
 

@@ -43,6 +43,7 @@ export interface Project {
   progress: string;
   has_video: boolean;
   final_video: string;
+  has_film: boolean;
   last_activity: number | null;
   active_job?: Job | null;
 }
