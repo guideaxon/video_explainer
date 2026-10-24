@@ -105,7 +105,7 @@ class Issue:
             "principle_violated": self.principle_violated.value,
             "description": self.description,
             "severity": self.severity,
-            "screenshot_path": str(self.screenshot_path) if self.screenshot_path else None,
+            "screenshot_path": self.screenshot_path.as_posix() if self.screenshot_path else None,
         }
 
     @classmethod
@@ -133,7 +133,7 @@ class Fix:
     def to_dict(self) -> dict:
         return {
             "issue": self.issue.to_dict(),
-            "file_path": str(self.file_path),
+            "file_path": self.file_path.as_posix(),
             "description": self.description,
             "code_change": self.code_change,
             "status": self.status.value,
@@ -173,7 +173,7 @@ class SceneRefinementResult:
         return {
             "scene_id": self.scene_id,
             "scene_title": self.scene_title,
-            "scene_file": str(self.scene_file),
+            "scene_file": self.scene_file.as_posix(),
             "beats": [b.to_dict() for b in self.beats],
             "issues_found": [i.to_dict() for i in self.issues_found],
             "fixes_applied": [f.to_dict() for f in self.fixes_applied],

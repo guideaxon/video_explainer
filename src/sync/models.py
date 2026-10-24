@@ -187,12 +187,12 @@ class MigrationPlan:
     def to_dict(self) -> dict:
         return {
             "scene_id": self.scene_id,
-            "scene_file": str(self.scene_file),
+            "scene_file": self.scene_file.as_posix(),
             "imports_added": self.imports_added,
             "constants_replaced": self.constants_replaced,
             "success": self.success,
             "error_message": self.error_message,
-            "backup_path": str(self.backup_path) if self.backup_path else None,
+            "backup_path": self.backup_path.as_posix() if self.backup_path else None,
         }
 
 
@@ -232,8 +232,8 @@ class SyncPhaseResult:
             "total_scenes": self.total_scenes,
             "sync_points_found": self.sync_points_found,
             "migration_results": [m.to_dict() for m in self.migration_results],
-            "sync_map_path": str(self.sync_map_path) if self.sync_map_path else None,
-            "timing_file_path": str(self.timing_file_path) if self.timing_file_path else None,
+            "sync_map_path": self.sync_map_path.as_posix() if self.sync_map_path else None,
+            "timing_file_path": self.timing_file_path.as_posix() if self.timing_file_path else None,
             "success": self.success,
             "error_message": self.error_message,
             "warnings": self.warnings,

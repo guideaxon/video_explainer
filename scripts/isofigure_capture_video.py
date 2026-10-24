@@ -21,7 +21,7 @@ Reads ``projects/<project>/tour.json``, plays it against ``projects/<project>/fi
 An action is ``{"key": "x"}`` (a keyboard key: ``x`` toggles Look inside, ``l`` labels, plus the figure's own keys) or
 ``{"click": "<control id>"}``. The voice is the project's ``tts.voice_id`` (edge TTS; a composed story sets it so every
 chapter has the same narrator). ``--no-voice`` makes a silent video. Because the timeline is built from the speech
-lengths, the picture always matches the words. Needs ffmpeg, node and Playwright.
+lengths, the picture always matches the words. Needs ffmpeg, node and Playwright (``npm install`` in the repo root).
 """
 
 from __future__ import annotations

@@ -52,7 +52,7 @@ projects/<story>/plan/compose.json       what was joined, and from where
 
 An `isofigure` chapter is the interactive figure recorded to video: `projects/<p>/tour.json` lists narrated steps (what the presenter-voice says, which parts to press, when to Look inside), and
 `python scripts/isofigure_capture_video.py <p>` plays them in headless Chromium and writes `output/final.mp4` with the voice (edge TTS, the story's voice). The timeline comes from the speech lengths, so picture and words match.
-`compose_build.py` calls it automatically. Needs Playwright (`npm i -g @playwright/test`).
+`compose_build.py` calls it automatically. Needs Playwright: `npm install` in the repo root (declared in `package.json`), then `npx playwright install chromium`.
 
 ## Not built yet
 

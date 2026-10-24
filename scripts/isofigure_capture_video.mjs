@@ -4,7 +4,7 @@
 // schedule.json: { "duration": seconds, "actions": [ { "at": seconds, "key": "s" } | { "at": seconds, "click": "power" } ] }
 // `click` names a control id: the part wrapped in <Press id> is clicked at its centre. The recording starts when the page
 // has loaded; timing.json gets { lead } (seconds of recording before the schedule's time zero) so the caller can trim it.
-// Needs Playwright (`npm i -g @playwright/test`).
+// Needs Playwright: `npm install` in the repo root (declared in package.json), then `npx playwright install chromium`.
 import fs from "node:fs";
 import path from "node:path";
 import { createRequire } from "node:module";
@@ -24,7 +24,7 @@ function loadPlaywright() {
   for (const r of roots) {
     try { return createRequire(r)("@playwright/test"); } catch { /* try next */ }
   }
-  throw new Error("Playwright not found. Install it with: npm i -g @playwright/test");
+  throw new Error("Playwright not found. Run `npm install` in the repo root (it is declared in package.json), then `npx playwright install chromium`.");
 }
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));

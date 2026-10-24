@@ -17,7 +17,7 @@ Model facts and timings: `docs/TryComfyUIOptions.md`. This is **not** a Remotion
 - ComfyUI >= 0.42 (FastH3 template `video_fasth3_ominiref_r2v`) running on `http://127.0.0.1:8188`, started
   with no `--listen`, and the model files from `docs/TryComfyUIOptions.md` section 6 (FastH3 Omni int8 ConvRot,
   Qwen3-VL text encoder, video and audio VAEs, `minimax_h3_orb360_step1500` LoRA). Official Hugging Face only.
-- Playwright (`npm i -g @playwright/test`) and Chrome. Python with Pillow and numpy (`pyproject.toml`).
+- Playwright (`npm install` in the repo root; declared in `package.json`) and Chrome. Python with Pillow and numpy (`pyproject.toml`).
 - Set `PYTHONUTF8=1` for Python. A clip takes about 3.5 minutes on the 12 GB laptop GPU **on AC power**; on
   battery the GPU is power-capped and it takes 10 minutes or more. Plug in, and keep the machine awake.
 

@@ -9,7 +9,7 @@
 // (video_fasth3_ominiref_r2v), sets the aspect, megapixels, seed, reference and caption, optionally inserts the
 // ORB360 LoRA (model only, strength 1.0) in front of the sampling nodes, queues it, waits, and saves the mp4 to
 // the job's `out` path (under projects/<project>/comic/). Needs ComfyUI >= 0.42 with the FastH3 template and the
-// model files from docs/TryComfyUIOptions.md, and Playwright (`npm i -g @playwright/test`) with Chrome.
+// model files from docs/TryComfyUIOptions.md, and Playwright (`npm install` in the repo root, declared in package.json) with Chrome.
 //
 // Prints one line per job. A job slower than --warn-seconds means the server has slowed down: restart ComfyUI.
 // A job writes its clip only on success; an existing clip is skipped unless --force is given.
@@ -59,7 +59,7 @@ function loadPlaywright() {
   for (const r of roots) {
     try { return createRequire(r)("@playwright/test"); } catch { /* try next */ }
   }
-  throw new Error("Playwright not found. Install it with: npm i -g @playwright/test");
+  throw new Error("Playwright not found. Run `npm install` in the repo root (it is declared in package.json), then `npx playwright install chromium`.");
 }
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));

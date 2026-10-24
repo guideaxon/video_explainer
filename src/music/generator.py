@@ -523,7 +523,7 @@ def _update_storyboard_with_music(project_dir: Path, music_path: Path):
             storyboard["audio"] = {}
 
         storyboard["audio"]["background_music"] = {
-            "path": str(relative_path),
+            "path": relative_path.as_posix(),
             "volume": 0.3,
         }
 
@@ -651,7 +651,7 @@ def _update_shorts_storyboard_with_music(project_dir: Path, variant: str, music_
             storyboard["audio"] = {}
 
         storyboard["audio"]["background_music"] = {
-            "path": str(relative_path),
+            "path": relative_path.as_posix(),
             "volume": 0.35,
         }
 

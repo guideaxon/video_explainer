@@ -1,0 +1,10 @@
+{
+  "name": "video-explainer-tools",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Node tools used by repo scripts outside Remotion (the Remotion app has its own package.json in remotion/)",
+  "type": "module",
+  "devDependencies": {
+    "@playwright/test": "1.57.0"
+  }
+}

@@ -5,6 +5,7 @@ detecting syntax errors and attempting to fix them automatically.
 """
 
 import json
+import os
 import re
 import subprocess
 from dataclasses import dataclass, field
@@ -132,8 +133,10 @@ class SyntaxVerifier:
         # Attempt to fix each file with errors
         for filename, file_errors in errors_by_file.items():
             file_path = scenes_dir / filename
-            if not file_path.exists():
-                result.unfixed_files.append(filename)
+            if not file_path.is_file():
+                # Errors without a file (a timed-out or failed checker) name the scenes directory itself: nothing to fix.
+                if filename:
+                    result.unfixed_files.append(filename)
                 continue
 
             fixed = self._attempt_auto_fix(file_path, file_errors)
@@ -250,7 +253,7 @@ class SyntaxVerifier:
             tsconfig_path.write_text(tsconfig_content)
 
             # Find tsc
-            tsc_path = self.remotion_dir / "node_modules" / ".bin" / "tsc"
+            tsc_path = self._tsc_path()
             if tsc_path.exists():
                 cmd = [str(tsc_path), "--project", str(tsconfig_path), "--pretty", "false"]
             else:
@@ -299,6 +302,10 @@ class SyntaxVerifier:
 
         return errors
 
+    def _tsc_path(self) -> Path:
+        """The local TypeScript compiler; on Windows npm installs it as `tsc.cmd` (the bare `tsc` is a shell script)."""
+        return self.remotion_dir / "node_modules" / ".bin" / ("tsc.cmd" if os.name == "nt" else "tsc")
+
     def _check_file_syntax(self, file_path: Path) -> list[SyntaxError]:
         """Check syntax of a single file.
 
@@ -312,7 +319,7 @@ class SyntaxVerifier:
 
         # First try TypeScript if available
         try:
-            tsc_path = self.remotion_dir / "node_modules" / ".bin" / "tsc"
+            tsc_path = self._tsc_path()
             if tsc_path.exists():
                 cmd = [str(tsc_path), "--noEmit", "--pretty", "false", str(file_path)]
             else:
