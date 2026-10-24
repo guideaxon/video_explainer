@@ -1,0 +1,11 @@
+{
+  "lead_in": 0.6,
+  "steps": [
+    {"say": "Here is the machine from the outside: a door, a display, a knob and a start button.", "hold": 3},
+    {"say": "Switch it on, and the display wakes up.", "actions": [{"at": 0.3, "click": "power"}]},
+    {"say": "Now look inside. The drum sits in a tub, held by springs, and a motor turns it by a belt.", "actions": [{"at": 0.2, "key": "x"}], "hold": 5},
+    {"say": "And down in the corner is the drain pump. It empties the tub after every wash.", "hold": 4},
+    {"say": "Put the cover back, close the door and start a cycle, to see the pump work.", "actions": [{"at": 0.2, "key": "x"}, {"at": 2.8, "click": "start"}]},
+    {"say": "The drum fills, washes, then drains. That is the pump doing its job.", "hold": 7}
+  ]
+}

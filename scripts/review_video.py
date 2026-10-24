@@ -38,6 +38,8 @@ STYLE_BUNDLES: dict[str, dict] = {
     "leaderbot": {"words": (6, 12), "required": ["not business advice"], "headline_chars": 10},
     # Storybook: landscape painted-still films; narration 5 to 14 words per beat; art/<scene_id>.png per scene.
     "storybook": {"words": (5, 14), "required": [], "resolutions": [(1280, 720), (1920, 1080)]},
+    # Lowpoly: landscape 3D presenter films; the presenter speaks the narration and captions show it.
+    "lowpoly": {"words": (6, 16), "required": [], "resolutions": [(1280, 720), (1920, 1080)]},
     # Demo: narration explains real screenshots, so it runs longer; landscape or portrait; text comes from manifest.json.
     "demo": {"words": (5, 30), "required": [], "resolutions": [(1920, 1080), (1080, 1920)]},
 }

@@ -14,6 +14,8 @@ export const STYLE_BUNDLES: { id: string; name: string; blurb: string; format: s
   { id: "leaderbot", name: "Leaderbot", blurb: "Pixel-mosaic business explainers and satire", format: "Portrait" },
   { id: "demo", name: "Demo", blurb: "Narrated product demos from real screenshots", format: "16:9 or portrait" },
   { id: "storybook", name: "Storybook", blurb: "Illustrated storybook films from painted stills", format: "16:9" },
+  { id: "lowpoly", name: "Lowpoly", blurb: "A low-poly 3D presenter talks you through a story or how-to, lip-synced and captioned", format: "16:9" },
+  { id: "isofigure", name: "Isofigure", blurb: "Interactive isometric figures of working objects, with buttons you press, as one HTML file", format: "16:9" },
   { id: "papercut", name: "Papercut", blurb: "Paper-cut films drawn in code, with generated music, as one HTML file", format: "16:9" },
 ];
 

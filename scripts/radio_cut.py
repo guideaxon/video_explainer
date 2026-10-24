@@ -28,7 +28,7 @@ from review_video import STYLE_BUNDLES  # noqa: E402
 
 
 # Scene buffer each bundle's finalize script uses; other bundles fall back to 0.4.
-BUNDLE_BUFFER = {"launch": 0.2, "storybook": 0.5}
+BUNDLE_BUFFER = {"launch": 0.2, "storybook": 0.5, "lowpoly": 0.4}
 
 
 def count_words(text: str) -> int:

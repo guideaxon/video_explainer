@@ -12,7 +12,7 @@ from pathlib import Path
 from typing import Callable
 
 # Full-video style bundles the UI can drive. Vantage shorts use the `short` CLI commands; not in v1.
-FULL_STYLE_BUNDLES = ("markets", "promo", "launch", "lyric", "leaderbot", "demo", "storybook", "papercut")
+FULL_STYLE_BUNDLES = ("markets", "promo", "launch", "lyric", "leaderbot", "demo", "storybook", "lowpoly", "papercut", "isofigure")
 
 RUN, MANUAL, SKIPPED, HIDDEN = "run", "manual", "skipped", "hidden"
 
@@ -48,8 +48,9 @@ class StepDef:
     optional: bool = False
 
     def variant(self, ctx: Ctx) -> Variant:
-        if ctx.style_bundle == "papercut" and self.id in PAPERCUT_VARIANTS:
-            return PAPERCUT_VARIANTS[self.id]
+        override = HTML_VARIANTS.get(ctx.style_bundle)
+        if override and self.id in override:
+            return override[self.id]
         return self.style_bundle if ctx.style_bundle else self.standard
 
 
@@ -142,6 +143,26 @@ PAPERCUT_VARIANTS: dict[str, Variant] = {
                       outputs=("film.html",)),
     "verify": Variant(SKIPPED, note="Open film.html in a browser to check it"),
 }
+
+# Isofigure is an interactive HTML figure with a pure model: scaffold the washing machine template once, edit it, build.
+_IF_SKIP = "An isofigure is built from a model and a drawing, not from a script or recorded media"
+ISOFIGURE_VARIANTS: dict[str, Variant] = {
+    "script": Variant(SKIPPED, note=_IF_SKIP),
+    "narration": Variant(SKIPPED, note=_IF_SKIP),
+    "scenes": Variant(
+        RUN, lambda c: None if (c.project_dir / "main.tsx").exists() else ["scripts/isofigure_new_figure.py", c.project],
+        note="Scaffold once (the washing machine), then edit model.ts, figure.tsx and main.tsx", outputs=("figure.tsx",),
+    ),
+    "review": Variant(SKIPPED, note="No pre-render review for isofigures"),
+    "voiceover": Variant(SKIPPED, note=_IF_SKIP),
+    "storyboard": Variant(SKIPPED, note="A figure has one view, not a storyboard"),
+    "sound": Variant(SKIPPED, note="Isofigures are silent"),
+    "render": Variant(RUN, _script("isofigure_build_html"), note="Builds one interactive HTML file", outputs=("figure.html",)),
+    "verify": Variant(SKIPPED, note="Open figure.html in a browser and press every control"),
+}
+
+# Style bundles delivered as one HTML file instead of a rendered video: per-step overrides.
+HTML_VARIANTS: dict[str, dict[str, Variant]] = {"papercut": PAPERCUT_VARIANTS, "isofigure": ISOFIGURE_VARIANTS}
 
 STEP_IDS = tuple(s.id for s in STEPS)
 

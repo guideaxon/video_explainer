@@ -322,10 +322,16 @@ def test_steps_expose_copyable_cli_commands(client):
 def test_papercut_project_reports_film_and_serves_it_sandboxed(client):
     c, projects = client
     p = _create(c, style_bundle="papercut")
-    assert p["style_bundle"] == "papercut" and p["supported"] and p["has_film"] is False
+    assert p["style_bundle"] == "papercut" and p["supported"] and p["html_output"] == ""
     steps = _by_id(p["steps"])
     assert steps["narration"]["status"] == "skipped" and steps["render"]["status"] != "skipped"
     _touch(projects / p["id"] / "film.html", "<html></html>")
-    assert c.get(f"/api/projects/{p['id']}").json()["has_film"] is True
+    assert c.get(f"/api/projects/{p['id']}").json()["html_output"] == "film.html"
     r = c.get(f"/api/projects/{p['id']}/files/film.html")
     assert r.status_code == 200 and "sandbox" in r.headers["content-security-policy"]
+
+
+def test_lowpoly_is_a_full_video_style_bundle():
+    from ui.server.steps import FULL_STYLE_BUNDLES
+
+    assert "lowpoly" in FULL_STYLE_BUNDLES

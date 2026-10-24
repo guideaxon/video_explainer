@@ -34,6 +34,11 @@ def test_template_imports_only_the_papercut_kit():
     assert "@papercut/" in text
 
 
+def test_worked_example_matches_the_template():
+    for name in ("scenes.tsx", "score.ts", "main.tsx"):
+        assert (ROOT / "projects" / "papercut_fox" / name).read_text(encoding="utf-8") == (ROOT / "templates" / "papercut_video" / name).read_text(encoding="utf-8"), name
+
+
 def test_ui_steps_for_papercut():
     from ui.server.steps import FULL_STYLE_BUNDLES, STEPS, Ctx
 

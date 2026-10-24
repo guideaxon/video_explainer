@@ -25,7 +25,7 @@ PAID = re.compile(r"api\.elevenlabs\.io|elevenlabs\.io/v1|api\.kie\.ai|api\.apim
 INLINE = re.compile(r"(python3?|py)\s+-c\b|node\s+(-e|--eval)\b|(python3?|py|node)\s+-?\s*<<|\bcurl\b|\bwget\b|Invoke-(WebRequest|RestMethod)", re.I)
 CODE = re.compile(r"\.(py|mjs|cjs|js|ts|ps1|sh)$", re.I)
 MEDIA = re.compile(r"\.(mp4|mov|m4v|webm|mkv|mp3|wav|m4a|aac|flac)$", re.I)
-KIT_IMPORT = re.compile(r"components/(vantage|markets|promo|launch|lyric|leaderbot|demo|storybook|papercut)\b")
+KIT_IMPORT = re.compile(r"components/(vantage|markets|promo|launch|lyric|leaderbot|demo|storybook|papercut|isofigure|lowpoly)\b")
 
 
 def deny(reason: str) -> dict:
@@ -62,7 +62,7 @@ def decide(call: dict) -> dict | None:
             return deny(f"{f.name} would call a paid API outside src/ or scripts/.")
         rel = f.relative_to(ROOT) if f.is_absolute() and f.is_relative_to(ROOT) else None
         in_scenes = rel and len(rel.parts) > 3 and rel.parts[2] in ("scenes", "short")
-        papercut_root = rel and len(rel.parts) == 3 and rel.name in ("scenes.tsx", "main.tsx")  # papercut keeps scenes at the project root
+        papercut_root = rel and len(rel.parts) == 3 and rel.name in ("scenes.tsx", "main.tsx", "figure.tsx")  # papercut and isofigure keep their sources at the project root
         if rel and rel.parts[0] == "projects" and (in_scenes or papercut_root) and f.suffix == ".tsx":
             cfg = ROOT / "projects" / rel.parts[1] / "config.json"
             bundle = json.loads(cfg.read_text(encoding="utf-8")).get("style_bundle") if cfg.exists() else None
