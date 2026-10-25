@@ -161,7 +161,7 @@ built as bundles yet; each one gets its own bundle when a real video needs it.
 | Isometric robot | Interactive figure template: Wave, Blink, Talk (LED mouth), Antenna light, Look inside (battery, board, servo, speaker, wiring), optional in-page sound, no voiceover | `templates/isofigure_robot/`, `isofigure_new_figure.py --template robot` |
 | Filter cost | Guidance in the shared workflow skill | `.claude/skills/video_make_core/SKILL.md` |
 | Web UI style picker | Each style with a character shows its face (rendered from the real kit); every card that maps to one of the 12 styles says "Animation style: ...". Markets, Promo, Demo and Standard have no character, so no face. The five new styles are listed as disabled "coming soon" cards | `ui/web/src/screens/NewProject.tsx`, `ui/web/public/faces/`, `scripts/ui_render_faces.mjs` (re-run after a character's look changes), `remotion/src/faces/` |
-| Rhubarb on this machine | Built from source (1.14.0) and added to the user PATH; verified with the lip-sync tests. `RHUBARB_BIN` overrides PATH | `D:\GAXONhubarb-lip-syncuildhubarb\Release` |
+| Rhubarb on this machine | Built from source (1.14.0) and added to the user PATH; verified with the lip-sync tests. `RHUBARB_BIN` overrides PATH | `D:\GAXON\rhubarb-lip-sync\build\rhubarb\Release` |
 
 Still open:
 - Watercolor storybook: characters are still baked into the stills. A code-drawn layer over the painting is started
