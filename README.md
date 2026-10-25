@@ -160,6 +160,9 @@ npm run build                           # builds the frontend into ui\web\dist
 cd ..\..
 
 $env:PYTHONUTF8 = "1"
+.venv\Scripts\python.exe -c "import sys; sys.path.insert(0,'scripts'); import _lipsync as L; print(L.find_rhubarb())"
+
+$env:PYTHONUTF8 = "1"
 python -m ui.server
 ```
 

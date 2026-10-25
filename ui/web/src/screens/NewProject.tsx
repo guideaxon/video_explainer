@@ -5,18 +5,28 @@ import MarkdownPreview from "../components/MarkdownPreview";
 import { go } from "../nav";
 import { loadPrefs } from "../prefs";
 
-export const STYLE_BUNDLES: { id: string; name: string; blurb: string; format: string }[] = [
+/**
+ * `look` is the animation style from the 12-style sheet (docs/AnimationStyleGaps.md); `face` is the bundle's character,
+ * rendered from its kit by scripts/ui_render_faces.mjs into public/faces/<face>.png. Bundles with no character (Markets,
+ * Promo, Demo) have no face. `soon` cards are listed but cannot be picked until the bundle is built.
+ */
+export const STYLE_BUNDLES: { id: string; name: string; blurb: string; format: string; look?: string; face?: string; soon?: boolean }[] = [
   { id: "", name: "Standard", blurb: "Explainer from a document: script, narration, generated scenes", format: "16:9" },
   { id: "markets", name: "Markets", blurb: "Market-story explainers with charts and sentiment", format: "Portrait" },
   { id: "promo", name: "Promo", blurb: "SaaS product-launch promos, kinetic headlines", format: "Portrait" },
-  { id: "launch", name: "Launch", blurb: "Playful consumer-app launch teasers", format: "Portrait" },
-  { id: "lyric", name: "Lyric", blurb: "Kawaii pixel-pop lyric and music videos", format: "Portrait" },
-  { id: "leaderbot", name: "Leaderbot", blurb: "Pixel-mosaic business explainers and satire", format: "Portrait" },
+  { id: "launch", name: "Launch", blurb: "Playful consumer-app launch teasers", format: "Portrait", look: "Flat 2D vector", face: "launch" },
+  { id: "lyric", name: "Lyric", blurb: "Kawaii pixel-pop lyric and music videos", format: "Portrait", look: "Pixel art 8-bit", face: "lyric" },
+  { id: "leaderbot", name: "Leaderbot", blurb: "Pixel-mosaic business explainers and satire", format: "Portrait", look: "Pixel art 8-bit", face: "leaderbot" },
   { id: "demo", name: "Demo", blurb: "Narrated product demos from real screenshots", format: "16:9 or portrait" },
-  { id: "storybook", name: "Storybook", blurb: "Illustrated storybook films from painted stills", format: "16:9" },
-  { id: "lowpoly", name: "Lowpoly", blurb: "A low-poly 3D presenter talks you through a story or how-to, lip-synced and captioned", format: "16:9" },
-  { id: "isofigure", name: "Isofigure", blurb: "Interactive isometric figures of working objects, with buttons you press, as one HTML file", format: "16:9" },
-  { id: "papercut", name: "Papercut", blurb: "Paper-cut films drawn in code, with generated music, as one HTML file", format: "16:9" },
+  { id: "storybook", name: "Storybook", blurb: "Illustrated storybook films from painted stills", format: "16:9", look: "Watercolor storybook" },
+  { id: "lowpoly", name: "Lowpoly", blurb: "A low-poly 3D presenter talks you through a story or how-to, lip-synced and captioned", format: "16:9", look: "Low-poly 3D", face: "lowpoly" },
+  { id: "isofigure", name: "Isofigure", blurb: "Interactive isometric figures of working objects, with buttons you press, as one HTML file", format: "16:9", look: "Isometric 3D", face: "isofigure" },
+  { id: "papercut", name: "Papercut", blurb: "Paper-cut films drawn in code, with generated music, as one HTML file", format: "16:9", look: "Paper cut-out", face: "papercut" },
+  { id: "rubberhose", name: "Rubber hose", blurb: "1930s cartoon: noodle limbs, pie-cut eyes, film grain", format: "Portrait", look: "Retro rubber-hose 2D", soon: true },
+  { id: "glossy", name: "Glossy toy", blurb: "Shiny vinyl-toy characters with springy motion", format: "Portrait", look: "Glossy toy 3D-look", soon: true },
+  { id: "clay", name: "Clay", blurb: "Plasticine characters animated like stop-motion", format: "Portrait", look: "Claymation look", soon: true },
+  { id: "popart", name: "Pop art", blurb: "Comic pages: halftone dots, ink outlines, POW captions", format: "Portrait", look: "Comic pop-art", soon: true },
+  { id: "neon", name: "Neon", blurb: "Glowing synthwave tubes over a moving grid and sun", format: "Portrait", look: "Neon synthwave", soon: true },
 ];
 
 /** Outline of the frame shape a style bundle produces, like the Landscape / Portrait picker in the reference. */
@@ -102,15 +112,17 @@ function CreateForm() {
       <div className="style-bundles" role="radiogroup" aria-label="Style Bundle">
         {STYLE_BUNDLES.map((c) => (
           <button
-            type="button" key={c.id || "standard"} role="radio" aria-checked={styleBundle === c.id}
+            type="button" key={c.id || "standard"} role="radio" aria-checked={styleBundle === c.id} disabled={c.soon}
             className={`style-bundle ${styleBundle === c.id ? "selected" : ""}`} onClick={() => setStyleBundle(c.id)}
           >
+            {c.face && <img className="sb-face" src={`${import.meta.env.BASE_URL}faces/${c.face}.png`} width={64} height={64} alt={`${c.name} character`} loading="lazy" />}
             <span className="sb-head">
               <strong>{c.name}</strong>
               <AspectIcon format={c.format} />
             </span>
             <span>{c.blurb}</span>
-            <em>{c.format}</em>
+            {c.look && <span className="sb-look">Animation style: {c.look}</span>}
+            <em>{c.soon ? `${c.format} · coming soon` : c.format}</em>
           </button>
         ))}
       </div>

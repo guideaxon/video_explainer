@@ -43,7 +43,7 @@ export default function Preferences() {
         </label>
         <label>Default Style Bundle
           <select value={prefs.defaultStyleBundle} onChange={(e) => update({ defaultStyleBundle: e.target.value })}>
-            {STYLE_BUNDLES.map((c) => <option key={c.id || "standard"} value={c.id}>{c.name}</option>)}
+            {STYLE_BUNDLES.filter((c) => !c.soon).map((c) => <option key={c.id || "standard"} value={c.id}>{c.name}</option>)}
           </select>
         </label>
         <label>Default length (seconds)

@@ -16,11 +16,11 @@ const Bg: React.FC<{ color: string; children: React.ReactNode }> = ({ color, chi
 
 const LaunchFace = () => (
   <Bg color="#d7f4e4">
-    <LaunchArt><g transform="translate(-290 -770) scale(1)"><Mascot cx={546} cy={940} scale={2.0} stage={6} shadow={false} /></g></LaunchArt>
+    <LaunchArt><g transform="translate(-290 -770) scale(1)"><Mascot cx={546} cy={1010} scale={1.75} stage={6} shadow={false} /></g></LaunchArt>
   </Bg>
 );
 const LyricFace = () => (
-  <Bg color="#ffe3f1"><Pixie x={90} y={30} scale={2.6} /></Bg>
+  <Bg color="#ffe3f1"><Pixie x={-10} y={-30} scale={3.4} /></Bg>
 );
 const LeaderbotFace = () => (
   <Bg color="#111111"><PixelBot x={0} y={0} size={S} smooth look={0} /></Bg>
@@ -30,7 +30,7 @@ const PapercutFace = () => (
   <Bg color="#2a2150">
     <svg width={S} height={S} viewBox={`0 0 ${S} ${S}`}>
       <Defs />
-      <Fox x={-60} y={640} s={4.2} t={0.4} look={-4} />
+      <Fox x={-150} y={700} s={4.2} t={0.4} look={-4} />
     </svg>
   </Bg>
 );
