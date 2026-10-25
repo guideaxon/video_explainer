@@ -6,7 +6,8 @@ missing, which styles are new, and what to change before building them.
 The sheet promises one original character per style that can **move, blink, talk, and get a voice plus sound
 effects**. Every row below is judged against that promise.
 
-Status as of 2026-10-24.
+Status as of 2026-10-24. Sections 1 to 6 are the analysis and decisions as written **before** the work started (the
+"Status", "Gaps" and "Moves/Blinks/Talks" columns describe that starting point); **section 7 is the current state**.
 
 ## 1. The 12 styles at a glance
 
@@ -87,7 +88,7 @@ plus a row in the bundle table and an entry in the guard hook's `KIT_IMPORT` lis
 1. **Add a shared rig contract in `remotion/src/components/rig/`.** It holds types and timing only: a `RigProps`
    type (`mouth: number[]`, `blink`, `gesture`, `walk`, `look`) and helpers such as `blinkAt(frame, fps, seed)`
    and `mouthAt(mouth, frame)`. Each bundle still draws its own character from these props, so styles never mix.
-   The guard hook only blocks the eleven bundle folder names, so a neutral `rig/` folder is allowed.
+   The guard hook only blocks the bundle folder names, so a neutral `rig/` folder is allowed.
 2. **Move lip sync to a shared script.** Lift `mouth_curve()` and `write_lipsync_ts()` into
    `scripts/_lipsync.py` so any bundle's finalize step can call it. Read the project fps from config instead of
    the hard-coded `FPS = 30`, because rubber-hose and claymation run at 24 or 12 fps.
@@ -159,8 +160,20 @@ built as bundles yet; each one gets its own bundle when a real video needs it.
 | Paper cut-out `Fox` | Blink, paper-cut jaw with mouth shapes; optional voice per project (`"voice": true`) embedded in `film.html` with lip sync, music ducking, sync with pause, seek and loop, one mute for both | `papercut/fox.tsx`, `voice.ts`, `player.tsx`, `scripts/papercut_build_html.*` |
 | Isometric robot | Interactive figure template: Wave, Blink, Talk (LED mouth), Antenna light, Look inside (battery, board, servo, speaker, wiring), optional in-page sound, no voiceover | `templates/isofigure_robot/`, `isofigure_new_figure.py --template robot` |
 | Filter cost | Guidance in the shared workflow skill | `.claude/skills/video_make_core/SKILL.md` |
+| Web UI style picker | Each style with a character shows its face (rendered from the real kit); every card that maps to one of the 12 styles says "Animation style: ...". Markets, Promo, Demo and Standard have no character, so no face. The five new styles are listed as disabled "coming soon" cards | `ui/web/src/screens/NewProject.tsx`, `ui/web/public/faces/`, `scripts/ui_render_faces.mjs` (re-run after a character's look changes), `remotion/src/faces/` |
+| Rhubarb on this machine | Built from source (1.14.0) and added to the user PATH; verified with the lip-sync tests. `RHUBARB_BIN` overrides PATH | `D:\GAXONhubarb-lip-syncuildhubarb\Release` |
 
 Still open:
-- Watercolor storybook: characters are still baked into the stills (needs a code-drawn layer over the painting).
+- Watercolor storybook: characters are still baked into the stills. A code-drawn layer over the painting is started
+  (`remotion/src/components/storybook/character.tsx`, `paint.ts`; rendering, occlusion and ground contact work) but
+  unfinished: the grain reads as dirt on the face, outlines are too weak against the stills, the desk scene sits too low,
+  and the finalize lip sync, template scenes and style guide are not done. The Storybook card has no face yet.
+- The five new styles (section 4) are **in progress, not usable**: helper files for rubber hose, glossy, clay and pop art,
+  and a partly written kit for neon. Each still needs its kit, template scenes, style guide, skill, scaffold and finalize
+  scripts, tests and a rendered sample, plus the shared entries (review rules in `scripts/review_video.py`, the
+  `CLAUDE.md` row, the sound mappings and palette, and removing `soon` from the UI card). The guard hook,
+  `compose_new_story.py` and the UI step table already list their names. Until they are built, they should not be
+  committed as supported.
 - Lowpoly: only one seated presenter; no full body, walk or fox model.
-- The five new styles (section 4) and the one-off style-sheet video that would prove them.
+- The Vantage `Guide` is not in the UI picker (the UI does not drive Vantage shorts yet).
+- The one-off style-sheet video that would prove all five new looks (section 5, item 7).
