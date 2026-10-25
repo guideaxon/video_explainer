@@ -97,6 +97,16 @@ STYLE_PALETTES: dict[str, dict[str, str]] = {
         "text_tick": "pro_typing_key/glass", "success_tone": "pro_notify/ding_2045",
         "transition_whoosh": "pro_whoosh_big/windy",
     },
+    # Neon synthwave: glossy, electric, a little retro.
+    "neon": {"ui_pop": "pro_pop_in/round", "reveal_hit": "pro_logo_sting/zap_bloom", "transition_whoosh": "pro_whoosh_big/long", "digital_stream": "pro_glitch/standard", "data_flow": "pro_zip/down", "bar_grow": "pro_riser/nblips", "counter_sweep": "pro_riser/nblips_hi", "success_tone": "pro_notify/ding_2167", "text_tick": "pro_hover_tick/ping", "warning_tone": "pro_sub_drop/low"},
+    # Retro 1930s cartoon: boingy, wooden and warm.
+    "rubberhose": {"ui_pop": "pro_pop/boop", "text_tick": "pro_typing_key/tick", "keyboard_type": "pro_typing_key/tick", "success_tone": "pro_notify/ding_1930", "reveal_hit": "pro_pop_in/round", "transition_whoosh": "pro_whoosh_big/tonal", "footstep": "pro_tap/soft", "impact_soft": "pro_impact/short", "lock_click": "pro_click/snap"},
+    # Glossy vinyl toys: bright, bouncy and clean.
+    "glossy": {"ui_pop": "pro_pop_in/airy", "reveal_hit": "pro_logo_sting/zap_bloom", "success_tone": "pro_notify/ding_2296", "text_tick": "pro_hover_tick/ping", "lock_click": "pro_click/tink", "bar_grow": "pro_riser/roll", "counter_sweep": "pro_riser/air_gate", "transition_whoosh": "pro_whoosh_big/long", "impact_soft": "pro_impact/air", "footstep": "pro_tap/soft"},
+    # Claymation: felt, wood and soft thuds.
+    "clay": {"ui_pop": "pro_pop/thup", "text_tick": "pro_tap/soft", "lock_click": "pro_tap/knock", "keyboard_type": "pro_typing_key/soft", "cache_click": "pro_tap/finger", "reveal_hit": "pro_impact/air", "impact_soft": "pro_impact/air", "impact_hard": "pro_impact/short", "success_tone": "pro_notify/ding_1822", "transition_whoosh": "pro_whoosh_big/windy", "bar_grow": "pro_riser/roll", "footstep": "pro_tap/soft"},
+    # Comic pop-art: punchy and printed.
+    "popart": {"ui_pop": "pro_pop/boop", "reveal_hit": "pro_impact/short", "impact_hard": "pro_impact/deep", "transition_whoosh": "pro_whoosh_big/swell", "text_tick": "pro_typing_key/tick", "keyboard_type": "pro_typing_key/tick", "bar_grow": "pro_riser/roll", "counter_sweep": "pro_riser/nblips", "success_tone": "pro_notify/ding_2296"},
 }
 
 # Level relative to the peak, 6 dB per doubling (earshot sfx render --weight). Only for sounds that are

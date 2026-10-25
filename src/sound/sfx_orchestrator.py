@@ -321,7 +321,8 @@ class SFXOrchestrator:
                 analysis_notes.append(f"Analyzed with kit component timing ({len(kit_moments)} components)")
 
         # Rigged characters: gesture pops and walk footsteps, always added on top of the other analyzers.
-        rig_moments = analyze_rig_scene(scene_file, self.fps)
+        # A walk or gesture that runs past the scene's end would sound in the next scene: keep only what happens inside it.
+        rig_moments = [m for m in analyze_rig_scene(scene_file, self.fps) if m.frame < duration_frames]
         if rig_moments:
             result.moments.extend(rig_moments)
             steps = sum(1 for m in rig_moments if m.type == "footstep")

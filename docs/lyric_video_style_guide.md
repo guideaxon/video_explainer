@@ -62,7 +62,7 @@ Loud pastel pop, one idea per scene, every scene a different surface.
 - Typed terminal lines with a block caret; a stamp slaps with overshoot; a circle draws itself.
 - Constant ambient motion: spinning sunburst, drifting checkerboard, stars twinkling, character bob
   and blink, sticker wobble.
-- **Character rig** (`Pixie`): talks from `scenes/lipsync.ts`, which `scripts/lyric_finalize_storyboard.py` bakes from the voiceover
+- **Character rig** (design: [CHARACTER_RIG.md](CHARACTER_RIG.md); `Pixie`): talks from `scenes/lipsync.ts`, which `scripts/lyric_finalize_storyboard.py` bakes from the voiceover
   (shared `scripts/_lipsync.py`; mouth shapes need Rhubarb, see CLAUDE.md). Import `{ LIPSYNC, VISEMES } from "./lipsync"` and pass
   `mouth={LIPSYNC.<scene>} visemes={VISEMES.<scene>}`. Blinks follow the shared rig rhythm (`seed` varies it). A pixel mouth has three frames (closed, open, wide), so only the
   openness is used. `walk={{ from, to }}` plus `walkTo={x}` walks it across with a two-frame leg cycle.

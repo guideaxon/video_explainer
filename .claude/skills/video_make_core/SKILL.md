@@ -1,6 +1,6 @@
 ---
 name: video_make_core
-description: Shared workflow for the full-video style bundles (Markets, Promo, Launch, Lyric, Leaderbot, Demo, Storybook, Lowpoly): project, scaffold, pre-render review, voiceover, finalize, render, verify, export. Not invoked directly; a style bundle skill (markets_make_video, promo_make_video, launch_make_video, lyric_make_video) loads it first and supplies the style bundle details.
+description: Shared workflow for the full-video style bundles (Markets, Promo, Launch, Lyric, Leaderbot, Demo, Storybook, Lowpoly, Neon, Rubberhose, Glossy, Clay, Popart): project, scaffold, pre-render review, voiceover, finalize, render, verify, export. Not invoked directly; a style bundle skill (markets_make_video, promo_make_video, launch_make_video, lyric_make_video) loads it first and supplies the style bundle details.
 metadata:
   tags: video, remotion, workflow, core
 ---

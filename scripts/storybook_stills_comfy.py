@@ -33,13 +33,23 @@ def call(server: str, path: str, data: dict | None = None) -> dict:
         return json.loads(r.read())
 
 
+PLATE_TAIL = "empty scene, no people, no characters, no figures, clear empty open floor or ground in the lower middle of the picture"
+PLATE_NEVER = ", person, people, child, girl, boy, figure, character, silhouette"
+
+
 def build_prompt(style: dict, shot: dict) -> str:
     """Positive prompt of a shot.
+
+    A shot flagged ``"plate": true`` is an empty plate for the code-drawn character (Wren, see the style guide): no
+    cast or canon identity, the shot prompt and style line, then an explicit empty-ground clause. ``plate`` wins over
+    ``cast``. Shots without the flag are built exactly as before.
 
     With a ``canon`` block in style.json and a shot flagged ``cast``: framing first, the identity text (the long
     form for close and medium shots, the short form for wide ones, copied verbatim), the wardrobe of the shot's
     ``look``, the action, the style line, and "no text" last. Without a canon: the older style + prompt + cast lines.
     """
+    if shot.get("plate"):
+        return ", ".join([shot["prompt"], style["style_line"], PLATE_TAIL])
     canon = style.get("canon")
     if canon and shot.get("cast"):
         identity = canon["identity_short"] if shot.get("size") == "wide" else canon["identity_full"]
@@ -48,10 +58,10 @@ def build_prompt(style: dict, shot: dict) -> str:
     return ", ".join([style["style_line"], shot["prompt"], *(style.get("cast", []) if shot.get("cast") else [])])
 
 
-def graph(style: dict, full: str, seed: int, prefix: str) -> dict:
+def graph(style: dict, full: str, seed: int, prefix: str, plate: bool = False) -> dict:
     w, h = style["size"]
     up = style.get("upscale", 1.667)
-    negative = style["negative"] + ("".join(", " + n for n in style["canon"].get("never", [])) if style.get("canon") else "")
+    negative = style["negative"] + ("".join(", " + n for n in style["canon"].get("never", [])) if style.get("canon") else "") + (PLATE_NEVER if plate else "")
     return {
         "1": {"class_type": "CheckpointLoaderSimple", "inputs": {"ckpt_name": style["model"]}},
         "2": {"class_type": "CLIPTextEncode", "inputs": {"text": full, "clip": ["1", 1]}},
@@ -118,7 +128,7 @@ def render_one(args, style: dict, shot: dict, out: Path, offset: int) -> int:
     failed = 0
     t0 = time.time()
     prefix = f"storybook_{args.project}_{sid}_{uuid.uuid4().hex[:6]}"
-    pid = call(args.server, "/prompt", {"prompt": graph(style, build_prompt(style, shot), shot.get("seed", 1000) + offset, prefix)})["prompt_id"]
+    pid = call(args.server, "/prompt", {"prompt": graph(style, build_prompt(style, shot), shot.get("seed", 1000) + offset, prefix, bool(shot.get("plate")))})["prompt_id"]
     hist = None
     while time.time() - t0 < args.timeout:
         hist = call(args.server, f"/history/{pid}").get(pid)

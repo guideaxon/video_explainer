@@ -55,7 +55,7 @@ Friendly and bright, with one dark scene for contrast.
 - Phones pop in from below; chips pop with a spring and then bob; widgets and the pill spring in.
 - Ambient: sunburst rotates slowly, rings pulse behind the hook mascot, sparkles twinkle, the mascot
   bobs and blinks.
-- **Character rig** (`Mascot`): talks from `scenes/lipsync.ts`, which `scripts/launch_finalize_storyboard.py` bakes from the voiceover
+- **Character rig** (design: [CHARACTER_RIG.md](CHARACTER_RIG.md); `Mascot`): talks from `scenes/lipsync.ts`, which `scripts/launch_finalize_storyboard.py` bakes from the voiceover
   (shared `scripts/_lipsync.py`; mouth shapes need Rhubarb, see CLAUDE.md). Import `{ LIPSYNC, VISEMES } from "./lipsync"` and pass
   `mouth={LIPSYNC.<scene>} visemes={VISEMES.<scene>}`. Blinks follow the shared rig rhythm (`seed` varies it). From stage 3 (arms) it can `gesture="wave"` or `"cheer"` from
   `gestureAt`.

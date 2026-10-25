@@ -106,8 +106,12 @@ export class VoicePlayer {
     const c = this.cur;
     if (c) {
       const local = t - c.i * S; // where the film says the clip is; c.off + (now - c.at) is where the audio is
-      if (Math.abs(local - (c.off + now - c.at)) < 0.25 && local < clipWindow(this.v, c.i, S)) return;
-      this.stop(); // seek, loop or clip over
+      const inSync = Math.abs(local - (c.off + now - c.at)) < 0.25 && local < clipWindow(this.v, c.i, S);
+      // Still sounding and the next scene's clip is not due yet: nothing to do.
+      if (inSync && Math.floor((t + LOOKAHEAD) / S) === c.i) return;
+      // Still sounding but the next clip starts within the lookahead: schedule it below and let this one finish by
+      // itself (its source was started with a length), so a clip that runs to the scene end is not cut or late.
+      if (!inSync) this.stop(); // seek, loop or clip over
     }
     // the clip sounding now, or one starting within the lookahead (scheduled sample-exact on the audio clock)
     const i = Math.floor((t + LOOKAHEAD) / S);

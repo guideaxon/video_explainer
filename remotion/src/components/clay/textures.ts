@@ -102,11 +102,11 @@ const bakeClay = (g: CanvasRenderingContext2D, r: () => number) => {
 };
 
 const bakeFelt = (g: CanvasRenderingContext2D, r: () => number) => {
-  for (let i = 0; i < 60; i++) {
+  for (let i = 0; i < 40; i++) {
     const x = r() * TEX_SIZE;
     const y = r() * TEX_SIZE;
-    const rad = 18 + r() * 30;
-    wrapped(x, y, rad, (px, py) => softDot(g, px, py, rad, r() < 0.5 ? LIGHT : DARK, 0.05));
+    const rad = 10 + r() * 14;
+    wrapped(x, y, rad, (px, py) => softDot(g, px, py, rad, r() < 0.5 ? LIGHT : DARK, 0.025));
   }
   g.lineCap = "round";
   for (let i = 0; i < 2600; i++) {

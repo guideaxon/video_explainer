@@ -305,3 +305,15 @@ export function validateSceneTypes(storyboard, projectScenesDir, fs, path) {
     mismatches,
   };
 }
+
+/**
+ * H.264 quality from a project's config.json (`video.crf`, 0 to 51, lower is better quality and a bigger file).
+ * Returns undefined when it is missing or not a whole number in range, so Remotion keeps its default.
+ * Styles with film grain (rubberhose) set 24 here: the grain keeps the default bitrate near 30 Mb/s.
+ * @param {Object|null|undefined} projectConfig - Parsed config.json
+ * @returns {number|undefined}
+ */
+export function videoCrfFromConfig(projectConfig) {
+  const crf = projectConfig?.video?.crf;
+  return Number.isInteger(crf) && crf >= 0 && crf <= 51 ? crf : undefined;
+}

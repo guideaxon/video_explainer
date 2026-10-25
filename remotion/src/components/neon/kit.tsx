@@ -378,7 +378,7 @@ export const Sign: React.FC<{ x: number; y: number; w?: number; children: string
   return (
     <div style={{ position: "absolute", left: x, top: y, width: w, height: h, opacity: frame >= from ? 1 : 0 }}>
       <svg width={w} height={h} style={{ position: "absolute", left: 0, top: 0, overflow: "visible" }}>
-        <Neon d={rectPath(4, 4, w - 8, h - 8, 40)} color={color} w={6} on={on} />
+        <Neon d={rectPath(4, 4, w - 8, h - 8, 40)} color={color} w={6} on={on} fill="rgba(11,1,24,0.82)" />
       </svg>
       <div style={{ position: "absolute", left: 50, top: 50, width: w - 100, fontFamily: SIGN, fontSize: size, lineHeight: 1.25, color: NEON.white, opacity: 0.3 + 0.7 * on, textShadow: `0 0 2px #fff, 0 0 12px ${color}` }}>{children}</div>
     </div>

@@ -21,13 +21,13 @@ from .models import SoundMoment
 
 # Ordered: first matching rule wins. (component-name pattern, moment type, intensity)
 RULES: list[tuple[str, str, float]] = [
-    (r"^(LineChart|CandleChart|HBars|Heatmap|AreaChart|PollBars|PixelBars|Meter|Donut|Gauge)$", "chart_grow", 0.7),
-    (r"^(BigNumber|Stat|StatCard|StatCards|Counter|Stopwatch)$", "counter", 0.7),
-    (r"^(Slam|Stamp|Logo|Wordmark|Mascot|BullHead|Pixie|PixelBot|BotGrid)$", "reveal", 0.9),
-    (r"^(Title|Kicker|Headline|Eyebrow|Sub|BubbleTitle|Typed|Cursive)$", "text_reveal", 0.6),
+    (r"^(LineChart|CandleChart|HBars|Heatmap|AreaChart|PollBars|PixelBars|Meter|Donut|Gauge|EqBars|GlossBars|Bars|Stack|HalftoneBars)$", "chart_grow", 0.7),
+    (r"^(BigNumber|Stat|StatCard|StatCards|Counter|Stopwatch|NeonCounter|ClayNumber|StatBurst)$", "counter", 0.7),
+    (r"^(Slam|Stamp|Logo|Wordmark|Mascot|BullHead|Pixie|PixelBot|BotGrid|Tubo|Cassette|Car|Kip|TitleCard|EndCard|Toy|ToyBox|Pedestal|Ball|Badge|Sprinkles|Tuck|Pot|Starburst|Sfx|Hero|Masthead)$", "reveal", 0.9),
+    (r"^(Title|Kicker|Headline|Eyebrow|Sub|BubbleTitle|Typed|Cursive|NeonText)$", "text_reveal", 0.6),
     (r"^(Network|Hub)$", "data_flow", 0.6),
     (r"^(Annotation|Chip|Toast|Sticker|Receipt|Speech|Tile|PhoneMock|PhoneFrame|ScreenMock|Browser|Glass|"
-     r"WidgetCard|RetroWindow|Terminal|Newspaper|StorePill|LivePill|Button|Feature|Credits|ChatList|PromptBox)$",
+     r"WidgetCard|RetroWindow|Terminal|Newspaper|StorePill|LivePill|Button|Feature|Credits|ChatList|PromptBox|Sign|VhsChip|Cup|Clock|Bulb|Puff|Stars|GlossButton|Bubble|Mug|Plant|Coin|Lamp|Balloon|Caption|Laptop|Envelope)$",
      "element_appear", 0.7),
 ]
 START_PROPS = ("from", "delay", "at")

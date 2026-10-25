@@ -22,7 +22,7 @@ A system for generating high-quality explainer videos from technical documents. 
 - **Remotion Animations** - React-based programmatic video generation
 - **AI Scene Generation** - Claude-powered scene component creation
 - **Refinement** - 5-phase quality improvement system (analyze, script, visual-cue, visual, sync)
-- **Style Bundle Videos** - Seven style bundles (Vantage, Markets, Promo, Launch, Lyric, Leaderbot, Demo) with templates, kits and skills; pre-render review via `scripts/review_video.py`. See [docs/HowToUse.md](docs/HowToUse.md)
+- **Style Bundle Videos** - Sixteen style bundles (Vantage, Markets, Promo, Launch, Lyric, Leaderbot, Demo, Storybook, Lowpoly, Papercut, Isofigure, Rubber hose, Glossy, Clay, Pop art, Neon) with templates, kits and skills, each with an original character that can talk, blink, gesture and walk (see [docs/CHARACTER_RIG.md](docs/CHARACTER_RIG.md) and [docs/ANIMATION_STYLES.md](docs/ANIMATION_STYLES.md)); pre-render review via `scripts/review_video.py`. See [docs/HowToUse.md](docs/HowToUse.md)
 
 ### Sound Design
 - **Automated SFX** - Intelligent sound effect planning and generation
@@ -183,7 +183,7 @@ dependencies; fix any red one first (LLM steps shell out to Claude Code).
 
 1. Use the menu on the left. **File → Create New Project** (also the landing page) is where you
    describe the video (or write or upload a Markdown source document), pick a style bundle (Standard,
-   Markets, Promo, Launch, Lyric, Leaderbot or Demo), a length and a voice, then **Create project**.
+   Markets, Promo, Launch, Lyric, Leaderbot, Demo, Storybook, Lowpoly, Isofigure, Papercut, Rubber hose, Glossy toy, Clay, Pop art or Neon; each card shows its character and animation style), a length and a voice, then **Create project**.
    **Open Recent** lists your latest projects; **All** opens the Continue a project screen with every
    project and a filter. **Preferences** sets the theme, how many recent projects the menu shows, and
    the default style bundle, length and voice for new projects. The menu collapses to icons with the
@@ -386,11 +386,11 @@ export const MyComponent: React.FC<{ title: string }> = ({ title }) => {
 ### Testing
 
 ```bash
-# Python tests (1192 tests)
+# Python tests
 pytest tests/ -v
 pytest tests/ -v --run-slow     # Also run slow tests (network access)
 
-# JavaScript tests (203 tests)
+# JavaScript tests
 cd remotion && npm test
 ```
 

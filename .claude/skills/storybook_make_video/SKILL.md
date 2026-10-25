@@ -23,6 +23,10 @@ Needs ComfyUI on `http://127.0.0.1:8188` (SD1.5 checkpoint `sd15\juggernaut_rebo
 - `<style_bundle>` = `storybook`; resolution 1280x720, 30 fps.
 - **Step 2, scaffold**: also writes `art/style.json` (style line, cast, negative prompt, one shot per scene).
   Edit the cast and shots to the real story first; flag shots that show the character with `"cast": true`.
+- **Code-drawn character**: for scenes where the cast must blink, talk, gesture or walk, flag the shot `"plate": true`
+  in `art/style.json` (empty plate with a clear ground area; the scaffold does this for `workshop` and `voice`) and draw
+  `Wren` over it with `<OnStill>` (kit `character.tsx`, guide section 7); optional `<Foreground>` for occlusion. Scenes
+  with the character baked into the still stay `"cast": true` and need no change. Match `light` to the plate.
 - **Step 3**: the story needs a source (the user's brief or document). Never invent claims or numbers.
 - **Radio cut**: `python scripts/radio_cut.py <project>` before generating art; fix timing first.
 - **Stills**: `python scripts/storybook_stills_comfy.py <project>` (about 30 to 40 s per still). Look at every
@@ -30,5 +34,5 @@ Needs ComfyUI on `http://127.0.0.1:8188` (SD1.5 checkpoint `sd15\juggernaut_rebo
   exact composition: expect to reroll, simplify the prompt, or crop. Put the best front and side views of the
   character in `art/refs/`.
 - **Step 4, narration**: 5 to 14 words per scene; scene art is `art/<scene_id>.png`.
-- **Finalize**: `python scripts/storybook_finalize_storyboard.py <project>`.
+- **Finalize**: `python scripts/storybook_finalize_storyboard.py <project>` (also bakes `scenes/lipsync.ts` for the character; needs ffmpeg).
 - **Before delivery**: `python scripts/continuity_qc.py --project <project> --refs projects/<project>/art/refs`, read `qc/brief.md` and the contact sheet, then re-run with `--reviewed`.

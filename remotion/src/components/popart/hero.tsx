@@ -157,8 +157,8 @@ const Eye: React.FC<{ cx: number; side: 1 | -1; shut: number; look: P; mood: Her
   const top = mood === "fierce" ? -838 : mood === "shock" ? -856 : -849;
   const bot = mood === "shock" ? -800 : -806;
   const iris = mood === "shock" ? 10 : 15;
-  const o = cx - 32 * side;
-  const i = cx + 32 * side;
+  const o = cx + 32 * side; // outer corner
+  const i = cx - 32 * side; // inner corner
   const almond = `M${o},-822 Q${cx},${top} ${i},-822 Q${cx},${bot} ${o},-822 Z`;
   const k = 1 - 0.95 * shut;
   return (

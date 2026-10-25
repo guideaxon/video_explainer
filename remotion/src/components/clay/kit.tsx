@@ -119,17 +119,17 @@ const BakedDefs: React.FC = () => {
         <stop offset="100%" stopColor="rgba(255,214,140,0)" />
       </linearGradient>
       <pattern id="tex-clay" patternUnits="userSpaceOnUse" width={S} height={S}>
-        <image href={urls.clay} width={S} height={S} />
+        <image href={urls.clay} width={S + 1} height={S + 1} />
       </pattern>
       <pattern id="tex-clay-b" patternUnits="userSpaceOnUse" width={S} height={S} patternTransform="rotate(57) scale(0.85)">
-        <image href={urls.clay} width={S} height={S} />
+        <image href={urls.clay} width={S + 1} height={S + 1} />
       </pattern>
       {/* For glyph space (letters are drawn in 6-unit glyphs scaled ~17x): one tile spans 15 units. */}
       <pattern id="tex-clay-u" patternUnits="userSpaceOnUse" width={15} height={15}>
         <image href={urls.clay} width={15} height={15} />
       </pattern>
       <pattern id="tex-felt" patternUnits="userSpaceOnUse" width={S} height={S}>
-        <image href={urls.felt} width={S} height={S} />
+        <image href={urls.felt} width={S + 1} height={S + 1} />
       </pattern>
       <pattern id="tex-card" patternUnits="userSpaceOnUse" width={S * 1.5} height={S * 1.5}>
         <image href={urls.card} width={S * 1.5} height={S * 1.5} />
@@ -272,7 +272,7 @@ const ClayLine: React.FC<Word> = ({ text, x, y, cap, color, from, seed, sagAt, m
         const cx = (g.x + g.w / 2) * u;
         const sx = (1 + 0.3 * (1 - p)) * (1 + 0.28 * sag);
         const sy = Math.max(0.05, p) * (1 - 0.42 * sag);
-        const tf = `translate(${x0 + cx + dx} ${y + 6 * u + dy}) rotate(${rot}) scale(${sx} ${sy}) translate(${-cx} ${-6 * u}) scale(${u})`;
+        const tf = `translate(${x0 + cx + dx} ${y + 6 * u + dy}) rotate(${rot}) scale(${sx} ${sy}) translate(${-cx} ${-6 * u}) scale(${u}) translate(${g.x} 0)`;
         return (
           <g key={g.index} transform={tf}>
             <path d={g.d} {...s} stroke="rgba(46,22,10,0.13)" strokeWidth={STROKE + 0.4} transform="translate(0.45 0.62)" />
@@ -522,7 +522,7 @@ export const Stack: React.FC<{ x: number; count: number; color?: ClayColor; y?: 
         let rot = jitter(k, 2) * 2.5;
         if (toppleAt !== undefined && hf > toppleAt) {
           const t = Math.max(0, Math.min(1, (hf - toppleAt - (count - 1 - i) * 1.2) / 14));
-          const tx = x + dir * (80 + i * 42 + jitter(k, 3) * 20);
+          const tx = x + dir * (80 + i * 28 + jitter(k, 3) * 20);
           const ty = y + jitter(k, 4) * 30 + 10;
           px = px + (tx - px) * t;
           py = py + (ty - py) * t * t;
@@ -552,7 +552,7 @@ export const Bars: React.FC<{ x0?: number; x1?: number; bars: { label: string; v
         return (
           <g key={i}>
             <Stack x={cx} count={b.value} color={b.color} w={Math.min(130, gap - 24)} from={from + i * 5} seed={i + 3} />
-            <g transform={`translate(${cx} ${TABLE_Y + 60}) rotate(${jitter(i, 8) * 3})`}>
+            <g transform={`translate(${cx} ${TABLE_Y + 50}) rotate(${jitter(i, 8) * 3})`}>
               <path d={lumpSlab(-62, -26, 124, 54, 10, 150 + i, pose)} fill={T.tag} />
               <path d={lumpSlab(-62, -26, 124, 54, 10, 150 + i, pose)} fill="url(#tex-card)" />
               <text y={13} textAnchor="middle" fontFamily={ROUND} fontWeight={600} fontSize={32} fill={T.tagInk}>{b.label}</text>
@@ -598,7 +598,7 @@ const MOUTHS: Record<Viseme, MouthPiece> = {
   C: { cavity: [37, 21], teeth: 9, tongue: [12, 20, 8] },
   D: { cavity: [41, 34], teeth: 10, tongue: [20, 26, 13] },
   E: { cavity: [27, 25], tongue: [12, 16, 9] },
-  F: { ring: [22, 20], cavity: [9, 10] },
+  F: { ring: [26, 24], cavity: [11, 12] },
   G: { cavity: [34, 14], teeth: 14, lip: true },
   H: { cavity: [35, 23], teeth: 8, tongue: [-4, 18, 9] },
 };
@@ -678,7 +678,7 @@ export const Tuck: React.FC<RigProps<TuckGesture, TuckLook> & { x: number; y?: n
   const lookDir: TuckLook = look ?? (walking ? (dir > 0 ? "right" : dir < 0 ? "left" : "camera") : gesture === "point" && g > 0.5 ? "right" : "camera");
   const gaze = { camera: [0, 3], left: [-12, 2], right: [12, 2], up: [0, -11], down: [0, 11] }[lookDir];
   const shut = blink ? blinkAt(hf, fps, seed) : 0;
-  const lid = 0.16 + 0.84 * shut;
+  const lid = 0.1 + 0.9 * shut;
   const lean = walking ? dir * 3 : 0;
   const talkTilt = Math.sin(hf / 37 + seed) * 1.2 + open * 1.5;
   const breathe = 1 + 0.012 * Math.sin(hf / 14 + seed);

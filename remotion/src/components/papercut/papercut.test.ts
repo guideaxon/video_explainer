@@ -4,7 +4,7 @@ import { edgeWidth } from "./paper";
 import { faceTone, LIGHT } from "./iso";
 import { pokeAge, pokeKick, NO_UI } from "./ui";
 import { buildScore, MAJ, MIN } from "./music";
-import { clipAt, duckAt, voiceNow, DUCK, DUCK_RAMP } from "./voice";
+import { VoicePlayer, clipAt, duckAt, voiceNow, DUCK, DUCK_RAMP } from "./voice";
 import type { Voice } from "./voice";
 import { VISEME_OPEN } from "../rig";
 
@@ -108,5 +108,55 @@ describe("voice timing", () => {
     expect(voiceNow(v, 0, 3, 6)).toMatchObject({ open: 0, viseme: "X", talking: false });
     expect(voiceNow(v, 1, 0, 6)).toBeNull();
     expect(voiceNow({ fps: 30, clips: [{ ...clip(2), visemes: undefined }] }, 0, 2 / 30 + 0.001, 6)?.open).toBe(1);
+  });
+});
+
+describe("VoicePlayer scheduling", () => {
+  // A fake audio clock: records every source started, with its start time, offset and length.
+  const fake = () => {
+    const started: { at: number; off: number; dur: number; stopped: boolean }[] = [];
+    const ctx: any = {
+      currentTime: 0,
+      destination: {},
+      createGain: () => ({ gain: { setTargetAtTime() {} }, connect() {} }),
+      createBufferSource: () => {
+        const rec = { at: 0, off: 0, dur: 0, stopped: false };
+        started.push(rec);
+        return { buffer: null, connect() {}, start(at: number, off: number, dur: number) { Object.assign(rec, { at, off, dur }); }, stop() { rec.stopped = true; } };
+      },
+      decodeAudioData: async () => ({ duration: 6 }),
+    };
+    return { ctx, started };
+  };
+  const clip = (id: string) => ({ id, text: id, src: "data:audio/mpeg;base64,AAAA", dur: 6, mouth: [] });
+  const voice: Voice = { fps: 30, clips: [clip("a"), clip("b")] };
+
+  it("starts the next clip on the cut even when the current one runs to the scene end", async () => {
+    const { ctx, started } = fake();
+    const p = new VoicePlayer(ctx, voice, 6);
+    await new Promise((r) => setTimeout(r)); // let the clips decode
+    ctx.currentTime = 10;
+    p.tick(0); // clip a starts at film time 0
+    expect(started.length).toBe(1);
+    // film time 5.9 s: the next clip is within the 0.15 s lookahead, so it is scheduled now, 0.1 s ahead
+    ctx.currentTime = 10 + 5.9;
+    p.tick(5.9);
+    expect(started.length).toBe(2);
+    expect(started[1].at).toBeCloseTo(ctx.currentTime + 0.1, 5);
+    expect(started[1].off).toBe(0);
+    expect(started[0].stopped).toBe(false); // the first clip finishes by itself
+    ctx.currentTime = 10 + 6.1;
+    p.tick(6.1); // nothing more to do: no third source
+    expect(started.length).toBe(2);
+  });
+
+  it("restarts at the right offset after a seek", async () => {
+    const { ctx, started } = fake();
+    const p = new VoicePlayer(ctx, voice, 6);
+    await new Promise((r) => setTimeout(r));
+    p.tick(0);
+    p.tick(8); // jump into scene 1, 2 s in
+    expect(started[0].stopped).toBe(true);
+    expect(started[1].off).toBeCloseTo(2, 5);
   });
 });

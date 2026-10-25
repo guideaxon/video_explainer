@@ -36,6 +36,11 @@ STYLE_BUNDLES: dict[str, dict] = {
     "launch": {"words": (5, 12), "required": []},
     "lyric": {"words": None, "required": []},
     "leaderbot": {"words": (6, 12), "required": ["not business advice"], "headline_chars": 10},
+    "neon": {"words": (5, 12), "required": [], "headline_chars": 9},
+    "rubberhose": {"words": (6, 14), "required": [], "headline_chars": 12},
+    "glossy": {"words": (6, 12), "required": [], "headline_chars": 14},
+    "clay": {"words": (6, 12), "required": [], "headline_chars": 14},
+    "popart": {"words": (5, 12), "required": [], "headline_chars": 16},
     # Storybook: landscape painted-still films; narration 5 to 14 words per beat; art/<scene_id>.png per scene.
     "storybook": {"words": (5, 14), "required": [], "resolutions": [(1280, 720), (1920, 1080)]},
     # Lowpoly: landscape 3D presenter films; the presenter speaks the narration and captions show it.

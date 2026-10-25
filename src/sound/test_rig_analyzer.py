@@ -251,6 +251,16 @@ export default function WalkIn() {
         assert frames(moments, "footstep") == [25, 40, 55, 70, 85]
         assert any("Rig cues" in note for note in analyses["walk_in"].analysis_notes)
 
+    def test_cues_past_the_scene_end_are_dropped(self):
+        # the scene is 5.0 s = 150 frames: a walk to frame 400 and a gesture at 200 would sound in the next scene
+        scene = '<Fox walk={{ from: 10, to: 400, cadence: 2 }} gesture="wave" gestureAt={200} />'
+        with tempfile.TemporaryDirectory() as tmpdir:
+            project_dir = self.make_project(tmpdir, scene)
+            moments = SFXOrchestrator(project_dir).analyze_scenes()["walk_in"].moments
+        steps = frames(moments, "footstep")
+        assert steps == [25, 40, 55, 70, 85, 100, 115, 130, 145]
+        assert frames(moments, "gesture") == []
+
     def test_project_fps_from_config(self):
         with tempfile.TemporaryDirectory() as tmpdir:
             project_dir = self.make_project(tmpdir, "<Fox walk={{ from: 0, to: 24, cadence: 4 }} />", fps=12)

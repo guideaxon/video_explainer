@@ -27,7 +27,7 @@ export const jitter = (a: number, b: number, c = 0) => hash3(a, b, c) * 2 - 1;
 /** Pose index at a real frame ("on twos": 12 poses per second at 30 fps). */
 export const poseOf = (frame: number, fps = FPS, poses = POSES_PER_SECOND) => Math.floor((frame * poses) / fps);
 /** The real frame where a pose starts. */
-export const poseStart = (pose: number, fps = FPS, poses = POSES_PER_SECOND) => Math.ceil((pose * fps) / poses - 1e-9);
+export const poseStart = (pose: number, fps = FPS, poses = POSES_PER_SECOND) => Math.ceil((pose * fps) / poses - 1e-9) + 0;
 /** The real frame to evaluate animation at: the start of the pose this frame belongs to (holds 2 or 3 frames). */
 export const heldFrame = (frame: number, fps = FPS, poses = POSES_PER_SECOND) => poseStart(poseOf(frame, fps, poses), fps, poses);
 

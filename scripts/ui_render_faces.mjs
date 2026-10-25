@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // Render the face thumbnails the web UI's style picker shows (ui/web/public/faces/<bundle>.png, 256x256).
 // Each face is the real character from the bundle's kit, so a card shows the animation style it makes:
-//   launch, lyric, leaderbot, lowpoly, papercut  -> Remotion stills of remotion/src/faces/index.tsx
+//   launch, lyric, leaderbot, lowpoly, papercut, storybook, neon, popart, rubberhose, glossy, clay -> Remotion stills of remotion/src/faces/index.tsx
 //   isofigure                                    -> Playwright screenshot of the robot template's built figure.html
 // Usage: node scripts/ui_render_faces.mjs [bundle ...]   (default: all). Needs ffmpeg on PATH; the isofigure face needs
 // Playwright (npm install in the repo root, then npx playwright install chromium). Re-run after a kit's look changes.
@@ -18,11 +18,15 @@ mkdirSync(out, { recursive: true });
 const tmp = mkdtempSync(join(tmpdir(), "faces-"));
 const want = process.argv.slice(2);
 const on = (id) => !want.length || want.includes(id);
-const run = (cmd, args, cwd = root) => execFileSync(cmd, args, { cwd, stdio: ["ignore", "ignore", "inherit"], shell: process.platform === "win32" });
+// Windows needs a shell to run npx.cmd, and a shell does not quote arguments: quote any with a space (a temp or user folder may have one).
+const win = process.platform === "win32";
+const q = (a) => (win && /\s/.test(a) ? `"${a}"` : a);
+const run = (cmd, args, cwd = root) => execFileSync(q(cmd), args.map(q), { cwd, stdio: ["ignore", "ignore", "inherit"], shell: win });
 const toFace = (src, id, crop = "") => run("ffmpeg", ["-v", "error", "-y", "-i", src, "-vf", `${crop}scale=256:256:flags=lanczos`, join(out, `${id}.png`)]);
 
 // Remotion faces (frame 40: popped in, eyes open). lowpoly renders 1280x720 and is cropped to the head.
-const remotion = [["launch", ""], ["lyric", ""], ["leaderbot", ""], ["papercut", ""], ["lowpoly", "crop=480:480:400:70,"]].filter(([id]) => on(id));
+const remotion = [["launch", ""], ["lyric", ""], ["leaderbot", ""], ["papercut", ""], ["storybook", ""], ["lowpoly", "crop=480:480:400:70,"],
+  ["neon", ""], ["popart", ""], ["rubberhose", "crop=900:900:90:240,"], ["glossy", "crop=560:560:260:300,"], ["clay", "crop=540:540:270:330,"]].filter(([id]) => on(id));
 if (remotion.length) {
   const bundle = join(tmp, "bundle");
   run("npx", ["remotion", "bundle", "src/faces/index.tsx", "--out-dir", bundle, "--log=error"], join(root, "remotion"));

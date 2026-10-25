@@ -12,6 +12,7 @@ import {
   deriveStoryboardPath,
   deriveProjectDir,
   deriveShortsSceneDir,
+  videoCrfFromConfig,
   getFinalResolution,
   shouldSkipSceneValidation,
   getFrameRangeSuffix,
@@ -700,5 +701,18 @@ describe("Integration: Full argument parsing scenarios", () => {
     expect(config.projectDir).toBe("../projects/continual-learning");
     expect(config.outputPath).toBe("./part4.mp4");
     expect(config.frameRange).toEqual([7501, null]);
+  });
+});
+
+describe("videoCrfFromConfig", () => {
+  it("reads video.crf when it is a whole number from 0 to 51", () => {
+    expect(videoCrfFromConfig({ video: { crf: 24 } })).toBe(24);
+    expect(videoCrfFromConfig({ video: { crf: 0 } })).toBe(0);
+    expect(videoCrfFromConfig({ video: { crf: 51 } })).toBe(51);
+  });
+  it("returns undefined for anything else so Remotion keeps its default", () => {
+    for (const c of [null, undefined, {}, { video: {} }, { video: { crf: "24" } }, { video: { crf: 24.5 } }, { video: { crf: -1 } }, { video: { crf: 52 } }]) {
+      expect(videoCrfFromConfig(c)).toBeUndefined();
+    }
   });
 });

@@ -95,17 +95,20 @@ label.inline select { width: auto; }
 .search { max-width: 380px; margin-bottom: 16px; }
 
 /* Style bundle cards, like the Landscape / Portrait / Square picker in the reference design. */
-.style-bundles { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 10px; }
+.style-bundles { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 10px; }
 .style-bundle { display: flex; flex-direction: column; align-items: flex-start; gap: 4px; padding: 14px; text-align: left; cursor: pointer; font: inherit; color: var(--text);
   background: var(--surface-2); border: 1px solid var(--line); border-radius: 14px; }
 .style-bundle:hover { border-color: var(--muted); }
 .style-bundle:disabled { opacity: 0.5; cursor: not-allowed; }
 .style-bundle:disabled:hover { border-color: var(--line); }
-.style-bundle .sb-face { width: 64px; height: 64px; border-radius: 12px; object-fit: cover; border: 1px solid var(--line); margin-bottom: 4px; }
+.style-bundle .sb-row { align-self: stretch; display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; font-size: inherit; color: inherit; }
+.style-bundle .sb-text { flex: 1; min-width: 0; display: flex; flex-direction: column; align-items: flex-start; gap: 4px; font-size: inherit; color: inherit; }
+.style-bundle .sb-face { flex: none; width: 72px; height: 72px; border-radius: 12px; object-fit: cover; border: 1px solid var(--line); }
 .style-bundle .sb-look { font-size: 12px; color: var(--accent); }
 .style-bundle span { font-size: 13px; color: var(--muted); }
 .style-bundle em { font-size: 12px; color: var(--muted); font-style: normal; }
 .style-bundle .sb-head { align-self: stretch; display: flex; align-items: center; justify-content: space-between; gap: 8px; font-size: inherit; color: inherit; }
+.style-bundle .sb-format { display: flex; align-items: center; gap: 8px; margin-top: 2px; }
 .style-bundle .aspect { color: var(--muted); display: flex; gap: 4px; align-items: center; }
 .style-bundle .aspect-icon { display: inline-flex; cursor: help; }
 .style-bundle.selected { border-color: var(--accent); background: var(--accent-soft); box-shadow: 0 0 0 1px var(--accent) inset; }

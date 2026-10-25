@@ -3,7 +3,7 @@
  * glossy toy "3D look" drawn entirely in SVG and CSS: radial/linear gradients for volume, crisp white specular
  * shapes, a soft rim light, gradient contact shadows (no blur filters), saturated candy colours on a pastel
  * studio sweep, chunky rounded shapes and springy motion (overshoot pops, squash and stretch, wobble).
- * Star: `Toy`, an original round vinyl collectible ("Pomo", placeholder name) that talks, blinks, gestures and
+ * Star: `Toy`, an original round vinyl collectible ("Pebbo", placeholder name) that talks, blinks, gestures and
  * walks on the shared rig contract. See docs/glossy_video_style_guide.md.
  *
  * Layout: eyebrow + headline in the top third (y 200 to 560), the visual below (y 600 to 1500).
@@ -205,7 +205,7 @@ const MOUTH_IN = "#4a0c24";
 const TONGUE = "#ff6f8f";
 
 /**
- * Pomo, the glossy vinyl toy (original placeholder character): an egg-shaped body with a face decal, stubby capsule
+ * Pebbo, the glossy vinyl toy (original placeholder character): an egg-shaped body with a face decal, stubby capsule
  * arms and legs, chunky cream sneakers and a gumball antenna. (x, y) is the ground point between the feet; at
  * scale 1 it is about 550 px tall. Use inside `<Stage>` (or `<ToyBox>`).
  * Entrances (`enter` at `from`): "pop" (spring overshoot), "drop" (falls in and squashes), "rise" (shoots up out of
@@ -482,7 +482,7 @@ export const ToyBox: React.FC<{ x: number; y: number; w?: number; h?: number; co
       </defs>
       <ellipse cx={0} cy={h + 4} rx={hw * 1.15} ry={44} fill={`url(#${id}-shadow)`} />
       {/* inside of the box, seen from slightly above */}
-      <path d={`M${-hw + 34},-46 L${hw - 34},-46 L${hw},0 L${-hw},0 Z`} fill={shade(color, 0.55)} />
+      <path d={`M${-hw + 40},-46 L${hw - 40},-46 L${hw - 10},0 L${-hw + 10},0 Z`} fill={shade(color, 0.55)} />
       <g clipPath={`url(#${id}-clip)`}>
         <g transform={`translate(${-x} ${-y})`}>{children}</g>
       </g>

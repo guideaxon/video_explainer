@@ -43,6 +43,11 @@ Remotion kit, templates and skill, and styles are never mixed.
 | Make an animated lyric / music video | `/lyric_make_video` | [lyric_video_style_guide.md](lyric_video_style_guide.md) |
 | Make a pixel-bot business explainer or satire | `/leaderbot_make_video` | [leaderbot_video_style_guide.md](leaderbot_video_style_guide.md) |
 | Make a narrated product demo from real screenshots (no screen recording) | `/demo_make_video` | [demo_video_style_guide.md](demo_video_style_guide.md) |
+| Make a neon synthwave story or explainer with a glowing robot host | `/neon_make_video` | [neon_video_style_guide.md](neon_video_style_guide.md) |
+| Make a retro 1930s rubber-hose cartoon with a noodle-limbed host | `/rubberhose_make_video` | [rubberhose_video_style_guide.md](rubberhose_video_style_guide.md) |
+| Make a glossy vinyl-toy product explainer or launch teaser | `/glossy_make_video` | [glossy_video_style_guide.md](glossy_video_style_guide.md) |
+| Make a claymation-look explainer with a clay character | `/clay_make_video` | [clay_video_style_guide.md](clay_video_style_guide.md) |
+| Make a comic pop-art story or explainer with an inked hero | `/popart_make_video` | [popart_video_style_guide.md](popart_video_style_guide.md) |
 | Check a style bundle video before voiceover | `scripts/review_video.py <project> --brief` | [video_review_checklist.md](video_review_checklist.md) |
 | Understand why the Vantage and Markets style bundles look the way they do | Design rationale and notes | [VantageVideoTemplate.md](VantageVideoTemplate.md) |
 
@@ -84,6 +89,8 @@ flowchart TD
         LBT["leaderbot_video_style_guide.md"]
         DEM["demo_video_style_guide.md"]
         NOTES["VantageVideoTemplate.md<br/>design notes behind Vantage + Markets"]
+        RIG["CHARACTER_RIG.md<br/>how characters talk, blink, walk, make sound"]
+        STY["ANIMATION_STYLES.md<br/>the 12 styles: coverage and open work"]
     end
 
     HTU --> CLI
@@ -103,6 +110,9 @@ flowchart TD
     CORE --> LYR
     CORE --> LBT
     CORE --> DEM
+    CORE -.-> RIG
+    RIG --> STY
+    RIG -. "sound cues" .-> SOUND
     CHK -. "copy and data rules" .-> MKT
     NOTES -.-> VAN
     NOTES -.-> MKT
@@ -120,6 +130,8 @@ Solid arrows mean "go next / depends on"; dotted arrows mean "related or overrid
 - **Style bundle videos:** the shared `video_make_core` skill is the hub for Markets, Promo, Launch, Lyric, Leaderbot
   and Demo. It sends you to `video_review_checklist.md` before voiceover and to the style bundle's style guide for
   look, copy and data rules. Vantage skips `video_make_core` and builds on SHORTS.md plus its own guide.
+- **Characters:** `CHARACTER_RIG.md` is the design of the shared character rig (talk, blink, gesture, walk, lip sync,
+  sound cues). `ANIMATION_STYLES.md` maps the 12 animation styles to bundles and lists what is still open.
 - **Background reading:** `VantageVideoTemplate.md` explains the thinking behind the Vantage and Markets styles.
 
 ## 4. Typical workflows
@@ -189,6 +201,11 @@ and Demo are not listed there even though they depend on it.
 | Launch | 1080x1920, 25-35 s | Bright playful, evolving mascot, phone mockups | `components/launch/` | `templates/launch_video/`, `launch_new_video.py` |
 | Lyric | 1080x1920, 30-90 s | Kawaii retro-pixel pastel pop, one vignette per lyric line | `components/lyric/` | `templates/lyric_video/`, `lyric_new_video.py` |
 | Leaderbot | 1080x1920, 25-35 s | Flat blocky pixel mosaic, hard shadows, no gradients | `components/leaderbot/` | `templates/leaderbot_video/`, `leaderbot_new_video.py` |
+| Popart | 1080x1920, 25-35 s | Comic pop-art: inked panels, Ben-Day halftone dots, POW starbursts, speech balloons | `components/popart/` | `templates/popart_video/`, `popart_new_video.py` |
+| Clay | 1080x1920, 25-35 s | Claymation look: matte plasticine, fingerprint texture, stop-motion on twos, felt set | `components/clay/` | `templates/clay_video/`, `clay_new_video.py` |
+| Glossy | 1080x1920, 25-40 s | Glossy toy 3D-look: shiny vinyl, gradient gloss, springy squash-and-stretch, pastel sweep | `components/glossy/` | `templates/glossy_video/`, `glossy_new_video.py` |
+| Rubberhose | 1080x1920, 25-35 s | Retro 1930s rubber-hose cartoon: noodle limbs, film grain, animated on twos | `components/rubberhose/` | `templates/rubberhose_video/`, `rubberhose_new_video.py` |
+| Neon | 1080x1920, 25-35 s | Neon synthwave: glowing stroke-only tubes, perspective grid, striped sun, chrome type | `components/neon/` | `templates/neon_video/`, `neon_new_video.py` |
 | Demo | 1920x1080 (or `--portrait`) | Real screenshots in device frames, camera zooms, cursor, step tracker | `components/demo/` | `manifest.json`, `demo_new_video.py`, `demo_build_scenes.py` |
 
 All kits live under `remotion/src/components/`. Each style bundle's finalize script is

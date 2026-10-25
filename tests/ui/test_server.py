@@ -139,11 +139,14 @@ def test_health_reports_earshot_as_an_optional_chip(client, monkeypatch):
 
 
 def test_sound_palette_setting_roundtrip_and_validation(client):
+    from src.sound.earshot_backend import palette_names
+
     c, _ = client
     _create(c, id="vid", style_bundle="markets")
     assert c.get("/api/projects/vid").json()["sound"] == {
-        "palette": "markets", "override": "", "palettes": ["default", "vantage", "markets", "promo", "launch", "lyric", "leaderbot", "demo"],
+        "palette": "markets", "override": "", "palettes": palette_names(),
     }
+    assert {"default", "vantage", "markets", "lyric", "leaderbot", "demo"} <= set(palette_names())
     assert c.put("/api/projects/vid/settings", json={"sound_palette": "lyric"}).json()["sound"]["palette"] == "lyric"
     assert c.put("/api/projects/vid/settings", json={"sound_palette": "nope"}).status_code == 400
     cleared = c.put("/api/projects/vid/settings", json={"sound_palette": ""}).json()["sound"]

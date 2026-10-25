@@ -91,7 +91,7 @@ const getGrain = (): string | null => {
   const ctx = canvas.getContext("2d");
   if (!ctx) return null;
   const img = ctx.createImageData(GRAIN_SIZE, GRAIN_SIZE);
-  img.data.set(grainPixels(GRAIN_SIZE, 7, 0.55));
+  img.data.set(grainPixels(GRAIN_SIZE, 7, 0.32));
   ctx.putImageData(img, 0, 0);
   grainUrl = canvas.toDataURL("image/png");
   return grainUrl;
@@ -300,7 +300,7 @@ export const EndCard: React.FC<{ text?: string; sub?: string; cy?: number; r?: n
         <circle cx={W / 2} cy={cy} r={r * 0.64} fill="none" stroke={C.ink} strokeWidth={4} />
       </Svg>
       <div style={{ position: "absolute", left: W / 2 - r * 0.62, width: r * 1.24, top: cy - r * 0.4, textAlign: "center", color: C.ink }}>
-        <div style={{ fontFamily: SCRIPT, fontSize: 132, lineHeight: 1.1, transform: "rotate(-6deg)" }}>{text}</div>
+        <div style={{ fontFamily: SCRIPT, fontSize: 112, lineHeight: 1.1, transform: "rotate(-6deg)" }}>{text}</div>
         {sub && <div style={{ fontFamily: DECO, fontSize: 34, letterSpacing: 4, marginTop: 18, textTransform: "uppercase", color: C.umber }}>{sub}</div>}
       </div>
     </div>

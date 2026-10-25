@@ -203,8 +203,8 @@ not how it eases, and ignores components it does not recognise. Scenes are found
 
 ### Character cues from the rig
 
-Characters built on the shared rig contract (`remotion/src/components/rig/index.ts`) get sound cues from
-their props. `src/sound/rig_analyzer.py` reads them from every scene file on top of the other analyzers
+Characters built on the shared rig contract (`remotion/src/components/rig/index.ts`, design in
+[CHARACTER_RIG.md](CHARACTER_RIG.md)) get sound cues from their props. `src/sound/rig_analyzer.py` reads them from every scene file on top of the other analyzers
 (not only when those find nothing):
 
 | Prop in the scene | Cue |

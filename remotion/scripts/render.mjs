@@ -33,6 +33,7 @@ import {
   getFinalResolution,
   validateSceneTypes,
   shouldSkipSceneValidation,
+  videoCrfFromConfig,
 } from "./render-utils.mjs";
 import fs from "fs";
 import path from "path";
@@ -238,6 +239,15 @@ async function main() {
     console.log(`  Frame range: ${start}-${endStr}`);
   }
 
+  // Optional per-project H.264 quality (config.json video.crf)
+  const projectConfigPath = resolve(projectDir, "config.json");
+  let projectCrf;
+  try {
+    projectCrf = existsSync(projectConfigPath) ? videoCrfFromConfig(JSON.parse(readFileSync(projectConfigPath, "utf-8"))) : undefined;
+  } catch {
+    projectCrf = undefined; // an unreadable config.json must not stop a render
+  }
+
   // Build render options
   const renderOptions = {
     composition: {
@@ -252,6 +262,7 @@ async function main() {
     concurrency,
     x264Preset,
     jpegQuality: config.fast ? 80 : 90, // Lower quality = faster frame generation
+    ...(projectCrf === undefined ? {} : { crf: projectCrf }), // per-project H.264 quality (config.json video.crf)
     onProgress: ({ progress }) => {
       const percent = Math.round(progress * 100);
       if (percent % 10 === 0) {

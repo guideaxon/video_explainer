@@ -33,7 +33,7 @@ SAMPLE_SCENES = [
     ("storyboard", "Storyboard", "Then a storyboard, panel by panel.",
      "(large cork board with nine small painted pictures in a grid:1.4), the girl pinning a picture to the board, workshop interior"),
     ("voice", "Voice", "A voice reads it aloud, in time with every picture.",
-     "(vintage microphone on a stand:1.4), the girl speaking into the microphone, reel-to-reel tape machine, workshop interior"),
+     "(vintage microphone on a stand:1.4), reel-to-reel tape machine, workshop interior, wooden floor, no people"),
     ("review", "Review", "Nothing leaves until you approve it.",
      "(big wooden double gate:1.3), (red rubber stamp on a counter:1.3), the girl standing beside the stamp, workshop interior"),
     ("render", "Render", "Then the film rolls out, ready to share.",
@@ -54,6 +54,8 @@ STYLE = {
     "cfg": 6.5,
 }
 CAST_SHOTS = {"script", "storyboard", "voice", "review", "render"}
+# Shots generated as empty plates; the template scene draws the code-drawn character (Wren) over them.
+PLATE_SHOTS = {"workshop", "voice"}
 WORDS_PER_SECOND = 2.3
 
 
@@ -89,7 +91,7 @@ def main(argv: list[str] | None = None) -> int:
     (art_dir / "refs").mkdir(parents=True, exist_ok=True)
     (art_dir / "style.json").write_text(json.dumps({
         **STYLE,
-        "shots": [{"id": sid, "prompt": shot, "seed": 1500 + i * 7, "cast": sid in CAST_SHOTS} for i, (sid, _, _, shot) in enumerate(SAMPLE_SCENES)],
+        "shots": [{"id": sid, "prompt": shot, "seed": 1500 + i * 7, "cast": sid in CAST_SHOTS and sid not in PLATE_SHOTS, **({"plate": True} if sid in PLATE_SHOTS else {})} for i, (sid, _, _, shot) in enumerate(SAMPLE_SCENES)],
     }, indent=2), encoding="utf-8")
 
     config = json.loads(config_path.read_text(encoding="utf-8"))
