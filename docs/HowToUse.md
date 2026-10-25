@@ -48,6 +48,7 @@ Remotion kit, templates and skill, and styles are never mixed.
 | Make a glossy vinyl-toy product explainer or launch teaser | `/glossy_make_video` | [glossy_video_style_guide.md](glossy_video_style_guide.md) |
 | Make a claymation-look explainer with a clay character | `/clay_make_video` | [clay_video_style_guide.md](clay_video_style_guide.md) |
 | Make a comic pop-art story or explainer with an inked hero | `/popart_make_video` | [popart_video_style_guide.md](popart_video_style_guide.md) |
+| Make a code-built 3D scene (soap bubbles, physics) as a video and a playable HTML page | `/scene3d_make_video` | [scene3d_video_style_guide.md](scene3d_video_style_guide.md), [scene3d_design.md](scene3d_design.md) |
 | Check a style bundle video before voiceover | `scripts/review_video.py <project> --brief` | [video_review_checklist.md](video_review_checklist.md) |
 | Understand why the Vantage and Markets style bundles look the way they do | Design rationale and notes | [VantageVideoTemplate.md](VantageVideoTemplate.md) |
 
@@ -207,6 +208,7 @@ and Demo are not listed there even though they depend on it.
 | Rubberhose | 1080x1920, 25-35 s | Retro 1930s rubber-hose cartoon: noodle limbs, film grain, animated on twos | `components/rubberhose/` | `templates/rubberhose_video/`, `rubberhose_new_video.py` |
 | Neon | 1080x1920, 25-35 s | Neon synthwave: glowing stroke-only tubes, perspective grid, striped sun, chrome type | `components/neon/` | `templates/neon_video/`, `neon_new_video.py` |
 | Demo | 1920x1080 (or `--portrait`) | Real screenshots in device frames, camera zooms, cursor, step tracker | `components/demo/` | `manifest.json`, `demo_new_video.py`, `demo_build_scenes.py` |
+| Scene3d | 1920x1080, 10-30 s, plus `scene.html` | Code-built three.js: thin-film soap bubbles, breeze, pops, studio sweep with bokeh; seeded baked simulation | `components/scene3d/` on `components/three-core/` | `templates/scene3d_video/`, `scene3d_new_video.py`, `three_core_bake_sim.mjs` |
 
 All kits live under `remotion/src/components/`. Each style bundle's finalize script is
 `scripts/<style_bundle>_finalize_storyboard.py` (shared helper `scripts/_storyboard_pacing.py`).

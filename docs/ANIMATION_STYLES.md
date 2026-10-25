@@ -25,7 +25,8 @@ This file is the living status. Update the table and the open-work list when a b
 
 `comic` (rotatable ComfyUI panels) is a different product from pop-art and is not part of this table.
 
-Styles with no character (Markets, Promo, Demo, and the standard explainer) are not in the 12 and have no face.
+Styles with no character (Markets, Promo, Demo, Scene3d, and the standard explainer) are not in the 12 and have no face.
+Scene3d is built on `three-core`, the shared three.js engine (`docs/scene3d_design.md`); `lowpoly` may adopt it later (design phase 5).
 
 ## 2. Web UI style picker
 

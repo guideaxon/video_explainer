@@ -239,14 +239,15 @@ async function main() {
     console.log(`  Frame range: ${start}-${endStr}`);
   }
 
-  // Optional per-project H.264 quality (config.json video.crf)
+  // The project config, read once: per-project H.264 quality (video.crf) and the style bundle (delivery GL backend)
   const projectConfigPath = resolve(projectDir, "config.json");
-  let projectCrf;
+  let projectConfig = {};
   try {
-    projectCrf = existsSync(projectConfigPath) ? videoCrfFromConfig(JSON.parse(readFileSync(projectConfigPath, "utf-8"))) : undefined;
+    projectConfig = existsSync(projectConfigPath) ? JSON.parse(readFileSync(projectConfigPath, "utf-8")) : {};
   } catch {
-    projectCrf = undefined; // an unreadable config.json must not stop a render
+    projectConfig = {}; // an unreadable config.json must not stop a render
   }
+  const projectCrf = videoCrfFromConfig(projectConfig);
 
   // Build render options
   const renderOptions = {
@@ -270,6 +271,21 @@ async function main() {
       }
     },
   };
+
+  // three.js bundles deliver with the GL backend in delivery_gl.json unless --gl is given: the determinism check
+  // (scripts/three_core_check_determinism.py) reads the same table, so it measures the backend that ships.
+  if (!config.gl) {
+    try {
+      const bundle = projectConfig.style_bundle;
+      const gl = bundle ? JSON.parse(readFileSync(resolve(__dirname, "delivery_gl.json"), "utf-8"))[bundle] : undefined;
+      if (gl && gl !== "auto") {
+        config.gl = gl;
+        console.log(`  GL renderer: ${gl} (delivery_gl.json default for ${bundle})`);
+      }
+    } catch {
+      // an unreadable delivery_gl.json must not stop a render
+    }
+  }
 
   // Add GL option for 3D rendering if specified
   if (config.gl) {

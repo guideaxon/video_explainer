@@ -45,6 +45,7 @@ const StorybookFace = () => (
   <Bg color="#fbf1de"><WrenStage width={S} height={S}><Wren x={256} y={937} scale={3.4} blink={false} /></WrenStage></Bg>
 );
 
+
 // The five 1080x1920 faces are rendered full size and cropped to the head by scripts/ui_render_faces.mjs.
 const NeonFace = () => <NScene horizon={460} stars={30}><Tubo x={256} y={905} scale={1.25} from={0} /></NScene>;
 const RubberhoseFace = () => <RScene tone="paper" damage={0}><Kip x={540} y={1420} scale={1.8} bounce={false} blink={false} /></RScene>;

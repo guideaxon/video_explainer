@@ -27,7 +27,8 @@ class TestRemotionPackageJson:
         """Test that three.js is in dependencies."""
         deps = package_json.get("dependencies", {})
         assert "three" in deps, "three should be in dependencies"
-        assert deps["three"].startswith("^0.170"), f"three version should be ^0.170.x, got {deps['three']}"
+        # pinned exactly to the official r180 release (docs/scene3d_design.md, Versions)
+        assert deps["three"] == "0.180.0", f"three should be pinned to 0.180.0, got {deps['three']}"
 
     def test_has_react_three_fiber_dependency(self, package_json: dict):
         """Test that @react-three/fiber is in dependencies."""

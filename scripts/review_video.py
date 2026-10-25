@@ -45,6 +45,8 @@ STYLE_BUNDLES: dict[str, dict] = {
     "storybook": {"words": (5, 14), "required": [], "resolutions": [(1280, 720), (1920, 1080)]},
     # Lowpoly: landscape 3D presenter films; the presenter speaks the narration and captions show it.
     "lowpoly": {"words": (6, 16), "required": [], "resolutions": [(1280, 720), (1920, 1080)]},
+    # Scene3d: landscape code-built 3D scenes under a caption pill; scenes/sim.spec.ts and a baked sim.json are required.
+    "scene3d": {"words": (6, 16), "required": [], "resolutions": [(1280, 720), (1920, 1080)]},
     # Demo: narration explains real screenshots, so it runs longer; landscape or portrait; text comes from manifest.json.
     "demo": {"words": (5, 30), "required": [], "resolutions": [(1920, 1080), (1080, 1920)]},
 }
@@ -164,6 +166,24 @@ def review(project_dir: Path) -> tuple[Report, dict]:
         for sc in scenes:
             if not (project_dir / "art" / f"{sc['scene_id']}.png").exists():
                 rep.error(f"art/{sc['scene_id']}.png is missing (run scripts/storybook_stills_comfy.py)")
+
+    # Scene3d: every scene needs a simulation spec and a baked sim.json that covers it, or the render fails late.
+    if style_bundle == "scene3d":
+        spec = scenes_dir / "sim.spec.ts"
+        baked = scenes_dir / "sim.json"
+        if not spec.exists():
+            rep.error("scenes/sim.spec.ts is missing (scaffold with scripts/scene3d_new_video.py)")
+        elif not baked.exists():
+            rep.error("scenes/sim.json is missing (run: node scripts/three_core_bake_sim.mjs <project>)")
+        else:
+            sims = json.loads(baked.read_text(encoding="utf-8")).get("scenes", {})
+            # sim.json is keyed like the registry: the slug of each scene title (what the finalize step bakes)
+            for sc in scenes:
+                key = _title_to_scene_key(sc.get("title", sc["scene_id"]))
+                if key not in sims:
+                    rep.error(f"scenes/sim.json has no bake for {key!r} (add it to SIMS in sim.spec.ts and re-bake)")
+            if spec.stat().st_mtime > baked.stat().st_mtime:
+                rep.warn("sim.spec.ts changed after the last bake; re-run three_core_bake_sim.mjs")
 
     # Leftover template placeholders in narration and on-screen text.
     screen: dict[str, list[str]] = {}

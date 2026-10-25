@@ -27,6 +27,7 @@ export const STYLE_BUNDLES: { id: string; name: string; blurb: string; format: s
   { id: "clay", name: "Clay", blurb: "Plasticine characters animated like stop-motion", format: "Portrait", look: "Claymation look", face: "clay" },
   { id: "popart", name: "Pop art", blurb: "Comic pages: halftone dots, ink outlines, POW captions", format: "Portrait", look: "Comic pop-art", face: "popart" },
   { id: "neon", name: "Neon", blurb: "Glowing synthwave tubes over a moving grid and sun", format: "Portrait", look: "Neon synthwave", face: "neon" },
+  { id: "scene3d", name: "Scene 3D", blurb: "Code-built 3D scenes (soap bubbles, light, physics) as a video and a playable HTML page", format: "16:9" },
 ];
 
 /** Outline of the frame shape a style bundle produces, like the Landscape / Portrait picker in the reference. */

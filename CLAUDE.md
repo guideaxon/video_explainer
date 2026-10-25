@@ -49,10 +49,11 @@ prefixed with the style bundle name. A project selects its style bundle with `"s
 | glossy (glossy toy 3D-look product explainers starring the vinyl toy Pebbo: gradient gloss, squash-and-stretch, candy buttons and chips on a pastel studio sweep, portrait 1080x1920 full videos) | `docs/glossy_video_style_guide.md` | `remotion/src/components/glossy/` | `templates/glossy_video/`, `scripts/glossy_new_video.py`, `scripts/glossy_finalize_storyboard.py` | `.claude/skills/glossy_make_video/` |
 | clay (claymation-look explainers: matte plasticine shapes, stop-motion on twos, the clay character Tuck with replacement mouths, felt table-top set; portrait 1080x1920 full videos) | `docs/clay_video_style_guide.md` | `remotion/src/components/clay/` | `templates/clay_video/`, `scripts/clay_new_video.py`, `scripts/clay_finalize_storyboard.py` | `.claude/skills/clay_make_video/` |
 | popart (comic pop-art explainers and stories starring the original hero Dot Dash: inked panels, Ben-Day halftone dots, POW starbursts, speech balloons; portrait 1080x1920 full videos; not the `comic` bundle) | `docs/popart_video_style_guide.md` | `remotion/src/components/popart/` | `templates/popart_video/`, `scripts/popart_new_video.py`, `scripts/popart_finalize_storyboard.py` | `.claude/skills/popart_make_video/` |
+| scene3d (code-built three.js scenes from a seeded, baked simulation: soap bubbles with thin-film shading, breeze and pops, and a pool with waves, ripples and caustics; landscape 1920x1080 full videos plus a playable self-contained `scene.html`) | `docs/scene3d_video_style_guide.md` | `remotion/src/components/scene3d/` (on the shared engine `remotion/src/components/three-core/`) | `templates/scene3d_video/`, `scripts/scene3d_new_video.py`, `scripts/scene3d_finalize_storyboard.py`, `scripts/three_core_bake_sim.mjs`, `scripts/three_core_check_determinism.py`, `scripts/three_core_build_html.mjs` | `.claude/skills/scene3d_make_video/` |
 | comic (rotatable comic pages: each panel is a 360-degree orbit clip generated locally in ComfyUI; static web bundle, not a video) | `docs/comic_style_guide.md` | `templates/comic_viewer/` (static HTML viewer) | `scripts/comic_new_comic.py`, `scripts/comic_orbit_comfy.mjs`, `scripts/comic_build_bundle.py` | `.claude/skills/comic_make_comic/` |
 
-To make a video for a style bundle, use its skill (`/vantage_make_short`, `/markets_make_video`, `/promo_make_video`, `/launch_make_video`, `/lyric_make_video`, `/leaderbot_make_video`, `/demo_make_video`, `/storybook_make_video`, `/lowpoly_make_video`, `/neon_make_video`, `/rubberhose_make_video`, `/glossy_make_video`, `/clay_make_video`, `/popart_make_video`, `/papercut_make_video`, `/isofigure_make_figure`, `/comic_make_comic`).
-The thirteen full-video style bundle skills (Markets, Promo, Launch, Lyric, Leaderbot, Demo, Storybook, Lowpoly, Neon, Rubberhose, Glossy, Clay, Popart) require the shared `video_make_core` skill, which holds the common workflow and a pre-render review (`scripts/review_video.py`, `docs/video_review_checklist.md`); run the review before `voiceover`.
+To make a video for a style bundle, use its skill (`/vantage_make_short`, `/markets_make_video`, `/promo_make_video`, `/launch_make_video`, `/lyric_make_video`, `/leaderbot_make_video`, `/demo_make_video`, `/storybook_make_video`, `/lowpoly_make_video`, `/neon_make_video`, `/rubberhose_make_video`, `/glossy_make_video`, `/clay_make_video`, `/popart_make_video`, `/scene3d_make_video`, `/papercut_make_video`, `/isofigure_make_figure`, `/comic_make_comic`).
+The fourteen full-video style bundle skills (Markets, Promo, Launch, Lyric, Leaderbot, Demo, Storybook, Lowpoly, Neon, Rubberhose, Glossy, Clay, Popart, Scene3d) require the shared `video_make_core` skill, which holds the common workflow and a pre-render review (`scripts/review_video.py`, `docs/video_review_checklist.md`); run the review before `voiceover`.
 **Composed stories** (several style bundles in one film, e.g. a Lowpoly presenter introducing an explainer chapter and a how-to chapter): `/compose_make_story`, `docs/compose_story_guide.md`, `scripts/compose_new_story.py`, `scripts/compose_build.py`. Each chapter is a normal project in its own bundle (`<story>__<chapter>`); the composer only normalises and joins finished chapters, so bundles are never mixed inside a scene.
 Papercut has no narration, voiceover or MP4 render: it builds one self-contained `film.html` with a code-generated music score (`projects/<p>/scenes.tsx`, `score.ts`; worked example `projects/papercut_fox`) and does not use `video_make_core`.
 Isofigure is not a video either: it builds one interactive `figure.html` from a pure model (`projects/<p>/model.ts`, `figure.tsx`, `main.tsx`; worked example `projects/isofigure_washer`) and does not use `video_make_core`. To use a figure as a chapter of a composed story, record it with `scripts/isofigure_capture_video.py <p>` (narrated `tour.json`, needs Playwright).
@@ -70,6 +71,17 @@ hand-adapted from the template, as are Promo, Launch, Lyric and Leaderbot scenes
   `scripts/_storyboard_pacing.py`.
 - Rendering a short also needs a stub `projects/<p>/scenes/index.ts` (see the Vantage skill).
 - Always inspect rendered frames (mid-beat and end-of-beat) before calling a video done.
+
+## three-core: shared three.js engine
+
+- `remotion/src/components/three-core/` holds the style-free engine for code-built three.js scenes (design:
+  `docs/scene3d_design.md`): frame-driven time (scenes get `t` only; no wall clock, no `Math.random`), a fixed-step
+  seeded simulation baked once to `scenes/sim.json` by `scripts/three_core_bake_sim.mjs` (fails closed on its checks),
+  one `Stage` render path for video and live HTML, water physics (`waves.ts`), the determinism check (it and `render.mjs`
+  use each bundle's delivery backend from `remotion/scripts/delivery_gl.json`) and the offline HTML build. Like `rig`, any
+  bundle may import it; it must not hold colours or look-defining shaders (a test checks). `scene3d` is its first bundle;
+  `lowpoly` follows its time contract and determinism check.
+- three.js is pinned to the official `0.180.0` (MIT); keep its licence header in any bundled file (`THIRD_PARTY_NOTICES.md`).
 
 ## Characters: rig, lip sync, sound
 

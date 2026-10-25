@@ -28,7 +28,7 @@
     "react": "18.3.1",
     "react-dom": "18.3.1",
     "remotion": "4.0.242",
-    "three": "^0.170.0",
+    "three": "0.180.0",
     "zod": "3.22.4",
     "zustand": "^3.7.2"
   },
@@ -40,7 +40,7 @@
     "@types/node": "22.10.2",
     "@types/react": "18.3.12",
     "@types/react-dom": "18.3.1",
-    "@types/three": "^0.170.0",
+    "@types/three": "0.180.0",
     "ts-node": "^10.9.2",
     "typescript": "5.7.2",
     "vitest": "^2.1.8"

@@ -30,4 +30,8 @@ No ComfyUI, no art files: the character and room are code.
   (re-run it after every voiceover change, or the mouth will not match).
 - **Render check**: render a few frames first, `python -m src.cli render <project> --frames 100-101`, extract one with ffmpeg and look at it
   (face readable, mouth moving, caption not covering hands, nothing clipped). The full render is slow (WebGL); run it in the background.
+- **Determinism (three-core)**: `python scripts/three_core_check_determinism.py <project> --frames <one mid-beat frame per scene>`.
+  It renders each frame three times as PNG with the backend Lowpoly delivers with (`remotion/scripts/delivery_gl.json`).
+  Tier 1 or 2 passes; anything else blocks delivery. Scene code follows the three-core time contract: frame-driven only,
+  no `Math.random`, `Date.now`, `performance.now` or `useFrame` (a test checks the kit and the template).
 - **Before delivery**: `python scripts/continuity_qc.py --project <project>`, read `qc/brief.md` and the contact sheet, then re-run with `--reviewed`.

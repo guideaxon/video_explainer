@@ -13,7 +13,7 @@ from pathlib import Path
 from typing import Callable
 
 # Full-video style bundles the UI can drive. Vantage shorts use the `short` CLI commands; not in v1.
-FULL_STYLE_BUNDLES = ("markets", "promo", "launch", "lyric", "leaderbot", "demo", "storybook", "lowpoly", "papercut", "isofigure", "rubberhose", "glossy", "clay", "popart", "neon")
+FULL_STYLE_BUNDLES = ("markets", "promo", "launch", "lyric", "leaderbot", "demo", "storybook", "lowpoly", "papercut", "isofigure", "rubberhose", "glossy", "clay", "popart", "neon", "scene3d")
 
 RUN, MANUAL, SKIPPED, HIDDEN = "run", "manual", "skipped", "hidden"
 

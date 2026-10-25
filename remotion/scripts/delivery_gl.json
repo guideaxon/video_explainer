@@ -1,0 +1,5 @@
+{
+  "_comment": "GL backend each three.js bundle delivers with. Read by render.mjs (default when --gl is not given) and by scripts/three_core_check_determinism.py (so the check measures the backend that ships). Missing bundle = Remotion's default backend ('auto'). See docs/scene3d_design.md section 15.",
+  "scene3d": "angle",
+  "lowpoly": "auto"
+}
