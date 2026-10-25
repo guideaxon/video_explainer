@@ -13,7 +13,7 @@ from pathlib import Path
 from typing import Callable
 
 # Full-video style bundles the UI can drive. Vantage shorts use the `short` CLI commands; not in v1.
-FULL_STYLE_BUNDLES = ("markets", "promo", "launch", "lyric", "leaderbot", "demo", "storybook", "lowpoly", "papercut", "isofigure", "rubberhose", "glossy", "clay", "popart", "neon", "scene3d")
+FULL_STYLE_BUNDLES = ("markets", "promo", "launch", "lyric", "leaderbot", "demo", "storybook", "moviebook", "lowpoly", "papercut", "isofigure", "rubberhose", "glossy", "clay", "popart", "neon", "scene3d")
 
 RUN, MANUAL, SKIPPED, HIDDEN = "run", "manual", "skipped", "hidden"
 
@@ -36,6 +36,9 @@ class Variant:
     # steps with no output file (review, verify) count as done when their last job exited 0
     job_output: bool = False
     force_flag: str | None = None
+    # Per-bundle overrides of the step's title and approval gate (MovieBook reuses the fixed ten slots for its own steps).
+    title: str = ""
+    gated: bool | None = None
 
 
 @dataclass(frozen=True)
@@ -47,6 +50,13 @@ class StepDef:
     style_bundle: Variant
     # An optional step never blocks the steps after it and does not count toward progress until it has run.
     optional: bool = False
+
+    def title_for(self, ctx: Ctx) -> str:
+        return self.variant(ctx).title or self.title
+
+    def gated_for(self, ctx: Ctx) -> bool:
+        g = self.variant(ctx).gated
+        return self.gated if g is None else g
 
     def variant(self, ctx: Ctx) -> Variant:
         override = HTML_VARIANTS.get(ctx.style_bundle)
@@ -180,8 +190,37 @@ ISOFIGURE_VARIANTS: dict[str, Variant] = {
     "verify": Variant(SKIPPED, note="Open figure.html in a browser and press every control"),
 }
 
-# Style bundles delivered as one HTML file instead of a rendered video: per-step overrides.
-HTML_VARIANTS: dict[str, dict[str, Variant]] = {"papercut": PAPERCUT_VARIANTS, "isofigure": ISOFIGURE_VARIANTS}
+# MovieBook (generated shots with dialogue audio) reuses the ten fixed slots for its own steps: the story plan sits in
+# the Narration slot, keyframes in Review, H3 clips in Voiceover (the voice is the clips' own audio, never TTS), and the
+# voice check plus finalize in Storyboard. Keyframes, clips and the voice check are gated: a human looks and listens.
+_MB_PLAN = "moviebook/plan.json"
+
+
+def _moviebook_plan(c: Ctx) -> list[str] | None:
+    """Scaffold the sample plan once; after that the plan is edited in the panel and scenes are rebuilt from it."""
+    return None if (c.project_dir / _MB_PLAN).exists() else ["scripts/moviebook_new_video.py", c.project]
+
+
+MOVIEBOOK_VARIANTS: dict[str, Variant] = {
+    "script": Variant(SKIPPED, note="MovieBook films start from the story plan"),
+    "narration": Variant(RUN, _moviebook_plan, title="Story plan", gated=True, outputs=(_MB_PLAN,),
+                         note="Scaffolds the sample plan once. Then edit the cast, voices and shots in the panel below."),
+    "scenes": Variant(RUN, lambda c: ["scripts/moviebook_build_scenes.py", c.project], title="Scenes", gated=False, outputs=("scenes",),
+                      note="Builds the scenes, subtitles and narration from the plan. Instant; re-run after editing the plan."),
+    "review": Variant(RUN, lambda c: ["scripts/moviebook_keyframes_comfy.py", c.project], title="Keyframes", gated=True,
+                      outputs=("moviebook/keyframes",), force_flag="--force",
+                      note="Qwen-Image makes one keyframe per shot in your local ComfyUI. Look at each one, re-roll the bad ones, then approve."),
+    "voiceover": Variant(RUN, lambda c: ["scripts/moviebook_run_clips.py", c.project], title="Clips", gated=True,
+                         outputs=("moviebook/clips",), force_flag="--force",
+                         note="MiniMax H3 makes one clip per shot with its own dialogue audio (2 to 4 minutes each). Plug the laptop in."),
+    "storyboard": Variant(RUN, lambda c: ["scripts/moviebook_run_finalize.py", c.project], title="Voice check and storyboard",
+                          outputs=("@storyboard",),
+                          note="Checks each speaker's pitch against its voice anchor and the dialogue with Whisper, then builds the storyboard. Fails closed."),
+}
+
+# Style bundles with per-step overrides of the standard ten steps: delivered as one HTML file (papercut, isofigure) or
+# using the slots for their own steps (moviebook).
+HTML_VARIANTS: dict[str, dict[str, Variant]] = {"papercut": PAPERCUT_VARIANTS, "isofigure": ISOFIGURE_VARIANTS, "moviebook": MOVIEBOOK_VARIANTS}
 
 STEP_IDS = tuple(s.id for s in STEPS)
 

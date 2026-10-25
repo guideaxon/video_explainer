@@ -19,6 +19,7 @@ export const STYLE_BUNDLES: { id: string; name: string; blurb: string; format: s
   { id: "leaderbot", name: "Leaderbot", blurb: "Pixel-mosaic business explainers and satire", format: "Portrait", look: "Pixel art 8-bit", face: "leaderbot" },
   { id: "demo", name: "Demo", blurb: "Narrated product demos from real screenshots", format: "16:9 or portrait" },
   { id: "storybook", name: "Storybook", blurb: "Illustrated storybook films from painted stills", format: "16:9", look: "Watercolor storybook", face: "storybook" },
+  { id: "moviebook", name: "MovieBook", blurb: "Short films with spoken dialogue from locally generated shots: Qwen-Image keyframes, H3 clips, two voices checked", format: "16:9", look: "Cinematic generated video", face: "moviebook" },
   { id: "lowpoly", name: "Lowpoly", blurb: "A low-poly 3D presenter talks you through a story or how-to, lip-synced and captioned", format: "16:9", look: "Low-poly 3D", face: "lowpoly" },
   { id: "isofigure", name: "Isofigure", blurb: "Interactive isometric figures of working objects, with buttons you press, as one HTML file", format: "16:9", look: "Isometric 3D", face: "isofigure" },
   { id: "papercut", name: "Papercut", blurb: "Paper-cut films drawn in code, with generated music, as one HTML file", format: "16:9", look: "Paper cut-out", face: "papercut" },

@@ -23,6 +23,7 @@ from .projects import (
     NAME_RE, approve, keep_user_settings, load_config, project_style_bundle, project_path, project_summary, resolve_path,
     save_config, slugify, source_path, step_statuses,
 )
+from . import moviebook
 from .steps import FULL_STYLE_BUNDLES, STEP_IDS, Ctx, step_by_id
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
@@ -54,9 +55,25 @@ class RunOptions(BaseModel):
     provider: str | None = None  # voiceover only
     preview: bool = False  # render only
     sound_engine: str | None = None  # sound only: auto, builtin or earshot
+    only: str | None = None  # moviebook keyframes and clips: comma-separated shot ids
+    skip_asr: bool = False  # moviebook voice check and storyboard: leave Whisper out (dialogue unchecked)
 
 
 SOUND_ENGINES = ("auto", "builtin", "earshot")
+
+
+class PlanBody(BaseModel):
+    plan: dict
+
+
+class AnchorBody(BaseModel):
+    character: str
+    shot: str
+
+
+class RerollBody(BaseModel):
+    shot: str
+    kind: str  # keyframe or clip
 
 
 class SettingsBody(BaseModel):
@@ -290,6 +307,16 @@ def create_app(
                 if not es.available:
                     raise HTTPException(400, f"Earshot is not available ({es.detail}). {es.fix}")
             argv = [*argv, "--engine", body.sound_engine]
+        if body.only:
+            if ctx.style_bundle != "moviebook" or step_id not in ("review", "voiceover"):
+                raise HTTPException(400, "only applies to the MovieBook keyframes and clips steps")
+            if not all(moviebook.ID_RE.match(p) for p in body.only.split(",")):
+                raise HTTPException(400, "only must be comma-separated shot ids (lower case letters, digits, underscore)")
+            argv = [*argv, "--only", body.only]
+        if body.skip_asr:
+            if ctx.style_bundle != "moviebook" or step_id != "storyboard":
+                raise HTTPException(400, "skip_asr applies to the MovieBook voice check and storyboard step only")
+            argv = [*argv, "--skip-asr"]
         # Steps run the CLI and scripts, which read the repo's own projects/ folder. A server pointed at any
         # other folder would run them against the wrong project, so refuse rather than write there.
         if projects_dir.resolve() != (repo_root / "projects").resolve():
@@ -306,7 +333,8 @@ def create_app(
     def approve_step(name: str, step_id: str) -> dict:
         d = need_project(name)
         step = step_by_id(step_id)
-        if step is None or not step.gated:
+        config = load_config(d)
+        if step is None or not step.gated_for(Ctx(name, project_style_bundle(config), d)):
             raise HTTPException(400, f"Step {step_id!r} has no approval gate")
         statuses = {s["id"]: s for s in step_statuses(d, load_config(d), jobs.history(name))}
         if statuses[step_id]["output_time"] is None:
@@ -357,6 +385,45 @@ def create_app(
         if not jobs.cancel(job):
             raise HTTPException(409, f"Job is not running (status: {job.status})")
         return {"cancelled": job_id}
+
+    # ----- moviebook -----------------------------------------------------------------------------
+    def need_moviebook(name: str) -> Path:
+        d = need_project(name)
+        if project_style_bundle(load_config(d)) != "moviebook":
+            raise HTTPException(400, "Not a MovieBook project")
+        return d
+
+    @app.get("/api/projects/{name}/moviebook")
+    def get_moviebook(name: str) -> dict:
+        """Plan, per-shot keyframe and clip files and the voice-check result, for the MovieBook panel."""
+        return moviebook.overview(need_moviebook(name))
+
+    @app.put("/api/projects/{name}/moviebook/plan")
+    def put_moviebook_plan(name: str, body: PlanBody) -> dict:
+        problems = moviebook.save_plan(need_moviebook(name), body.plan)
+        if problems:
+            raise HTTPException(422, "Plan not saved: " + "; ".join(problems))
+        return {"saved": True}
+
+    @app.post("/api/projects/{name}/moviebook/reroll")
+    def post_moviebook_reroll(name: str, body: RerollBody) -> dict:
+        d = need_moviebook(name)
+        if not moviebook.ID_RE.match(body.shot):
+            raise HTTPException(400, "Bad shot id")
+        try:
+            return moviebook.reroll(d, body.shot, body.kind)
+        except ValueError as e:
+            raise HTTPException(400, str(e))
+
+    @app.post("/api/projects/{name}/moviebook/anchor")
+    def post_moviebook_anchor(name: str, body: AnchorBody) -> dict:
+        d = need_moviebook(name)
+        if not (moviebook.ID_RE.match(body.shot) and moviebook.ID_RE.match(body.character)):
+            raise HTTPException(400, "Bad character or shot id")
+        try:
+            return {"result": moviebook.set_anchor(d, name, body.character, body.shot)}
+        except ValueError as e:
+            raise HTTPException(400, str(e))
 
     # ----- sound ---------------------------------------------------------------------------------
     @app.get("/api/projects/{name}/sound")

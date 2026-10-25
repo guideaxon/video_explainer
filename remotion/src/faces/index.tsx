@@ -14,6 +14,7 @@ import { RScene, Kip } from "../components/rubberhose/kit";
 import { GScene, Stage, Toy } from "../components/glossy/kit";
 import { ClayScene, Tuck } from "../components/clay/kit";
 import { Hero } from "../components/popart/kit";
+import { PAL as MB } from "../components/moviebook/kit";
 
 const S = 512;
 const Bg: React.FC<{ color: string; children: React.ReactNode }> = ({ color, children }) => (
@@ -46,6 +47,27 @@ const StorybookFace = () => (
 );
 
 
+// MovieBook: a cinematic frame (two figures lit by a window) with the kit's subtitle pill, in the kit's palette.
+const MovieBookFace = () => (
+  <Bg color={MB.ink}>
+    <svg width={S} height={S} viewBox={`0 0 ${S} ${S}`}>
+      <defs>
+        <linearGradient id="mbglow" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stopColor="#f0b070" /><stop offset="1" stopColor="#3a2a22" /></linearGradient>
+      </defs>
+      <rect x="0" y="0" width={S} height={S} fill="url(#mbglow)" />
+      <rect x="0" y="0" width={S} height="58" fill={MB.ink} /><rect x="0" y={S - 58} width={S} height="58" fill={MB.ink} />
+      <rect x="300" y="110" width="150" height="190" rx="6" fill="#ffe7c2" opacity="0.8" />
+      <g fill={MB.ink} opacity="0.92">
+        <circle cx="170" cy="250" r="46" /><path d="M96 420 Q96 308 170 308 Q244 308 244 420 Z" />
+        <circle cx="330" cy="268" r="46" /><path d="M250 420 Q250 326 330 326 Q410 326 410 420 Z" />
+      </g>
+      <rect x="86" y="372" width="340" height="52" rx="14" fill="rgba(20,17,15,0.78)" />
+      <text x="106" y="406" fontSize="26" fontWeight="700" fontFamily="sans-serif" fill={MB.female}>Mara</text>
+      <rect x="188" y="394" width="212" height="9" rx="4" fill={MB.paper} opacity="0.9" />
+    </svg>
+  </Bg>
+);
+
 // The five 1080x1920 faces are rendered full size and cropped to the head by scripts/ui_render_faces.mjs.
 const NeonFace = () => <NScene horizon={460} stars={30}><Tubo x={256} y={905} scale={1.25} from={0} /></NScene>;
 const RubberhoseFace = () => <RScene tone="paper" damage={0}><Kip x={540} y={1420} scale={1.8} bounce={false} blink={false} /></RScene>;
@@ -55,7 +77,7 @@ const PopartFace = () => <Bg color="#00a8e8"><Hero x={256} y={880} scale={0.8} b
 
 const FACES: [string, React.FC, number, number][] = [
   ["launch", LaunchFace, S, S], ["lyric", LyricFace, S, S], ["leaderbot", LeaderbotFace, S, S],
-  ["lowpoly", LowpolyFace, 1280, 720], ["papercut", PapercutFace, S, S], ["storybook", StorybookFace, S, S],
+  ["lowpoly", LowpolyFace, 1280, 720], ["papercut", PapercutFace, S, S], ["storybook", StorybookFace, S, S], ["moviebook", MovieBookFace, S, S],
   ["neon", NeonFace, S, S], ["rubberhose", RubberhoseFace, 1080, 1920], ["glossy", GlossyFace, 1080, 1920],
   ["clay", ClayFace, 1080, 1920], ["popart", PopartFace, S, S],
 ];

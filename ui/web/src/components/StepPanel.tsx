@@ -1,10 +1,11 @@
 import { useEffect, useState } from "react";
 import { api, ApiError } from "../api";
 import { loadPrefs } from "../prefs";
-import type { Project, SoundEngine, Step } from "../types";
+import type { Project, RunOpts, SoundEngine, Step } from "../types";
 import CopyButton from "./CopyButton";
 import DocEditor from "./DocEditor";
 import JobLog from "./JobLog";
+import MovieBookPanel from "./MovieBookPanel";
 import SoundPanel from "./SoundPanel";
 
 const COSTLY: Record<string, string> = {
@@ -14,6 +15,15 @@ const COSTLY: Record<string, string> = {
   narration: "This calls Claude Code and uses tokens.",
   scenes: "This calls Claude Code once per scene and uses tokens.",
 };
+
+// MovieBook reuses the step ids for its own steps and runs everything locally: no tokens, no TTS provider.
+const MOVIEBOOK_COSTLY: Record<string, string> = {
+  review: "This runs Qwen-Image in your local ComfyUI (about a minute per keyframe) and keeps the GPU busy.",
+  voiceover: "Each clip takes 2 to 4 minutes on the GPU. Plug the laptop in and keep it awake.",
+  storyboard: "This checks every clip's pitch and runs Whisper on the dialogue, then builds the storyboard.",
+  render: "Rendering can take a long time and uses a lot of CPU.",
+};
+const MOVIEBOOK_PANEL_STEPS = ["narration", "review", "voiceover", "storyboard"];
 
 const HELP: Record<string, string> = {
   stale: "An earlier step changed after this was generated. Re-run it, or accept it if the change does not affect this step.",
@@ -32,6 +42,8 @@ export default function StepPanel({ project, step, refresh }: Props) {
   const [error, setError] = useState("");
   const [provider, setProvider] = useState(project.tts_provider ?? "edge");
   const [engine, setEngine] = useState<SoundEngine>(() => loadPrefs().soundEngine); // the Sound step's engine, seeded from Preferences
+  const movie = project.style_bundle === "moviebook";
+  const [skipAsr, setSkipAsr] = useState(false);
   const busy = project.steps.some((s) => s.status === "running");
   const hasOutput = step.output_time !== null;
 
@@ -47,14 +59,15 @@ export default function StepPanel({ project, step, refresh }: Props) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [project.id, step.id]);
 
-  async function run(opts: { force?: boolean; preview?: boolean } = {}) {
-    const warning = COSTLY[step.id];
-    if (warning && !window.confirm(`${warning}\n\nContinue?`)) return;
+  async function run(opts: RunOpts = {}) {
+    const warning = (movie ? MOVIEBOOK_COSTLY : COSTLY)[step.id];
+    if (warning && !opts.only && !window.confirm(`${warning}\n\nContinue?`)) return;
     setError("");
     try {
       const job = await api.run(project.id, step.id, {
         ...opts,
-        provider: step.id === "voiceover" ? provider : undefined,
+        provider: step.id === "voiceover" && !movie ? provider : undefined,
+        skip_asr: movie && step.id === "storyboard" && skipAsr ? true : undefined,
         sound_engine: step.id === "sound" ? engine : undefined,
       });
       setJobId(job.id);
@@ -95,7 +108,7 @@ export default function StepPanel({ project, step, refresh }: Props) {
       <div className="actions">
         {step.can_run && project.supported && (
           <>
-            {step.id === "voiceover" && (
+            {step.id === "voiceover" && !movie && (
               <label className="inline">Voice
                 <select value={provider} onChange={(e) => setProvider(e.target.value)} disabled={busy}>
                   <option value="edge">Edge</option><option value="elevenlabs">ElevenLabs</option><option value="mock">Mock</option>
@@ -123,8 +136,12 @@ export default function StepPanel({ project, step, refresh }: Props) {
       </div>
       {error && <div className="banner error" role="alert">{error}</div>}
 
-      {(step.id === "script" || step.id === "narration") && (
+      {!(movie && step.id === "narration") && (step.id === "script" || step.id === "narration") && (
         <DocEditor project={project.id} kind={step.id} version={step.output_time} onSaved={refresh} />
+      )}
+
+      {movie && MOVIEBOOK_PANEL_STEPS.includes(step.id) && (
+        <MovieBookPanel project={project} step={step} busy={busy} run={run} skipAsr={skipAsr} setSkipAsr={setSkipAsr} />
       )}
 
       {step.id === "sound" && <SoundPanel project={project} step={step} />}

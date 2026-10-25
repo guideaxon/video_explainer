@@ -1,6 +1,6 @@
 ---
 name: video_make_core
-description: Shared workflow for the full-video style bundles (Markets, Promo, Launch, Lyric, Leaderbot, Demo, Storybook, Lowpoly, Neon, Rubberhose, Glossy, Clay, Popart, Scene3d): project, scaffold, pre-render review, voiceover, finalize, render, verify, export. Not invoked directly; a style bundle skill (markets_make_video, promo_make_video, launch_make_video, lyric_make_video) loads it first and supplies the style bundle details.
+description: Shared workflow for the full-video style bundles (Markets, Promo, Launch, Lyric, Leaderbot, Demo, Storybook, MovieBook, Lowpoly, Neon, Rubberhose, Glossy, Clay, Popart, Scene3d): project, scaffold, pre-render review, voiceover, finalize, render, verify, export. Not invoked directly; a style bundle skill (markets_make_video, promo_make_video, launch_make_video, lyric_make_video) loads it first and supplies the style bundle details.
 metadata:
   tags: video, remotion, workflow, core
 ---
@@ -64,6 +64,12 @@ $env:PYTHONUTF8 = "1"                 # required for CLI output
 10. **Social export**: `ffmpeg -i final.mp4 -c:v copy -af loudnorm=I=-14:TP=-1.5:LRA=11 -c:a aac -b:a 192k
     final_social.mp4`.
 11. **Promote reusable changes** to `templates/<style_bundle>_video/` and the kit (`projects/` is gitignored).
+
+## MovieBook exception
+
+MovieBook has no TTS: skip step 6 (`voiceover`) and the radio cut in step 5. The voiceover is each generated clip's own
+dialogue audio, extracted by `scripts/moviebook_finalize_storyboard.py` (no silence trimming), which also requires a
+passing `scripts/moviebook_voice_check.py check`. The rest of the workflow applies.
 
 ## Common pitfalls
 

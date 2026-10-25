@@ -1,0 +1,107 @@
+{
+  "_note": "SAMPLE story. Replace the cast, voices, visuals and lines. scripts/moviebook_build_scenes.py turns this plan into scenes, narration and dialogue captions; never hand-edit those.",
+  "language": "en",
+  "fps": 24,
+  "size": [1280, 720],
+  "frames": 90,
+  "style_line": "cinematic still frame, soft morning window light, warm film color grade, shallow depth of field, 35mm lens, natural skin texture",
+  "negative": "text, letters, watermark, logo, extra fingers, deformed hands, blurry, lowres, duplicate people, extra people",
+  "keyframes": {
+    "unet": "qwen_image_2_1_bf16.safetensors",
+    "weight_dtype": "fp8_e4m3fn",
+    "clip": "qwen_2.5_vl_7b_fp8_scaled.safetensors",
+    "vae": "qwen_image_vae.safetensors",
+    "steps": 20,
+    "cfg": 2.5,
+    "shift": 3.1,
+    "size": [1280, 720]
+  },
+  "h3": {
+    "megapixels": 0.64,
+    "aspect": "16:9 (Widescreen)",
+    "lora": null,
+    "frames_node": null,
+    "caption_template": null
+  },
+  "cast": {
+    "mara": {
+      "name": "Mara",
+      "gender": "female",
+      "identity": "a woman in her early thirties with a short black bob, round tortoiseshell glasses, a flour-dusted mustard apron over a cream shirt",
+      "voice": {
+        "description": "warm, quick, mid-pitch female voice",
+        "anchor_hz": null,
+        "anchor_wav": null,
+        "tolerance": 0.12
+      }
+    },
+    "tomas": {
+      "name": "Tomas",
+      "gender": "male",
+      "identity": "a tall man in his late thirties with a trimmed beard, green delivery cap, navy jacket with a canvas satchel",
+      "voice": {
+        "description": "calm, low, slightly gravelly male voice",
+        "anchor_hz": null,
+        "anchor_wav": null,
+        "tolerance": 0.12
+      }
+    }
+  },
+  "shots": [
+    {
+      "title": "Dawn",
+      "visual": "A small bakery at dawn, the shutters half open, warm light spilling onto the street. Mara unlocks the door and looks up the road.",
+      "keyframe_prompt": "medium shot, the bakery doorway at dawn, Mara unlocking the door, street behind her",
+      "cast": ["mara"],
+      "speaker": "mara",
+      "line": "He is late again, the bread will go cold.",
+      "seed": 4101
+    },
+    {
+      "title": "Arrival",
+      "visual": "Tomas jogs into frame with his satchel, out of breath, and stops at the doorway.",
+      "keyframe_prompt": "medium shot, Tomas arriving at the bakery door holding a satchel, Mara standing in the doorway",
+      "cast": ["mara", "tomas"],
+      "speaker": "tomas",
+      "line": "Sorry, the bridge was closed, I came the long way.",
+      "seed": 4102
+    },
+    {
+      "title": "Reply",
+      "visual": "Close on Mara, a small smile, she takes the satchel.",
+      "keyframe_prompt": "close-up, Mara smiling and reaching for a satchel",
+      "cast": ["mara"],
+      "speaker": "mara",
+      "line": "Then you earned a warm loaf.",
+      "seed": 4103
+    },
+    {
+      "title": "Counter",
+      "visual": "Inside the bakery, Mara slides a loaf across the counter to Tomas.",
+      "keyframe_prompt": "medium shot inside the bakery, Mara sliding a loaf across the wooden counter to Tomas",
+      "cast": ["mara", "tomas"],
+      "speaker": "tomas",
+      "line": "It smells like the whole morning.",
+      "seed": 4104
+    },
+    {
+      "title": "Promise",
+      "visual": "Two-shot at the window, both look out at the waking street.",
+      "keyframe_prompt": "two-shot at the bakery window, Mara and Tomas side by side looking out at the street",
+      "cast": ["mara", "tomas"],
+      "speaker": "mara",
+      "line": "Tomorrow, take the other road.",
+      "seed": 4105
+    },
+    {
+      "title": "Leaving",
+      "visual": "Tomas steps out into the street with the loaf, glancing back with a grin.",
+      "keyframe_prompt": "wide shot, Tomas walking away down the morning street holding a loaf, glancing back, the bakery behind him",
+      "cast": ["tomas"],
+      "speaker": "tomas",
+      "line": "I will. Save me one.",
+      "seed": 4106
+    }
+  ],
+  "end_card": null
+}

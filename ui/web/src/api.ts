@@ -1,4 +1,4 @@
-import type { CreateBody, Health, Job, Project, SoundEngine, SoundInfo } from "./types";
+import type { CreateBody, Health, Job, MovieBookOverview, MovieBookPlan, Project, SoundEngine, SoundInfo } from "./types";
 
 export class ApiError extends Error {
   constructor(message: string, public status: number, public jobId?: string) {
@@ -40,8 +40,14 @@ export const api = {
     call<{ path: string }>(`/projects/${id}/doc/${kind}`, put({ content })),
   jobs: (id: string) => call<Job[]>(`/projects/${id}/jobs`),
   job: (id: string, jobId: string) => call<Job & { log: string[] }>(`/projects/${id}/jobs/${jobId}?tail=400`),
-  run: (id: string, step: string, opts: { force?: boolean; provider?: string; preview?: boolean; sound_engine?: SoundEngine } = {}) =>
+  run: (id: string, step: string, opts: { force?: boolean; provider?: string; preview?: boolean; sound_engine?: SoundEngine; only?: string; skip_asr?: boolean } = {}) =>
     call<Job>(`/projects/${id}/steps/${step}/run`, post(opts)),
+  moviebook: (id: string) => call<MovieBookOverview>(`/projects/${id}/moviebook`),
+  saveMovieBookPlan: (id: string, plan: MovieBookPlan) => call<{ saved: boolean }>(`/projects/${id}/moviebook/plan`, put({ plan })),
+  rerollMovieBook: (id: string, shot: string, kind: "keyframe" | "clip") =>
+    call<{ seed: number; clip_seed: number }>(`/projects/${id}/moviebook/reroll`, post({ shot, kind })),
+  anchorMovieBook: (id: string, character: string, shot: string) =>
+    call<{ result: string }>(`/projects/${id}/moviebook/anchor`, post({ character, shot })),
   sound: (id: string) => call<SoundInfo>(`/projects/${id}/sound`),
   approve: (id: string, step: string) => call<{ approved: string }>(`/projects/${id}/steps/${step}/approve`, post()),
   cancel: (id: string, jobId: string) => call<{ cancelled: string }>(`/projects/${id}/jobs/${jobId}/cancel`, post()),

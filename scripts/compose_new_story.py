@@ -22,7 +22,7 @@ import sys
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
-BUNDLES = ("lowpoly", "isofigure", "markets", "promo", "launch", "lyric", "leaderbot", "demo", "storybook", "rubberhose", "glossy", "clay", "popart", "neon", "scene3d")
+BUNDLES = ("lowpoly", "isofigure", "markets", "promo", "launch", "lyric", "leaderbot", "demo", "storybook", "moviebook", "rubberhose", "glossy", "clay", "popart", "neon", "scene3d")
 # Bundles whose scaffold needs more than a project id: the project is created, the bundle skill scaffolds it by hand.
 MANUAL_SCAFFOLD = {"demo": "demo_new_video.py <project> --screenshots DIR --name NAME"}
 

@@ -26,7 +26,7 @@ INLINE = re.compile(r"(python3?|py)\s+-c\b|node\s+(-e|--eval)\b|(python3?|py|nod
 CODE = re.compile(r"\.(py|mjs|cjs|js|ts|ps1|sh)$", re.I)
 MEDIA = re.compile(r"\.(mp4|mov|m4v|webm|mkv|mp3|wav|m4a|aac|flac)$", re.I)
 # Bundle kits only. Shared contracts (rig, three-core) are deliberately not listed, so every bundle may import them.
-KIT_IMPORT = re.compile(r"components/(vantage|markets|promo|launch|lyric|leaderbot|demo|storybook|papercut|isofigure|lowpoly|rubberhose|glossy|clay|popart|neon|scene3d)\b")
+KIT_IMPORT = re.compile(r"components/(vantage|markets|promo|launch|lyric|leaderbot|demo|storybook|moviebook|papercut|isofigure|lowpoly|rubberhose|glossy|clay|popart|neon|scene3d)\b")
 
 
 def deny(reason: str) -> dict:

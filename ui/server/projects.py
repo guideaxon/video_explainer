@@ -148,7 +148,7 @@ def step_statuses(project_dir: Path, config: dict, jobs: list[Job]) -> list[dict
         argv = v.build(ctx) if (v.mode == RUN and v.build) else None
         mode = v.mode if (v.mode != RUN or argv is not None) else MANUAL
         entry = {
-            "id": step.id, "title": step.title, "mode": mode, "note": v.note, "gated": step.gated,
+            "id": step.id, "title": step.title_for(ctx), "mode": mode, "note": v.note, "gated": step.gated_for(ctx),
             "can_run": argv is not None, "force_flag": v.force_flag, "output_time": None,
             "commands": _copyable_commands(step.id, argv), "optional": step.optional,
         }
@@ -169,7 +169,7 @@ def step_statuses(project_dir: Path, config: dict, jobs: list[Job]) -> list[dict
             status = "ready" if prev_active_has_output else "not started"
         elif upstream_times and out_time < max(upstream_times) - STALE_TOLERANCE_SECONDS:
             status = "stale"
-        elif not step.gated:
+        elif not step.gated_for(ctx):
             status = "done"
         else:
             status = "approved" if approved.get(step.id, 0) >= out_time else "needs review"

@@ -43,6 +43,8 @@ STYLE_BUNDLES: dict[str, dict] = {
     "popart": {"words": (5, 12), "required": [], "headline_chars": 16},
     # Storybook: landscape painted-still films; narration 5 to 14 words per beat; art/<scene_id>.png per scene.
     "storybook": {"words": (5, 14), "required": [], "resolutions": [(1280, 720), (1920, 1080)]},
+    # MovieBook: landscape generated-clip films; the clip carries the dialogue, so no word range; clips/<scene_id>.mp4 per scene.
+    "moviebook": {"words": None, "required": [], "resolutions": [(1280, 720), (1920, 1080)]},
     # Lowpoly: landscape 3D presenter films; the presenter speaks the narration and captions show it.
     "lowpoly": {"words": (6, 16), "required": [], "resolutions": [(1280, 720), (1920, 1080)]},
     # Scene3d: landscape code-built 3D scenes under a caption pill; scenes/sim.spec.ts and a baked sim.json are required.
@@ -166,6 +168,20 @@ def review(project_dir: Path) -> tuple[Report, dict]:
         for sc in scenes:
             if not (project_dir / "art" / f"{sc['scene_id']}.png").exists():
                 rep.error(f"art/{sc['scene_id']}.png is missing (run scripts/storybook_stills_comfy.py)")
+
+    # MovieBook: every scene needs its generated clip, and the plan must be valid, or the render fails late.
+    if style_bundle == "moviebook":
+        for sc in scenes:
+            if not (project_dir / "moviebook" / "clips" / f"{sc['scene_id']}.mp4").exists():
+                rep.error(f"moviebook/clips/{sc['scene_id']}.mp4 is missing (run scripts/moviebook_clips_comfy.mjs)")
+        plan_path = project_dir / "moviebook" / "plan.json"
+        if not plan_path.exists():
+            rep.error("moviebook/plan.json is missing (scaffold with scripts/moviebook_new_video.py)")
+        else:
+            plan = json.loads(plan_path.read_text(encoding="utf-8"))
+            for name, c in plan.get("cast", {}).items():
+                if c.get("voice", {}).get("anchor_hz") is None:
+                    rep.warn(f"cast {name!r} has no voice anchor (scripts/moviebook_voice_check.py anchor)")
 
     # Scene3d: every scene needs a simulation spec and a baked sim.json that covers it, or the render fails late.
     if style_bundle == "scene3d":

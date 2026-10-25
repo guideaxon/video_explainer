@@ -74,3 +74,33 @@ export interface CreateBody {
   target_seconds: number;
   tts_provider: string;
 }
+
+export interface MovieBookShotQc {
+  speaker?: string | null;
+  issues: string[];
+  f0_hz?: number | null;
+  anchor_hz?: number | null;
+  deviation?: number | null;
+  cer?: number;
+  heard?: string;
+}
+export interface MovieBookShot {
+  id: string; title: string; speaker: string | null; line: string; visual: string; cast: string[];
+  seed: number | null; clip_seed: number | null;
+  keyframe: string | null; keyframe_time: number | null; clip: string | null; clip_time: number | null;
+  qc: MovieBookShotQc | null;
+}
+export interface MovieBookCast { key: string; name: string; gender: string; description: string; anchor_hz: number | null; tolerance: number }
+export interface MovieBookPlan {
+  cast: Record<string, { name: string; gender: string; identity: string; voice: { description: string; anchor_hz: number | null; tolerance: number } }>;
+  shots: { title: string; visual: string; keyframe_prompt?: string; speaker?: string; line?: string; cast?: string[]; seed?: number; clip_seed?: number }[];
+  [key: string]: unknown;
+}
+export interface MovieBookOverview {
+  plan: MovieBookPlan | null;
+  problems: string[];
+  shots: MovieBookShot[];
+  cast: MovieBookCast[];
+  qc: { passed: boolean | null; asr_checked: boolean | null; stale: boolean; speaker_f0_hz: Record<string, { median: number; min: number; max: number }> } | null;
+}
+export interface RunOpts { force?: boolean; preview?: boolean; only?: string }

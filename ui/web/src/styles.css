@@ -200,3 +200,20 @@ em.bad { color: var(--bad); font-style: normal; } input[aria-invalid="true"] { b
 .audit { list-style: none; margin: 8px 0; padding: 0; font-size: 13px; }
 .audit li { padding: 2px 0; } .audit-error { color: var(--bad); } .audit-warn { color: var(--warn); } .audit-info { color: var(--muted); }
 .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+/* MovieBook panels: story plan, keyframe and clip grids, voice anchors */
+.mb h3 { margin: 18px 0 6px; font-size: 15px; }
+.mb-card { border: 1px solid var(--line); border-radius: 14px; background: var(--surface-2); padding: 12px; margin: 0 0 10px; display: flex; flex-direction: column; gap: 8px; }
+.mb-card label { display: flex; flex-direction: column; gap: 4px; font-size: 13px; color: var(--muted); }
+.mb-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 12px; margin-top: 10px; }
+.mb-grid .mb-card { margin: 0; }
+.mb-grid img, .mb-grid video { width: 100%; aspect-ratio: 16 / 9; object-fit: cover; border-radius: 10px; background: #000; }
+.mb-grid img.dim { opacity: 0.5; }
+.mb-empty { aspect-ratio: 16 / 9; display: grid; place-items: center; border-radius: 10px; border: 1px dashed var(--line); color: var(--muted); font-size: 13px; }
+.mb-issue { color: var(--bad); }
+.mb-table { width: 100%; border-collapse: collapse; font-size: 13px; margin: 6px 0 12px; }
+.mb-table th, .mb-table td { text-align: left; padding: 7px 10px; border-bottom: 1px solid var(--line); vertical-align: top; }
+.mb-table th { color: var(--muted); font-weight: 600; }
+.mb-table tr.bad td { background: var(--bad-bg); }
+.mb .row { display: flex; gap: 8px; align-items: center; } .mb .row select { width: auto; }
+@media (max-width: 640px) { .mb-table { display: block; overflow-x: auto; } }
